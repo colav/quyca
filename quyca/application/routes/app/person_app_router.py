@@ -41,6 +41,17 @@ def get_person_research_products(person_id: str) -> Response | Tuple[Response, i
         return jsonify({"error": str(e)}), 400
 
 
+@person_app_router.route("/<person_id>/research/products/filters", methods=["GET"])
+def get_person_research_products_filters(person_id: str) -> Response | Tuple[Response, int]:
+    try:
+        query_params = QueryParams(**request.args)
+        data = work_service.get_works_filters_by_person(person_id, query_params)
+        return jsonify(data)
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"error": str(e)}), 400
+
+
 @person_app_router.route("/<person_id>/research/products/csv", methods=["GET"])
 def get_works_csv_by_person(person_id: str) -> Response | Tuple[Response, int]:
     try:

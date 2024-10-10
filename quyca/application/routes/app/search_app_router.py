@@ -38,6 +38,17 @@ def search_works() -> Response | Tuple[Response, int]:
         return jsonify({"error": str(e)}), 400
 
 
+@search_app_router.route("/works/filters", methods=["GET"])
+def get_search_works_filters() -> Response | Tuple[Response, int]:
+    try:
+        query_params = QueryParams(**request.args)
+        data = work_service.get_search_works_available_filters(query_params)
+        return jsonify(data)
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"error": str(e)}), 400
+
+
 @search_app_router.route("/affiliations/<affiliation_type>", methods=["GET"])
 def search_affiliations(affiliation_type: str) -> Response | Tuple[Response, int]:
     try:

@@ -31,6 +31,7 @@ def get_works_by_affiliation(
             },
         },
     ]
+    set_product_type_filters(pipeline, query_params.product_type)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
@@ -40,9 +41,23 @@ def get_works_by_affiliation(
     return work_generator.get(cursor)
 
 
-def get_works_count_by_affiliation(affiliation_id: str) -> int:
-    pipeline = get_works_by_affiliation_pipeline(affiliation_id)
-    pipeline += [{"$count": "total"}]
+def get_works_available_filters_by_affiliation(affiliation_id: str, query_params: QueryParams) -> dict:
+    pipeline = [
+        {"$match": {"authors.affiliations.id": ObjectId(affiliation_id)}},
+    ]
+    return get_works_available_filters(pipeline, query_params)
+
+
+def get_works_count_by_affiliation(affiliation_id: str, query_params: QueryParams) -> int:
+    pipeline = [
+        {
+            "$match": {
+                "authors.affiliations.id": ObjectId(affiliation_id),
+            },
+        },
+    ]
+    set_product_type_filters(pipeline, query_params.product_type)
+    pipeline += [{"$count": "total"}] # type: ignore
     return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)
 
 
@@ -52,6 +67,7 @@ def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_para
     pipeline = [
         {"$match": {"authors.id": ObjectId(person_id)}},
     ]
+    set_product_type_filters(pipeline, query_params.product_type)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
@@ -61,13 +77,23 @@ def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_para
     return work_generator.get(cursor)
 
 
-def get_works_count_by_person(person_id: str) -> int:
-    pipeline = [{"$match": {"authors.id": ObjectId(person_id)}}, {"$count": "total"}]
+def get_works_available_filters_by_person(person_id: str, query_params: QueryParams) -> dict:
+    pipeline = [
+        {"$match": {"authors.id": ObjectId(person_id)}},
+    ]
+    return get_works_available_filters(pipeline, query_params)
+
+
+def get_works_count_by_person(person_id: str, query_params: QueryParams) -> int:
+    pipeline = [{"$match": {"authors.id": ObjectId(person_id)}}]
+    set_product_type_filters(pipeline, query_params.product_type)
+    pipeline += [{"$count": "total"}] # type: ignore
     return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)
 
 
 def search_works(query_params: QueryParams, pipeline_params: dict | None = None) -> Tuple[Generator, int]:
     pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    set_product_type_filters(pipeline, query_params.product_type)
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     works = database["works"].aggregate(pipeline)
     count_pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
@@ -76,6 +102,23 @@ def search_works(query_params: QueryParams, pipeline_params: dict | None = None)
     ]
     total_results = next(database["works"].aggregate(count_pipeline), {"total_results": 0}).get("total_results", 0)
     return work_generator.get(works), total_results
+
+
+def get_works_available_filters(pipeline: list, query_params: QueryParams) -> dict:
+    set_product_type_filters(pipeline, query_params.product_type)
+    available_filters: dict = {}
+    product_types_pipeline = pipeline.copy() + [
+        {"$unwind": "$types"},
+        {"$group": {"_id": "$types.source", "types": {"$addToSet": "$types.type"}}},
+    ]
+    product_types = database["works"].aggregate(product_types_pipeline)
+    available_filters["product_types"] = list(product_types)
+    return available_filters
+
+
+def get_search_works_available_filters(query_params: QueryParams, pipeline_params: dict | None = None) -> dict:
+    pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    return get_works_available_filters(pipeline, query_params)
 
 
 def get_works_with_source_by_affiliation(affiliation_id: str, pipeline_params: dict | None = None) -> Generator:
@@ -124,11 +167,11 @@ def get_works_with_source_by_person(person_id: str, pipeline_params: dict | None
     return work_generator.get(cursor)
 
 
-def get_works_by_affiliation_pipeline(affiliation_id: str) -> list:
-    return [
-        {
-            "$match": {
-                "authors.affiliations.id": ObjectId(affiliation_id),
-            },
-        },
-    ]
+def set_product_type_filters(pipeline: list, type_filters: str | None) -> None:
+    if not type_filters:
+        return
+    match_filters = []
+    for type_filter in type_filters.split(","):
+        source, type_name = type_filter.split("_")
+        match_filters.append({"types.source": source, "types.type": type_name})
+    pipeline += [{"$match": {"$or": match_filters}}]

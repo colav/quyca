@@ -2,6 +2,8 @@ import csv
 import io
 from typing import Generator
 
+
+from domain.constants.product_types import source_titles
 from domain.models.work_model import Work
 
 
@@ -87,3 +89,24 @@ def parse_work(work: Work) -> dict:
 
 def parse_api_expert(works: Generator) -> list:
     return [work.model_dump(exclude_none=True) for work in works]
+
+
+def parse_available_filters(filters: dict) -> dict:
+    available_filters: dict = {}
+    if product_types := filters.get("product_types"):
+        types = []
+        for product_type in product_types:
+            if product_type.get("_id") == "crossref":
+                continue
+            children = []
+            for inner_type in product_type.get("types"):
+                children.append({"value": product_type.get("_id") + "_" + inner_type, "title": inner_type})
+            types.append(
+                {
+                    "value": product_type.get("_id"),
+                    "title": source_titles.get(product_type.get("_id")),
+                    "children": children,
+                }
+            )
+        available_filters["product_types"] = types
+    return available_filters

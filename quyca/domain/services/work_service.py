@@ -43,13 +43,23 @@ def search_works(query_params: QueryParams) -> dict:
     return {"data": data, "total_results": total_results}
 
 
+def get_search_works_available_filters(query_params: QueryParams) -> dict:
+    available_filters = work_repository.get_search_works_available_filters(query_params)
+    return work_parser.parse_available_filters(available_filters)
+
+
 def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams) -> dict:
     pipeline_params = get_works_by_entity_pipeline_params()
     works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
     works_data = get_work_by_entity_data(works)
     data = work_parser.parse_works_by_entity(works_data)
-    total_results = work_repository.get_works_count_by_affiliation(affiliation_id)
+    total_results = work_repository.get_works_count_by_affiliation(affiliation_id, query_params)
     return {"data": data, "total_results": total_results}
+
+
+def get_works_filters_by_affiliation(affiliation_id: str, query_params: QueryParams) -> dict:
+    available_filters = work_repository.get_works_available_filters_by_affiliation(affiliation_id, query_params)
+    return work_parser.parse_available_filters(available_filters)
 
 
 def get_works_by_person(person_id: str, query_params: QueryParams) -> dict:
@@ -57,8 +67,13 @@ def get_works_by_person(person_id: str, query_params: QueryParams) -> dict:
     works = work_repository.get_works_by_person(person_id, query_params, pipeline_params)
     works_data = get_work_by_entity_data(works)
     data = work_parser.parse_works_by_entity(works_data)
-    total_results = work_repository.get_works_count_by_person(person_id)
+    total_results = work_repository.get_works_count_by_person(person_id, query_params)
     return {"data": data, "total_results": total_results}
+
+
+def get_works_filters_by_person(person_id: str, query_params: QueryParams) -> dict:
+    available_filters = work_repository.get_works_available_filters_by_person(person_id, query_params)
+    return work_parser.parse_available_filters(available_filters)
 
 
 def get_work_by_entity_data(works: Generator) -> list:
