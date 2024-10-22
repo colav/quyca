@@ -60,9 +60,16 @@ class Source(BaseModel):
         json_encoders = {ObjectId: str}
 
 
+class Abstract(BaseModel):
+    abstract: dict | None = None
+    lang: str | None = None
+    provenance: str | None = None
+    source: str | None = None
+
+
 class Work(BaseModel):
     id: PyObjectId = Field(alias="_id")
-    abstract: str | None = None
+    abstracts: list[Abstract] | None = None
     apc: APC | None = Field(default_factory=APC)
     authors_count: int | None = Field(default_factory=int, alias="author_count")
     authors: list[Author] | str | None = None
@@ -87,10 +94,10 @@ class Work(BaseModel):
     updated: list[Updated] | None = None
     year_published: int | str | None = None
 
-    countries: str | None = None
-    source_data: Source | None = None
+    abstract: dict | None = None
     authors_data: list[Author] | None = None
     affiliations_data: list[Affiliation] | None = None
+    countries: str | None = None
     openalex_citations_count: str | int | None = None
     scholar_citations_count: str | int | None = None
     institutions: str | None = None
@@ -110,6 +117,7 @@ class Work(BaseModel):
     scienti_types: str | None = None
     scimago_quartile: str | None = None
     source_apc: str | None = None
+    source_data: Source | None = None
     source_name: str | None = None
     source_urls: str | None = None
     title: str | None = None

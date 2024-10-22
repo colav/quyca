@@ -1,7 +1,7 @@
 from typing import Generator
 
 from domain.models.base_model import QueryParams
-from domain.models.work_model import Work
+from domain.models.work_model import Work, Abstract
 from infrastructure.repositories import work_repository
 from domain.services import source_service
 from domain.services.base_service import (
@@ -17,6 +17,7 @@ from domain.parsers import work_parser
 
 def get_work_by_id(work_id: str) -> dict:
     work = work_repository.get_work_by_id(work_id)
+    set_abstract(work)
     set_external_ids(work)
     set_external_urls(work)
     limit_authors(work)
@@ -27,6 +28,15 @@ def get_work_by_id(work_id: str) -> dict:
     set_product_types(work)
     data = work_parser.parse_work(work)
     return {"data": data}
+
+
+def set_abstract(work: Work) -> None:
+    def order(abstract: Abstract) -> float:
+        hierarchy = ["openalex", "scholar", "scienti"]
+        return hierarchy.index(abstract.source) if abstract.source in hierarchy else float("inf")
+
+    first_abstract = sorted(work.abstracts, key=order)[0]
+    work.abstract = first_abstract.abstract
 
 
 def get_work_authors(work_id: str) -> dict:
