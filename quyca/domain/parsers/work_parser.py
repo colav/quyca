@@ -107,7 +107,7 @@ def parse_available_filters(filters: dict) -> dict:
                     if inner_type.get("level") == 0:
                         children.append(
                             {
-                                "value": "scienti_" + inner_type.get("type"),
+                                "value": "scienti_" + inner_type.get("type") + "_" + inner_type.get("code"),
                                 "title": inner_type.get("code") + " " + inner_type.get("type"),
                                 "code": inner_type.get("code"),
                                 "children": [],
@@ -116,7 +116,7 @@ def parse_available_filters(filters: dict) -> dict:
                     elif inner_type.get("level") == 1:
                         second_level_children.append(
                             {
-                                "value": "scienti_" + inner_type.get("type"),
+                                "value": "scienti_" + inner_type.get("type") + "_" + inner_type.get("code"),
                                 "title": inner_type.get("code") + " " + inner_type.get("type"),
                                 "code": inner_type.get("code"),
                                 "children": [],
@@ -125,7 +125,7 @@ def parse_available_filters(filters: dict) -> dict:
                     elif inner_type.get("level") == 2:
                         third_level_children.append(
                             {
-                                "value": "scienti_" + inner_type.get("type"),
+                                "value": "scienti_" + inner_type.get("type") + "_" + inner_type.get("code"),
                                 "title": inner_type.get("code") + " " + inner_type.get("type"),
                                 "code": inner_type.get("code"),
                             }

@@ -24,12 +24,15 @@ def set_product_types(workable: Work | OtherWork | Patent | Project) -> None:
         hierarchy = ["openalex", "scienti", "minciencias", "scholar"]
         return hierarchy.index(product_type.source) if product_type.source in hierarchy else float("inf")
 
-    product_types = list(
-        map(
-            lambda product_type: ProductType(name=product_type.type, source=product_type.source),
-            workable.types,
-        )
-    )
+    def filter_func(product_type: ProductType) -> bool:
+        if product_type.source == "minciencias" and product_type.level == 0:
+            return False
+        elif product_type.source == "scienti" and product_type.level in [0, 1]:
+            return False
+        return True
+
+    types = filter(filter_func, workable.types)
+    product_types = list(map(lambda x: ProductType(name=x.type, source=x.source), types))
     workable.product_types = sorted(product_types, key=order)
 
 

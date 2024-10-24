@@ -35,6 +35,10 @@ services:
       - --workers
       - "12"
       - app:create_app()
+      - --access-logfile
+      - "-"
+      - --error-logfile
+      - "-"
 
   local:
     container_name: quyca-local
