@@ -101,7 +101,40 @@ def parse_available_filters(filters: dict) -> dict:
         available_filters["status"] = parse_status_filter(status)
     if subjects := filters.get("subjects"):
         available_filters["subjects"] = parse_subject_filter(subjects)
+    if countries := filters.get("countries"):
+        available_filters["countries"] = parse_country_filter(countries)
+    if groups_ranking := filters.get("groups_ranking"):
+        available_filters["groups_ranking"] = parse_groups_ranking_filter(groups_ranking)
+    if authors_ranking := filters.get("authors_ranking"):
+        available_filters["authors_ranking"] = parse_authors_ranking_filter(authors_ranking)
     return available_filters
+
+
+def parse_authors_ranking_filter(authors_ranking: list) -> list:
+    parsed_authors_ranking = []
+    for ranking in authors_ranking:
+        if ranking.get("_id"):
+            parsed_authors_ranking.append({"value": ranking.get("_id"), "label": ranking.get("_id")})
+    parsed_authors_ranking.sort(key=lambda x: x.get("label"))  # type: ignore
+    return parsed_authors_ranking
+
+
+def parse_groups_ranking_filter(groups_ranking: list) -> list:
+    parsed_groups_ranking = []
+    for ranking in groups_ranking:
+        if ranking.get("_id"):
+            parsed_groups_ranking.append({"value": ranking.get("_id"), "label": ranking.get("_id")})
+    parsed_groups_ranking.sort(key=lambda x: x.get("label"))  # type: ignore
+    return parsed_groups_ranking
+
+
+def parse_country_filter(countries: list) -> list:
+    parsed_countries = []
+    for country in countries:
+        if country.get("country_code") and country.get("_id"):
+            parsed_countries.append({"value": country.get("country_code"), "label": country.get("_id")})
+    parsed_countries.sort(key=lambda x: x.get("label"))  # type: ignore
+    return parsed_countries
 
 
 def parse_subject_filter(subjects: list) -> list:

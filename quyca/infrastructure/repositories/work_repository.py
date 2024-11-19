@@ -195,6 +195,30 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
     ]
     subjects = database["works"].aggregate(subjects_pipeline)
     available_filters["subjects"] = list(next(subjects, {"subjects": []}).get("subjects"))  # type: ignore
+    countries_pipeline = pipeline.copy() + [
+        {"$unwind": "$authors"},
+        {"$unwind": "$authors.affiliations"},
+        {
+            "$group": {
+                "_id": "$authors.affiliations.country",
+                "country_code": {"$first": "$authors.affiliations.country_code"},
+            }
+        },
+    ]
+    countries = database["works"].aggregate(countries_pipeline)
+    available_filters["countries"] = list(countries)
+    groups_ranking_pipeline = pipeline.copy() + [
+        {"$unwind": "$groups"},
+        {"$group": {"_id": "$groups.ranking"}},
+    ]
+    groups_ranking = database["works"].aggregate(groups_ranking_pipeline)
+    available_filters["groups_ranking"] = list(groups_ranking)
+    authors_ranking_pipeline = pipeline.copy() + [
+        {"$unwind": "$authors"},
+        {"$group": {"_id": "$authors.ranking"}},
+    ]
+    authors_ranking = database["works"].aggregate(authors_ranking_pipeline)
+    available_filters["authors_ranking"] = list(authors_ranking)
     return available_filters
 
 
@@ -203,6 +227,9 @@ def set_product_filters(pipeline: list, query_params: QueryParams) -> None:
     set_year_filters(pipeline, query_params.year)
     set_status_filters(pipeline, query_params.status)
     set_subject_filters(pipeline, query_params.subject)
+    set_country_filters(pipeline, query_params.country)
+    set_groups_ranking_filters(pipeline, query_params.groups_ranking)
+    set_authors_ranking_filters(pipeline, query_params.authors_ranking)
 
 
 def set_product_type_filters(pipeline: list, type_filters: str | None) -> None:
@@ -254,4 +281,31 @@ def set_subject_filters(pipeline: list, subjects: str | None) -> None:
         if len(params) == 1:
             return
         match_filters.append({"subjects.subjects": {"$elemMatch": {"level": int(params[0]), "name": params[1]}}})
+    pipeline += [{"$match": {"$or": match_filters}}]
+
+
+def set_country_filters(pipeline: list, countries: str | None) -> None:
+    if not countries:
+        return
+    match_filters = []
+    for country in countries.split(","):
+        match_filters.append({"authors.affiliations": {"$elemMatch": {"country_code": country}}})
+    pipeline += [{"$match": {"$or": match_filters}}]
+
+
+def set_groups_ranking_filters(pipeline: list, groups_ranking: str | None) -> None:
+    if not groups_ranking:
+        return
+    match_filters = []
+    for ranking in groups_ranking.split(","):
+        match_filters.append({"groups": {"$elemMatch": {"ranking": ranking}}})
+    pipeline += [{"$match": {"$or": match_filters}}]
+
+
+def set_authors_ranking_filters(pipeline: list, authors_ranking: str | None) -> None:
+    if not authors_ranking:
+        return
+    match_filters = []
+    for ranking in authors_ranking.split(","):
+        match_filters.append({"authors": {"$elemMatch": {"ranking": ranking}}})
     pipeline += [{"$match": {"$or": match_filters}}]
