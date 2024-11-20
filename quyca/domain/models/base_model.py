@@ -1,6 +1,6 @@
 from typing import Generator
 
-from pydantic import BaseModel, field_validator, Field, conint
+from pydantic import BaseModel, field_validator, Field, conint, model_validator
 from bson import ObjectId
 
 
@@ -140,11 +140,11 @@ class APC(BaseModel):
 
 
 class QueryParams(BaseModel):
-    limit: conint(ge=1, le=250) | None = Field(default=10, alias="max")  # type: ignore
-    page: conint(ge=1) | None = 1  # type: ignore
+    limit: conint(ge=1, le=250) | None = Field(default=None, alias="max")  # type: ignore
+    page: conint(ge=1) | None = None  # type: ignore
     keywords: str | None = None
     plot: str | None = None
-    sort: str | None = "citations_desc"
+    sort: str | None = None
     product_type: str | None = None
     year: str | None = None
     status: str | None = None
@@ -152,6 +152,14 @@ class QueryParams(BaseModel):
     country: str | None = None
     groups_ranking: str | None = None
     authors_ranking: str | None = None
+
+    @model_validator(mode="after")
+    def validate_pagination_and_sort(self) -> "QueryParams":
+        if not self.plot:
+            self.limit = 10
+            self.page = 1
+            self.sort = "citations_desc"
+        return self
 
 
 class Geography(BaseModel):
