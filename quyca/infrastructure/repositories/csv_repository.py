@@ -66,17 +66,17 @@ def get_works_csv_by_person(person_id: str, query_params: QueryParams) -> Genera
 
 def get_works_csv_by_affiliation(affiliation_id: str, query_params: QueryParams) -> Generator:
     pipeline = [
-        {"$match": {"authors.affiliations.id": ObjectId(affiliation_id)}},
+        {"$match": {"authors.affiliations.hash": affiliation_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
         {
             "$lookup": {
                 "from": "affiliations",  # type: ignore
-                "localField": "authors.affiliations.id",  # type: ignore
-                "foreignField": "_id",  # type: ignore
+                "localField": "authors.affiliations.hash",  # type: ignore
+                "foreignField": "hash",  # type: ignore
                 "as": "affiliations_data",  # type: ignore
-                "pipeline": [{"$project": {"id": "$_id", "addresses.country": 1, "ranking": 1}}],  # type: ignore
+                "pipeline": [{"$project": {"hash": 1, "addresses.country": 1, "ranking": 1}}],  # type: ignore
             }
         },
         {

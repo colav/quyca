@@ -27,7 +27,7 @@ def get_projects_by_affiliation(
     pipeline = [
         {
             "$match": {
-                "authors.affiliations.id": ObjectId(affiliation_id),
+                "authors.affiliations.hash": affiliation_id,
             },
         },
     ]
@@ -80,7 +80,7 @@ def get_projects_by_affiliation_pipeline(affiliation_id: str) -> list:
     return [
         {
             "$match": {
-                "authors.affiliations.id": ObjectId(affiliation_id),
+                "authors.affiliations.hash": affiliation_id,
             },
         },
     ]

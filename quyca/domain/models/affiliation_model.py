@@ -1,5 +1,5 @@
 from bson import ObjectId
-from pydantic import BaseModel, Field, model_validator, field_validator
+from pydantic import BaseModel, model_validator, field_validator, Field
 
 from domain.models.base_model import (
     Type,
@@ -7,7 +7,6 @@ from domain.models.base_model import (
     ExternalUrl,
     CitationsCount,
     Name,
-    PyObjectId,
     ExternalId,
     Subject,
     Ranking,
@@ -30,7 +29,8 @@ class Description(BaseModel):
 
 
 class Relation(BaseModel):
-    id: PyObjectId = None
+    id: str | None = Field(default_factory=None, alias="hash")
+    hash: str | None = None
     name: str | Name | None = None
     types: list[Type] | None = None
     external_urls: list[ExternalUrl] | None = None
@@ -49,7 +49,8 @@ class Status(BaseModel):
 
 
 class Affiliation(BaseModel):
-    id: PyObjectId = Field(alias="_id")
+    id: str = Field(alias="hash")
+    hash: str | None = None
     abbreviations: list[str] | None = None
     addresses: list[Address] | Address | None = None
     aliases: list[str] | None = None

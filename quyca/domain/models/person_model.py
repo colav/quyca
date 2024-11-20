@@ -15,7 +15,8 @@ from domain.models.base_model import (
 
 
 class Affiliation(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId)
+    id: str | None = Field(default_factory=None, alias="hash")
+    hash: str | None = None
     name: str | None = None
     position: str | None = None
     start_date: int | str | None = None

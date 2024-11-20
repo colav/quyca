@@ -90,7 +90,7 @@ def get_work_by_entity_data(works: Generator) -> list:
 def get_works_by_entity_pipeline_params() -> dict:
     pipeline_params = {
         "project": [
-            "_id",
+            "hash",
             "author_count",
             "open_access",
             "authors",

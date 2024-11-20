@@ -121,7 +121,7 @@ def set_csv_affiliations(work: Work) -> None:
     for author in work.authors:
         for affiliation in author.affiliations:
             affiliation_data = next(
-                filter(lambda x: x.id == affiliation.id, work.affiliations_data),
+                filter(lambda x: x.hash == affiliation.hash, work.affiliations_data),
                 Affiliation(),
             )
             if affiliation.types and affiliation.types[0].type in institutions_list:

@@ -25,19 +25,39 @@ def set_affiliations_hash():  # type: ignore
                                 0,
                             ]
                         },
-                        None,
+                        null,
                     ]
                 }
             }
         },
         {
             "$addFields": {
-                "hash": {
-                    "$cond": {
-                        "if": {"$ne": ["$ror_id", None]},
-                        "then": {"$substr": ["$ror_id", {"$subtract": [{"$strLenCP": "$ror_id"}, 9]}, 9]},
-                        "else": {"$toString": "$_id"},
-                    }
+                "ror_id_hex": {
+                    "$cond": [
+                        {"$ne": ["$ror_id", null]},
+                        {
+                            "$toHex": {
+                                "$binary": {
+                                    "base64": {
+                                        "$substrBytes": ["$ror_id", 0, 12]
+                                    },
+                                    "subType": "00"
+                                }
+                            }
+                        },
+                        null
+                    ]
+                }
+            }
+        },
+        {
+            "$addFields": {
+                "_id": {
+                    "$cond": [
+                        {"$regexMatch": {"input": "$ror_id_hex", "regex": "^[0-9a-fA-F]{24}$"}},
+                        {"$toObjectId": "$ror_id_hex"},
+                        "$_id"
+                    ]
                 }
             }
         },
@@ -119,6 +139,301 @@ def set_works_authors_affiliations_hash():  # type: ignore
             }
         },
         {"$project": {"affiliations_data": 0}},
+        {
+            "$merge": {
+                "into": "works",
+                "whenMatched": "merge",
+                "whenNotMatched": "fail",
+            }
+        },
+    ]
+    database["works"].aggregate(pipeline)
+
+
+def set_other_works_authors_affiliations_hash():  # type: ignore
+    pipeline = [
+        {
+            "$lookup": {
+                "from": "affiliations",
+                "localField": "authors.affiliations.id",
+                "foreignField": "_id",
+                "as": "affiliations_data",
+                "pipeline": [{"$project": {"_id": 1, "hash": 1}}],
+            }
+        },
+        {
+            "$addFields": {
+                "authors": {
+                    "$map": {
+                        "input": "$authors",
+                        "as": "author",
+                        "in": {
+                            "$mergeObjects": [
+                                "$$author",
+                                {
+                                    "affiliations": {
+                                        "$map": {
+                                            "input": "$$author.affiliations",
+                                            "as": "affiliation",
+                                            "in": {
+                                                "$mergeObjects": [
+                                                    "$$affiliation",
+                                                    {
+                                                        "hash": {
+                                                            "$let": {
+                                                                "vars": {
+                                                                    "matchedAffiliation": {
+                                                                        "$arrayElemAt": [
+                                                                            {
+                                                                                "$filter": {
+                                                                                    "input": "$affiliations_data",
+                                                                                    "as": "affiliation_data",
+                                                                                    "cond": {
+                                                                                        "$eq": [
+                                                                                            "$$affiliation.id",
+                                                                                            "$$affiliation_data._id",
+                                                                                        ]
+                                                                                    },
+                                                                                }
+                                                                            },
+                                                                            0,
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "in": "$$matchedAffiliation.hash",
+                                                            }
+                                                        }
+                                                    },
+                                                ]
+                                            },
+                                        }
+                                    }
+                                },
+                            ]
+                        },
+                    }
+                }
+            }
+        },
+        {"$project": {"affiliations_data": 0}},
+        {
+            "$merge": {
+                "into": "works_misc",
+                "whenMatched": "merge",
+                "whenNotMatched": "fail",
+            }
+        },
+    ]
+    database["works_misc"].aggregate(pipeline)
+
+
+def set_patents_authors_affiliations_hash():  # type: ignore
+    pipeline = [
+        {
+            "$lookup": {
+                "from": "affiliations",
+                "localField": "authors.affiliations.id",
+                "foreignField": "_id",
+                "as": "affiliations_data",
+                "pipeline": [{"$project": {"_id": 1, "hash": 1}}],
+            }
+        },
+        {
+            "$addFields": {
+                "authors": {
+                    "$map": {
+                        "input": "$authors",
+                        "as": "author",
+                        "in": {
+                            "$mergeObjects": [
+                                "$$author",
+                                {
+                                    "affiliations": {
+                                        "$map": {
+                                            "input": "$$author.affiliations",
+                                            "as": "affiliation",
+                                            "in": {
+                                                "$mergeObjects": [
+                                                    "$$affiliation",
+                                                    {
+                                                        "hash": {
+                                                            "$let": {
+                                                                "vars": {
+                                                                    "matchedAffiliation": {
+                                                                        "$arrayElemAt": [
+                                                                            {
+                                                                                "$filter": {
+                                                                                    "input": "$affiliations_data",
+                                                                                    "as": "affiliation_data",
+                                                                                    "cond": {
+                                                                                        "$eq": [
+                                                                                            "$$affiliation.id",
+                                                                                            "$$affiliation_data._id",
+                                                                                        ]
+                                                                                    },
+                                                                                }
+                                                                            },
+                                                                            0,
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "in": "$$matchedAffiliation.hash",
+                                                            }
+                                                        }
+                                                    },
+                                                ]
+                                            },
+                                        }
+                                    }
+                                },
+                            ]
+                        },
+                    }
+                }
+            }
+        },
+        {"$project": {"affiliations_data": 0}},
+        {
+            "$merge": {
+                "into": "patents",
+                "whenMatched": "merge",
+                "whenNotMatched": "fail",
+            }
+        },
+    ]
+    database["patents"].aggregate(pipeline)
+
+
+def set_projects_authors_affiliations_hash():  # type: ignore
+    pipeline = [
+        {
+            "$lookup": {
+                "from": "affiliations",
+                "localField": "authors.affiliations.id",
+                "foreignField": "_id",
+                "as": "affiliations_data",
+                "pipeline": [{"$project": {"_id": 1, "hash": 1}}],
+            }
+        },
+        {
+            "$addFields": {
+                "authors": {
+                    "$map": {
+                        "input": "$authors",
+                        "as": "author",
+                        "in": {
+                            "$mergeObjects": [
+                                "$$author",
+                                {
+                                    "affiliations": {
+                                        "$map": {
+                                            "input": "$$author.affiliations",
+                                            "as": "affiliation",
+                                            "in": {
+                                                "$mergeObjects": [
+                                                    "$$affiliation",
+                                                    {
+                                                        "hash": {
+                                                            "$let": {
+                                                                "vars": {
+                                                                    "matchedAffiliation": {
+                                                                        "$arrayElemAt": [
+                                                                            {
+                                                                                "$filter": {
+                                                                                    "input": "$affiliations_data",
+                                                                                    "as": "affiliation_data",
+                                                                                    "cond": {
+                                                                                        "$eq": [
+                                                                                            "$$affiliation.id",
+                                                                                            "$$affiliation_data._id",
+                                                                                        ]
+                                                                                    },
+                                                                                }
+                                                                            },
+                                                                            0,
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "in": "$$matchedAffiliation.hash",
+                                                            }
+                                                        }
+                                                    },
+                                                ]
+                                            },
+                                        }
+                                    }
+                                },
+                            ]
+                        },
+                    }
+                }
+            }
+        },
+        {"$project": {"affiliations_data": 0}},
+        {
+            "$merge": {
+                "into": "projects",
+                "whenMatched": "merge",
+                "whenNotMatched": "fail",
+            }
+        },
+    ]
+    database["projects"].aggregate(pipeline)
+
+
+def set_works_groups_hash():  # type: ignore
+    pipeline = [
+        {
+            "$lookup": {
+                "from": "affiliations",
+                "localField": "groups.id",
+                "foreignField": "_id",
+                "as": "groups_data",
+                "pipeline": [{"$project": {"_id": 1, "hash": 1}}],
+            }
+        },
+        {
+            "$addFields": {
+                "groups": {
+                    "$map": {
+                        "input": "$groups",
+                        "as": "group",
+                        "in": {
+                            "$mergeObjects": [
+                                "$$group",
+                                {
+                                    "hash": {
+                                        "$let": {
+                                            "vars": {
+                                                "matchedGroup": {
+                                                    "$arrayElemAt": [
+                                                        {
+                                                            "$filter": {
+                                                                "input": "$groups_data",
+                                                                "as": "group_data",
+                                                                "cond": {
+                                                                    "$eq": [
+                                                                        "$$group.id",
+                                                                        "$$group_data._id",
+                                                                    ]
+                                                                },
+                                                            }
+                                                        },
+                                                        0,
+                                                    ]
+                                                }
+                                            },
+                                            "in": "$$matchedGroup.hash",
+                                        }
+                                    }
+                                },
+                            ]
+                        },
+                    }
+                }
+            }
+        },
+        {"$project": {"groups_data": 0}},
         {
             "$merge": {
                 "into": "works",
@@ -612,3 +927,20 @@ def set_works_authors_ranking():  # type: ignore
         },
     ]
     database["works"].aggregate(pipeline)
+
+from bson import ObjectId
+
+# String de entrada
+input_str = "example01"  # 9 caracteres
+
+# Convertir el string a bytes, luego a hexadecimal
+hex_part = input_str.encode("utf-8").hex()
+
+# Rellenar con ceros para alcanzar 24 caracteres
+hex_full = hex_part.ljust(24, "0")
+
+# Construir el ObjectId
+object_id = ObjectId(hex_full)
+
+print("Hexadecimal:", hex_full)
+print("ObjectId:", object_id)

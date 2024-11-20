@@ -13,12 +13,12 @@ def get_affiliations_scienti_works_count_by_institution(
     institution_id: str, relation_type: str, query_params: QueryParams
 ) -> CommandCursor:
     pipeline = [
-        {"$match": {"relations.id": ObjectId(institution_id), "types.type": relation_type}},
+        {"$match": {"relations.hash": institution_id, "types.type": relation_type}},
         {
             "$lookup": {
                 "from": "works",
-                "localField": "_id",
-                "foreignField": "authors.affiliations.id",
+                "localField": "hash",
+                "foreignField": "authors.affiliations.hash",
                 "as": "works",
                 "pipeline": [{"$project": {"types": 1}}],
             }
@@ -51,19 +51,19 @@ def get_groups_scienti_works_count_by_faculty_or_department(
         database["affiliations"]
         .aggregate(
             [
-                {"$match": {"_id": ObjectId(affiliation_id)}},
+                {"$match": {"hash": affiliation_id}},
                 {"$unwind": "$relations"},
                 {"$match": {"relations.types.type": "education"}},
             ]
         )
         .next()
         .get("relations", {})
-        .get("id", None)
+        .get("hash", None)
     )
     pipeline = [
         {
             "$match": {
-                "relations.id": institution_id,
+                "relations.hash": institution_id,
                 "types.type": "group",
             }
         },
@@ -80,7 +80,7 @@ def get_groups_scienti_works_count_by_faculty_or_department(
         {"$unwind": "$works.types"},
         {
             "$match": {
-                "works.authors.affiliations.id": ObjectId(affiliation_id),
+                "works.authors.affiliations.hash": affiliation_id,
                 "works.types.source": "scienti",
                 "works.types.level": 2,
             }
@@ -101,7 +101,7 @@ def get_groups_scienti_works_count_by_faculty_or_department(
 
 def get_affiliations_citations_count_by_institution(institution_id: str, relation_type: str) -> CommandCursor:
     pipeline = [
-        {"$match": {"relations.id": ObjectId(institution_id), "types.type": relation_type}},
+        {"$match": {"relations.hash": institution_id, "types.type": relation_type}},
         {"$project": {"_id": 0, "citations_count": 1, "name": {"$first": "$names.name"}}},
     ]
     return database["affiliations"].aggregate(pipeline)
@@ -116,32 +116,32 @@ def get_groups_citations_count_by_faculty_or_department(affiliation_id: str) -> 
         database["affiliations"]
         .aggregate(
             [
-                {"$match": {"_id": ObjectId(affiliation_id)}},
+                {"$match": {"hash": affiliation_id}},
                 {"$unwind": "$relations"},
                 {"$match": {"relations.types.type": "education"}},
             ]
         )
         .next()
         .get("relations", {})
-        .get("id", None)
+        .get("hash", None)
     )
     pipeline = [
         {
             "$match": {
-                "authors.affiliations.id": ObjectId(affiliation_id),
+                "authors.affiliations.hash": affiliation_id,
             }
         },
         {"$unwind": "$groups"},
         {
             "$lookup": {
                 "from": "affiliations",
-                "localField": "groups.id",
-                "foreignField": "_id",
+                "localField": "groups.hash",
+                "foreignField": "hash",
                 "as": "group",
                 "pipeline": [
                     {
                         "$match": {
-                            "relations.id": ObjectId(institution_id),
+                            "relations.hash": institution_id,
                             "types.type": "group",
                         },
                     },
@@ -166,12 +166,12 @@ def get_affiliations_apc_expenses_by_institution(
     institution_id: str, relation_type: str, query_params: QueryParams
 ) -> CommandCursor:
     pipeline = [
-        {"$match": {"relations.id": ObjectId(institution_id), "types.type": relation_type}},
+        {"$match": {"relations.hash": institution_id, "types.type": relation_type}},
         {
             "$lookup": {
                 "from": "works",
-                "localField": "_id",
-                "foreignField": "authors.affiliations.id",
+                "localField": "hash",
+                "foreignField": "authors.affiliations.hash",
                 "as": "works",
                 "pipeline": [{"$project": {"source": 1}}],
             }
@@ -204,19 +204,19 @@ def get_groups_apc_expenses_by_faculty_or_department(affiliation_id: str, query_
         database["affiliations"]
         .aggregate(
             [
-                {"$match": {"_id": ObjectId(affiliation_id)}},
+                {"$match": {"hash": affiliation_id}},
                 {"$unwind": "$relations"},
                 {"$match": {"relations.types.type": "education"}},
             ]
         )
         .next()
         .get("relations", {})
-        .get("id", None)
+        .get("hash", None)
     )
     pipeline = [
         {
             "$match": {
-                "relations.id": institution_id,
+                "relations.hash": institution_id,
                 "types.type": "group",
             }
         },
@@ -227,7 +227,7 @@ def get_groups_apc_expenses_by_faculty_or_department(affiliation_id: str, query_
                 "foreignField": "authors.affiliations.id",
                 "as": "works",
                 "pipeline": [
-                    {"$match": {"authors.affiliations.id": ObjectId(affiliation_id)}},
+                    {"$match": {"authors.affiliations.hash": affiliation_id}},
                     {"$project": {"source": 1, "authors": 1}},
                 ],
             }
@@ -255,12 +255,12 @@ def get_affiliations_works_citations_count_by_institution(
     institution_id: str, relation_type: str, query_params: QueryParams
 ) -> CommandCursor:
     pipeline = [
-        {"$match": {"relations.id": ObjectId(institution_id), "types.type": relation_type}},
+        {"$match": {"relations.hash": institution_id, "types.type": relation_type}},
         {
             "$lookup": {
                 "from": "works",
-                "localField": "_id",
-                "foreignField": "authors.affiliations.id",
+                "localField": "hash",
+                "foreignField": "authors.affiliations.hash",
                 "as": "works",
                 "pipeline": [
                     {
@@ -318,30 +318,30 @@ def get_groups_works_citations_count_by_faculty_or_department(
         database["affiliations"]
         .aggregate(
             [
-                {"$match": {"_id": ObjectId(affiliation_id)}},
+                {"$match": {"hash": affiliation_id}},
                 {"$unwind": "$relations"},
                 {"$match": {"relations.types.type": "education"}},
             ]
         )
         .next()
         .get("relations", {})
-        .get("id", None)
+        .get("hash", None)
     )
     pipeline = [
         {
             "$match": {
-                "relations.id": institution_id,
+                "relations.hash": institution_id,
                 "types.type": "group",
             }
         },
         {
             "$lookup": {
                 "from": "works",
-                "localField": "_id",
-                "foreignField": "authors.affiliations.id",
+                "localField": "hash",
+                "foreignField": "authors.affiliations.hash",
                 "as": "works",
                 "pipeline": [
-                    {"$match": {"authors.affiliations.id": ObjectId(affiliation_id)}},
+                    {"$match": {"authors.affiliations.hash": affiliation_id}},
                     {
                         "$addFields": {
                             "scholar_citations_count": {
@@ -390,7 +390,7 @@ def get_active_authors_by_sex(affiliation_id: str) -> CommandCursor:
     pipeline = [
         {
             "$match": {
-                "affiliations": {"$elemMatch": {"id": ObjectId(affiliation_id), "end_date": -1}},
+                "affiliations": {"$elemMatch": {"hash": affiliation_id, "end_date": -1}},
                 "ranking.source": "staff",
             }
         },
@@ -403,7 +403,7 @@ def get_active_authors_by_age_range(affiliation_id: str) -> CommandCursor:
     pipeline = [
         {
             "$match": {
-                "affiliations": {"$elemMatch": {"id": ObjectId(affiliation_id), "end_date": -1}},
+                "affiliations": {"$elemMatch": {"hash": affiliation_id, "end_date": -1}},
                 "ranking.source": "staff",
             }
         },
@@ -443,7 +443,7 @@ def get_products_by_author_age_and_person(person_id: str, query_params: QueryPar
 def get_coauthorship_by_country_map_by_affiliation(affiliation_id: str, query_params: QueryParams) -> list:
     data = []
     pipeline = [
-        {"$match": {"authors.affiliations.id": ObjectId(affiliation_id)}},
+        {"$match": {"authors.affiliations.hash": affiliation_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
@@ -519,7 +519,7 @@ def get_coauthorship_by_country_map_by_person(person_id: str, query_params: Quer
 def get_coauthorship_by_colombian_department_map_by_affiliation(affiliation_id: str, query_params: QueryParams) -> list:
     data = []
     pipeline = [
-        {"$match": {"authors.affiliations.id": ObjectId(affiliation_id)}},
+        {"$match": {"authors.affiliations.hash": affiliation_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
@@ -585,7 +585,7 @@ def get_coauthorship_by_colombian_department_map_by_person(person_id: str, query
 
 def get_collaboration_network(affiliation_id: str) -> CommandCursor:
     pipeline = [
-        {"$match": {"_id": ObjectId(affiliation_id)}},
+        {"$match": {"hash": affiliation_id}},
         {"$project": {"coauthorship_network": 1}},
         {
             "$lookup": {
@@ -650,7 +650,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "minciencias": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "minciencias"},
                 ]
             }
@@ -658,7 +658,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "openalex": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "openalex"},
                 ]
             }
@@ -666,7 +666,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "scholar"},
                 ]
             }
@@ -674,7 +674,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "scienti": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "scienti"},
                 ]
             }
@@ -682,7 +682,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "scienti_minciencias": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "scienti"},
                 ]
@@ -691,7 +691,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "scienti_openalex": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "openalex"},
                     {"updated.source": "scienti"},
                 ]
@@ -700,7 +700,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "scienti_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "scholar"},
                     {"updated.source": "scienti"},
                 ]
@@ -709,7 +709,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "minciencias_openalex": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "openalex"},
                 ]
@@ -718,7 +718,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "minciencias_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "scholar"},
                 ]
@@ -727,7 +727,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "openalex_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "openalex"},
                     {"updated.source": "scholar"},
                 ]
@@ -736,7 +736,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "scienti_minciencias_openalex": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "openalex"},
                     {"updated.source": "scienti"},
@@ -746,7 +746,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "scienti_minciencias_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "scholar"},
                     {"updated.source": "scienti"},
@@ -756,7 +756,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "scienti_openalex_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "openalex"},
                     {"updated.source": "scholar"},
                     {"updated.source": "scienti"},
@@ -766,7 +766,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "minciencias_openalex_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "openalex"},
                     {"updated.source": "scholar"},
@@ -776,7 +776,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
         "minciencias_openalex_scholar_scienti": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.affiliations.id": ObjectId(affiliation_id)},
+                    {"authors.affiliations.hash": affiliation_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "openalex"},
                     {"updated.source": "scholar"},

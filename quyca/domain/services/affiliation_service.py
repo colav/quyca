@@ -29,6 +29,7 @@ def get_related_affiliations_by_affiliation(affiliation_id: str, affiliation_typ
         groups = affiliation_repository.get_groups_by_faculty_or_department(affiliation_id)
         authors = person_repository.get_persons_by_affiliation(affiliation_id)
         data["departments"] = [department.model_dump(include={"id", "name"}) for department in departments]
+        groups = list(groups)
         data["groups"] = [group.model_dump(include={"id", "name"}) for group in groups]
         data["authors"] = [author.model_dump(include={"id", "full_name"}) for author in authors]
     elif affiliation_type == "department":
@@ -46,6 +47,7 @@ def search_affiliations(affiliation_type: str, query_params: QueryParams) -> dic
     pipeline_params = {
         "project": [
             "_id",
+            "hash",
             "names",
             "addresses.country_code",
             "external_ids",
@@ -72,7 +74,7 @@ def search_affiliations(affiliation_type: str, query_params: QueryParams) -> dic
 def set_relation_external_urls(affiliation: Affiliation) -> None:
     for relation in affiliation.relations:
         relation_data = next(
-            filter(lambda x: x.id == relation.id, affiliation.relations_data),
+            filter(lambda x: x.hash == relation.hash, affiliation.relations_data),
             Relation(),
         )
         relation.external_urls = relation_data.external_urls

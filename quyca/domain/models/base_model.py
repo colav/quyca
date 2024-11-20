@@ -172,7 +172,8 @@ class Geography(BaseModel):
 
 
 class Affiliation(BaseModel):
-    id: PyObjectId | None = None
+    id: str | None = Field(default_factory=None, alias="hash")
+    hash: str | None = None
     name: str | None = None
     types: list[Type] | None = None
     start_date: int | str | None = None
@@ -184,9 +185,6 @@ class Affiliation(BaseModel):
     position: str | None = None
     ranking: list[Ranking] | None = None
     external_ids: list[ExternalId] | None = None
-
-    class Config:
-        json_encoders = {ObjectId: str}
 
 
 class BirthPlace(BaseModel):
@@ -229,7 +227,7 @@ class Author(BaseModel):
 
 
 class Group(BaseModel):
-    id: PyObjectId | None = None
+    hash: str | None = None
     name: str | None
 
     class Config:

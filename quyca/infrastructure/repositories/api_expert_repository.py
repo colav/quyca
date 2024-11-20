@@ -17,7 +17,7 @@ def get_works_by_affiliation_for_api_expert(
         pipeline_params = {}
     pipeline = [
         {
-            "$match": {"authors.affiliations.id": ObjectId(affiliation_id)},
+            "$match": {"authors.affiliations.hash": affiliation_id},
         }
     ]
     return get_works_for_api_expert(pipeline, pipeline_params, query_params)
@@ -83,10 +83,10 @@ def get_works_for_api_expert(pipeline: list, pipeline_params: dict, query_params
         {
             "$lookup": {
                 "from": "affiliations",
-                "localField": "authors.affiliations.id",
-                "foreignField": "_id",
+                "localField": "authors.affiliations.hash",
+                "foreignField": "hash",
                 "as": "affiliations_data",
-                "pipeline": [{"$project": {"id": "$_id", "addresses": 1, "external_ids": 1}}],
+                "pipeline": [{"$project": {"hash": 1, "addresses": 1, "external_ids": 1}}],
             },
         },
     ]

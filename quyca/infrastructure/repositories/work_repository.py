@@ -27,7 +27,7 @@ def get_works_by_affiliation(
     pipeline = [
         {
             "$match": {
-                "authors.affiliations.id": ObjectId(affiliation_id),
+                "authors.affiliations.hash": affiliation_id,
             },
         },
     ]
@@ -48,7 +48,7 @@ def get_works_with_source_by_affiliation(
         pipeline_params = {}
     source_project = pipeline_params.get("source_project", [])
     pipeline = [
-        {"$match": {"authors.affiliations.id": ObjectId(affiliation_id)}},
+        {"$match": {"authors.affiliations.hash": affiliation_id}},
     ]
     set_product_filters(pipeline, query_params)
     pipeline += [
@@ -73,7 +73,7 @@ def get_works_count_by_affiliation(affiliation_id: str, query_params: QueryParam
     pipeline = [
         {
             "$match": {
-                "authors.affiliations.id": ObjectId(affiliation_id),
+                "authors.affiliations.hash": affiliation_id,
             },
         },
     ]
@@ -156,7 +156,7 @@ def get_works_available_filters_by_person(person_id: str, query_params: QueryPar
 
 def get_works_available_filters_by_affiliation(affiliation_id: str, query_params: QueryParams) -> dict:
     pipeline = [
-        {"$match": {"authors.affiliations.id": ObjectId(affiliation_id)}},
+        {"$match": {"authors.affiliations.hash": affiliation_id}},
     ]
     return get_works_available_filters(pipeline, query_params)
 

@@ -1,6 +1,5 @@
 from typing import Generator, Tuple
 
-from bson import ObjectId
 
 from domain.models.base_model import QueryParams
 from domain.constants.institutions import institutions_list
@@ -14,14 +13,14 @@ from domain.exceptions.not_entity_exception import NotEntityException
 
 def get_affiliation_by_id(affiliation_id: str) -> Affiliation:
     pipeline = [
-        {"$match": {"_id": ObjectId(affiliation_id)}},
+        {"$match": {"hash": affiliation_id}},
         {
             "$lookup": {
                 "from": "affiliations",
-                "localField": "relations.id",
-                "foreignField": "_id",
+                "localField": "relations.hash",
+                "foreignField": "hash",
                 "as": "relations_data",
-                "pipeline": [{"$project": {"id": "$_id", "external_urls": 1}}],
+                "pipeline": [{"$project": {"hash": 1, "external_urls": 1}}],
             }
         },
     ]
@@ -36,12 +35,12 @@ def get_affiliations_by_institution(institution_id: str, relation_type: str) -> 
     pipeline = [
         {
             "$match": {
-                "relations.id": ObjectId(institution_id),
+                "relations.hash": institution_id,
                 "types.type": relation_type,
             }
         }
     ]
-    set_project(pipeline, ["_id", "names"])
+    set_project(pipeline, ["hash", "names"])
     affiliations = database["affiliations"].aggregate(pipeline)
     return affiliation_generator.get(affiliations)
 
@@ -55,19 +54,19 @@ def get_groups_by_faculty_or_department(affiliation_id: str) -> Generator:
         database["affiliations"]
         .aggregate(
             [
-                {"$match": {"_id": ObjectId(affiliation_id)}},
+                {"$match": {"hash": affiliation_id}},
                 {"$unwind": "$relations"},
                 {"$match": {"relations.types.type": "education"}},
             ]
         )
         .next()
         .get("relations", {})
-        .get("id", None)
+        .get("hash", None)
     )
     pipeline = [
         {
             "$match": {
-                "affiliations.id": ObjectId(affiliation_id),
+                "affiliations.hash": affiliation_id,
             }
         },
         {"$unwind": "$affiliations"},
@@ -81,18 +80,19 @@ def get_groups_by_faculty_or_department(affiliation_id: str) -> Generator:
                 "pipeline": [
                     {
                         "$match": {
-                            "relations.id": ObjectId(institution_id),
+                            "relations.hash": institution_id,
                             "types.type": "group",
                         },
                     },
-                    {"$project": {"_id": 1, "names": 1}},
+                    {"$project": {"_id": 1, "hash": 1, "names": 1}},
                 ],
             }
         },
         {"$unwind": "$group"},
-        {"$group": {"_id": "$group._id", "names": {"$first": "$group.names"}}},
+        {"$group": {"_id": "$group.hash", "names": {"$first": "$group.names"}, "hash": {"$first": "$group.hash"}}},
     ]
     groups = database["person"].aggregate(pipeline)
+    list_groups = list(groups)
     return affiliation_generator.get(groups)
 
 
@@ -112,10 +112,10 @@ def search_affiliations(
         {
             "$lookup": {
                 "from": "affiliations",  # type: ignore
-                "localField": "relations.id",  # type: ignore
-                "foreignField": "_id",  # type: ignore
+                "localField": "relations.hash",  # type: ignore
+                "foreignField": "hash",  # type: ignore
                 "as": "relations_data",  # type: ignore
-                "pipeline": [{"$project": {"id": "$_id", "external_urls": 1}}],  # type: ignore
+                "pipeline": [{"$project": {"hash": 1, "external_urls": 1}}],  # type: ignore
             }
         },
         {"$project": {"works": 0}},  # type: ignore

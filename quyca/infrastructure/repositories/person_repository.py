@@ -47,8 +47,8 @@ def get_person_by_id(person_id: str) -> Person:
 
 def get_persons_by_affiliation(affiliation_id: str) -> list:
     pipeline = [
-        {"$match": {"affiliations.id": ObjectId(affiliation_id)}},
-        {"$project": {"_id": 1, "full_name": 1}},
+        {"$match": {"affiliations.hash": affiliation_id}},
+        {"$project": {"hash": 1, "full_name": 1}},
     ]
     cursor = database["person"].aggregate(pipeline)
     return person_generator.get(cursor)

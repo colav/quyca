@@ -59,7 +59,9 @@ def set_authors_affiliations_data(work: Work) -> None:
         for affiliation in author.affiliations:
             affiliation_data = Affiliation()
             if work.affiliations_data:
-                affiliation_data = next(filter(lambda x: x.id == affiliation.id, work.affiliations_data), Affiliation())
+                affiliation_data = next(
+                    filter(lambda x: x.hash == affiliation.hash, work.affiliations_data), Affiliation()
+                )
             if affiliation_data.external_ids:
                 affiliation.ror = next(
                     filter(lambda x: x.source == "ror", affiliation_data.external_ids), ExternalId()
