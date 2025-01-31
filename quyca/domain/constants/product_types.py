@@ -4,4 +4,5 @@ source_titles: dict = {
     "scholar": "Google Scholar",
     "scienti": "ScienTi",
     "croosref": "CrossRef",
+    "dspace": "DSpace",
 }
