@@ -22,7 +22,6 @@ def get_work_by_id(work_id: str) -> dict:
     set_external_urls(work)
     limit_authors(work)
     set_authors_external_ids(work)
-    set_bibliographic_info(work)
     source_service.update_work_source(work)
     set_title_and_language(work)
     set_product_types(work)
@@ -94,7 +93,6 @@ def get_work_by_entity_data(works: Generator) -> list:
         limit_authors(work)
         set_title_and_language(work)
         set_product_types(work)
-        set_bibliographic_info(work)
         works_data.append(work)
     return works_data
 
@@ -119,11 +117,3 @@ def get_works_by_entity_pipeline_params() -> dict:
         ]
     }
     return pipeline_params
-
-
-def set_bibliographic_info(work: Work) -> None:
-    if not work.bibliographic_info:
-        return
-    work.issue = work.bibliographic_info.issue
-    work.volume = work.bibliographic_info.volume
-    work.bibliographic_info = None

@@ -40,6 +40,9 @@ def search_works_for_api_expert(query_params: QueryParams, pipeline_params: dict
 
 
 def get_works_for_api_expert(pipeline: list, pipeline_params: dict, query_params: QueryParams) -> Generator:
+    base_repository.set_match(pipeline, pipeline_params.get("match"))
+    if sort := query_params.sort:
+        base_repository.set_sort(sort, pipeline)
     pipeline += [
         {
             "$lookup": {
@@ -98,10 +101,7 @@ def get_works_for_api_expert(pipeline: list, pipeline_params: dict, query_params
         },
     ]
     work_repository.set_product_filters(pipeline, query_params)
-    base_repository.set_match(pipeline, pipeline_params.get("match"))
-    if sort := query_params.sort:
-        base_repository.set_sort(sort, pipeline)
-    base_repository.set_pagination(pipeline, query_params)
     base_repository.set_project(pipeline, pipeline_params.get("project"))
+    base_repository.set_pagination(pipeline, query_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)

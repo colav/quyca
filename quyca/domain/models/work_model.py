@@ -72,12 +72,21 @@ class Abstract(BaseModel):
     source: str | None = None
 
 
+class AutorWork(Author):
+    """
+    The difference with Author is that in the work the author is marked with a type of author (ex: advisor, co-advisor, author etc..)
+    this value is only assigned in the work.
+    """
+
+    type: str | None = None
+
+
 class Work(BaseModel):
     id: PyObjectId = Field(alias="_id")
     abstracts: list[Abstract] | None = None
     apc: APC | None = Field(default_factory=APC)
     authors_count: int | None = Field(default_factory=int, alias="author_count")
-    authors: list[Author] | str | None = Field(default_factory=list[Author])
+    authors: list[AutorWork] | str | None = Field(default_factory=list[AutorWork])
     bibliographic_info: BiblioGraphicInfo | None = None
     citations: list | None = Field(default_factory=list)
     citations_by_year: list[CitationByYear] | None = None

@@ -254,4 +254,5 @@ def parse_product_type_filter(product_types: list) -> list:
                 "children": children,
             }
         )
+    types.sort(key=lambda x: x["title"] != "Colav")
     return types

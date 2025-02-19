@@ -171,6 +171,7 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
     available_filters: dict = {}
     product_types_pipeline = pipeline.copy() + [
         {"$unwind": "$types"},
+        {"$project": {"types.provenance": 0}},
         {"$group": {"_id": "$types.source", "types": {"$addToSet": "$types"}}},
     ]
     product_types = database["works"].aggregate(product_types_pipeline)
