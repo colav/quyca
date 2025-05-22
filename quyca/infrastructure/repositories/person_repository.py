@@ -1,6 +1,5 @@
 from typing import Generator, Tuple
 
-from bson import ObjectId
 
 from infrastructure.generators import person_generator
 from domain.models.base_model import QueryParams
@@ -13,7 +12,7 @@ from infrastructure.mongo import database
 def get_person_by_id(person_id: str) -> Person:
     person_data = database["person"].aggregate(
         [
-            {"$match": {"_id": ObjectId(person_id)}},
+            {"$match": {"_id": person_id}},
             {
                 "$addFields": {
                     "filtered_affiliations": {

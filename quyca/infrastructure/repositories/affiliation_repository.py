@@ -56,7 +56,7 @@ def get_groups_by_faculty_or_department(affiliation_id: str) -> Generator:
             [
                 {"$match": {"_id": affiliation_id}},
                 {"$unwind": "$relations"},
-                {"$match": {"relations.types.type": "education"}},
+                {"$match": {"relations.types.type": "Education"}},
             ]
         )
         .next()

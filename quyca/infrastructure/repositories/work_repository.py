@@ -86,7 +86,7 @@ def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_para
     if pipeline_params is None:
         pipeline_params = {}
     pipeline = [
-        {"$match": {"authors.id": ObjectId(person_id)}},
+        {"$match": {"authors.id": person_id}},
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
@@ -105,7 +105,7 @@ def get_works_with_source_by_person(
         pipeline_params = {}
     source_project = pipeline_params.get("source_project", [])
     pipeline = [
-        {"$match": {"authors.id": ObjectId(person_id)}},
+        {"$match": {"authors.id": person_id}},
     ]
     set_product_filters(pipeline, query_params)
     pipeline += [
@@ -127,7 +127,7 @@ def get_works_with_source_by_person(
 
 
 def get_works_count_by_person(person_id: str, query_params: QueryParams) -> int:
-    pipeline = [{"$match": {"authors.id": ObjectId(person_id)}}]
+    pipeline = [{"$match": {"authors.id": person_id}}]
     set_product_filters(pipeline, query_params)
     pipeline += [{"$count": "total"}]  # type: ignore
     return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)

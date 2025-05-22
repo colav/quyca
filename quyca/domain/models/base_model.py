@@ -197,7 +197,7 @@ class BirthPlace(BaseModel):
 
 
 class Author(BaseModel):
-    id: PyObjectId | None = None
+    id: PyObjectId | str | None = None
     affiliations: list[Affiliation] | None = Field(default_factory=list[Affiliation])
     full_name: str | None = None
 

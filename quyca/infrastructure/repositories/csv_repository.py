@@ -1,6 +1,5 @@
 from typing import Generator
 
-from bson import ObjectId
 
 from domain.models.base_model import QueryParams
 from infrastructure.generators import work_generator
@@ -10,7 +9,7 @@ from infrastructure.repositories import work_repository
 
 def get_works_csv_by_person(person_id: str, query_params: QueryParams) -> Generator:
     pipeline = [
-        {"$match": {"authors.id": ObjectId(person_id)}},
+        {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [

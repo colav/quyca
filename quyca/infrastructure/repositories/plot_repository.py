@@ -1,6 +1,5 @@
 from typing import Generator, Tuple
 
-from bson import ObjectId
 from pymongo.command_cursor import CommandCursor
 
 from domain.models.base_model import QueryParams
@@ -412,7 +411,7 @@ def get_active_authors_by_age_range(affiliation_id: str) -> CommandCursor:
 
 def get_products_by_author_age_and_person(person_id: str, query_params: QueryParams) -> CommandCursor:
     pipeline = [
-        {"$match": {"authors.id": ObjectId(person_id)}},
+        {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
@@ -475,7 +474,7 @@ def get_coauthorship_by_country_map_by_affiliation(affiliation_id: str, query_pa
 def get_coauthorship_by_country_map_by_person(person_id: str, query_params: QueryParams) -> list:
     data = []
     pipeline = [
-        {"$match": {"authors.id": ObjectId(person_id)}},
+        {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
@@ -551,7 +550,7 @@ def get_coauthorship_by_colombian_department_map_by_affiliation(affiliation_id: 
 def get_coauthorship_by_colombian_department_map_by_person(person_id: str, query_params: QueryParams) -> list:
     data = []
     pipeline = [
-        {"$match": {"authors.id": ObjectId(person_id)}},
+        {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
@@ -613,7 +612,7 @@ def get_collaboration_network(affiliation_id: str) -> CommandCursor:
 
 def get_works_rankings_by_person(person_id: str, query_params: QueryParams) -> Tuple[Generator, int]:
     pipeline = [
-        {"$match": {"authors.id": ObjectId(person_id)}},
+        {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
@@ -632,7 +631,7 @@ def get_works_rankings_by_person(person_id: str, query_params: QueryParams) -> T
         {"$project": {"_id": 1, "source_data": 1, "date_published": 1}},  # type: ignore
     ]
     count_pipeline = [
-        {"$match": {"authors.id": ObjectId(person_id)}},
+        {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(count_pipeline, query_params)
     count_pipeline += [
@@ -790,7 +789,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "minciencias": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "minciencias"},
                 ]
             }
@@ -798,7 +797,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "openalex": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "openalex"},
                 ]
             }
@@ -806,7 +805,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "scholar"},
                 ]
             }
@@ -814,7 +813,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "scienti": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "scienti"},
                 ]
             }
@@ -822,7 +821,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "scienti_minciencias": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "scienti"},
                 ]
@@ -831,7 +830,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "scienti_openalex": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "openalex"},
                     {"updated.source": "scienti"},
                 ]
@@ -840,7 +839,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "scienti_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "scholar"},
                     {"updated.source": "scienti"},
                 ]
@@ -849,7 +848,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "minciencias_openalex": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "openalex"},
                 ]
@@ -858,7 +857,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "minciencias_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "scholar"},
                 ]
@@ -867,7 +866,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "openalex_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "openalex"},
                     {"updated.source": "scholar"},
                 ]
@@ -876,7 +875,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "scienti_minciencias_openalex": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "openalex"},
                     {"updated.source": "scienti"},
@@ -886,7 +885,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "scienti_minciencias_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "scholar"},
                     {"updated.source": "scienti"},
@@ -896,7 +895,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "scienti_openalex_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "openalex"},
                     {"updated.source": "scholar"},
                     {"updated.source": "scienti"},
@@ -906,7 +905,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "minciencias_openalex_scholar": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "openalex"},
                     {"updated.source": "scholar"},
@@ -916,7 +915,7 @@ def get_products_by_database_by_person(person_id: str) -> dict:
         "minciencias_openalex_scholar_scienti": database["works"].count_documents(
             {
                 "$and": [
-                    {"authors.id": ObjectId(person_id)},
+                    {"authors.id": person_id},
                     {"updated.source": "minciencias"},
                     {"updated.source": "openalex"},
                     {"updated.source": "scholar"},

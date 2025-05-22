@@ -51,7 +51,7 @@ def get_other_works_by_person(
     if pipeline_params is None:
         pipeline_params = {}
     pipeline = [
-        {"$match": {"authors.id": ObjectId(person_id)}},
+        {"$match": {"authors.id": person_id}},
     ]
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
@@ -62,7 +62,7 @@ def get_other_works_by_person(
 
 
 def get_other_works_count_by_person(person_id: str) -> int:
-    pipeline = [{"$match": {"authors.id": ObjectId(person_id)}}, {"$count": "total"}]
+    pipeline = [{"$match": {"authors.id": person_id}}, {"$count": "total"}]
     return next(database["works_misc"].aggregate(pipeline), {"total": 0}).get("total", 0)
 
 

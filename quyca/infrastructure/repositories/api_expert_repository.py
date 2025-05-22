@@ -1,6 +1,5 @@
 from typing import Generator
 
-from bson import ObjectId
 
 from infrastructure.generators import work_generator
 from domain.models.base_model import QueryParams
@@ -28,7 +27,7 @@ def get_works_by_person_for_api_expert(
 ) -> Generator:
     if pipeline_params is None:
         pipeline_params = {}
-    pipeline = [{"$match": {"authors.id": ObjectId(person_id)}}]
+    pipeline = [{"$match": {"authors.id": person_id}}]
     return get_works_for_api_expert(pipeline, pipeline_params, query_params)
 
 

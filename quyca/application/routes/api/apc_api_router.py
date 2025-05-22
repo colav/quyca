@@ -2,7 +2,6 @@ import csv
 import io
 from typing import Tuple
 
-from bson import ObjectId
 from flask import Blueprint, request, jsonify, Response
 from sentry_sdk import capture_exception
 
@@ -71,7 +70,7 @@ def apc_search() -> Response | Tuple[Response, int]:
 def apc_person(person_id: str) -> Response | Tuple[Response, int]:
     try:
         pipeline = [
-            {"$match": {"authors.id": ObjectId(person_id)}},
+            {"$match": {"authors.id": person_id}},
             {
                 "$lookup": {
                     "from": "sources",  # type: ignore
