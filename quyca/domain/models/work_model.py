@@ -90,7 +90,6 @@ class Work(BaseModel):
     authors: list[Author] = Field(default_factory=list)
     authors_csv: str | None = None
     bibliographic_info: BiblioGraphicInfo | None = None
-    citations: list | None = Field(default_factory=list)
     citations_by_year: list[CitationByYear] | None = None
     citations_count: list[CitationsCount] | str | None = None
     date_published: int | None = None
