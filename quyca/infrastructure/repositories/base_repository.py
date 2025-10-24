@@ -49,16 +49,14 @@ def set_sort(sort: str | None, pipeline: list, collection: str | None = None) ->
                                                 "$filter": {
                                                     "input": "$citations_count",
                                                     "as": "cite",
-                                                    "cond": {"$eq": ["$$cite.source", "openalex"]}
+                                                    "cond": {"$eq": ["$$cite.source", "openalex"]},
                                                 }
                                             },
-                                            0
+                                            0,
                                         ]
                                     }
                                 },
-                                "in": {
-                                    "$ifNull": ["$$openalexCitation.count", 0]
-                                }
+                                "in": {"$ifNull": ["$$openalexCitation.count", 0]},
                             }
                         }
                     }
@@ -131,7 +129,7 @@ def set_sort(sort: str | None, pipeline: list, collection: str | None = None) ->
                 {"$unset": ["names_order", "first_name"]},
             ]
             sort_field = "sort_name"
-        else: 
+        else:
             pipeline += [
                 {
                     "$addFields": {
