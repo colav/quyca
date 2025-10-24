@@ -32,6 +32,8 @@ def parse_search_result(sources: List) -> List:
         "plagiarism_detection",
         "open_access_start_year",
         "publication_time_weeks",
+        "products_count",
+        "citations_count",
         "apc",
         "copyright",
         "licenses",
@@ -40,4 +42,7 @@ def parse_search_result(sources: List) -> List:
         "review_process",
     ]
 
-    return [source.model_dump(include=source_fields) for source in sources]
+    return [
+        source.model_dump(include=source_fields, exclude={"citations_count": {"__all__": {"provenance"}}})
+        for source in sources
+    ]

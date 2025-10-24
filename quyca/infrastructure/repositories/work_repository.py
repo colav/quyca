@@ -162,7 +162,30 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
             {"$project": {"types": 1}},
             {"$project": {"types.provenance": 0}},
             {"$unwind": "$types"},
-            {"$group": {"_id": "$types.source", "types": {"$addToSet": "$types"}}},
+            {
+                "$group": {
+                    "_id": {
+                        "source": "$types.source",
+                        "type": "$types.type",
+                        "code": "$types.code",
+                        "level": "$types.level",
+                    },
+                    "count": {"$sum": 1},
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$_id.source",
+                    "types": {
+                        "$addToSet": {
+                            "type": "$_id.type",
+                            "code": "$_id.code",
+                            "level": "$_id.level",
+                            "count": "$count",
+                        }
+                    },
+                }
+            },
         ],
         "years": pipeline.copy()
         + [
@@ -173,7 +196,9 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
         ],
         "status": pipeline.copy()
         + [
-            {"$group": {"_id": "$open_access.open_access_status"}},
+            {"$project": {"open_access": 1}},
+            {"$group": {"_id": "$open_access.open_access_status", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
         ],
         "subjects": pipeline.copy()
         + [
@@ -189,12 +214,24 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
             {"$unwind": "$subjects.subjects"},
             {
                 "$group": {
-                    "_id": "$subjects.source",
+                    "_id": {
+                        "source": "$subjects.source",
+                        "subject_id": "$subjects.subjects.id",
+                        "subject_name": "$subjects.subjects.name",
+                        "subject_level": "$subjects.subjects.level",
+                    },
+                    "count": {"$sum": 1},
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$_id.source",
                     "subjects": {
                         "$addToSet": {
-                            "id": "$subjects.subjects.id",
-                            "name": "$subjects.subjects.name",
-                            "level": "$subjects.subjects.level",
+                            "id": "$_id.subject_id",
+                            "name": "$_id.subject_name",
+                            "level": "$_id.subject_level",
+                            "count": "$count",
                         }
                     },
                 }
@@ -203,11 +240,13 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
         "countries": pipeline.copy()
         + [
             {"$match": {"authors.affiliations.addresses.country_code": {"$ne": None}}},
-            {"$project": {"authors.affiliations.addresses.country_code": 1}},
+            {"$project": {"_id": 1, "authors.affiliations.addresses.country_code": 1}},
             {"$unwind": "$authors"},
             {"$unwind": "$authors.affiliations"},
             {"$unwind": "$authors.affiliations.addresses"},
-            {"$group": {"_id": "$authors.affiliations.addresses.country_code"}},
+            {"$group": {"_id": {"work_id": "$_id", "country_code": "$authors.affiliations.addresses.country_code"}}},
+            {"$group": {"_id": "$_id.country_code", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
         ],
         "authors_ranking": pipeline.copy()
         + [
