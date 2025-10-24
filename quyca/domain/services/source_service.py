@@ -103,7 +103,8 @@ def get_sources_by_entity_pipeline_params() -> Dict:
             "external_urls",
             "subjects",
             "ranking",
-        ]
+        ],
+        "collection": "sources",
     }
 
     return pipeline_source_params
