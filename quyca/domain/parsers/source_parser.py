@@ -1,5 +1,37 @@
 from typing import List
 
+from quyca.domain.models.source_model import Source
+
+
+def parse_source(source: Source) -> dict:
+    include = [
+        "id",
+        "updated",
+        "names",
+        "abbreviations",
+        "types",
+        "keywords",
+        "languages",
+        "publisher",
+        "relations",
+        "addresses",
+        "external_ids",
+        "external_urls",
+        "waiver",
+        "plagiarism_detection",
+        "open_access_start_year",
+        "publication_time_weeks",
+        "products_count",
+        "citations_count",
+        "apc",
+        "copyright",
+        "licenses",
+        "subjects",
+        "ranking",
+        "review_process",
+    ]
+    return source.model_dump(include=include, exclude_none=True)
+
 
 def parse_search_result(sources: List) -> List:
     """
