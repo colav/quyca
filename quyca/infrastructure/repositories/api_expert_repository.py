@@ -1,4 +1,5 @@
 from typing import Any, Generator
+from bson import ObjectId
 
 from quyca.infrastructure.generators import work_generator
 from quyca.domain.models.base_model import QueryParams
@@ -28,6 +29,15 @@ def get_works_by_person_for_api_expert(
     if pipeline_params is None:
         pipeline_params = {}
     pipeline = [{"$match": {"authors.id": person_id}}]
+    return get_works_for_api_expert(pipeline, pipeline_params, query_params)
+
+
+def get_works_by_source_for_api_expert(
+    source_id: str, query_params: QueryParams, pipeline_params: dict | None = None
+) -> Generator:
+    if pipeline_params is None:
+        pipeline_params = {}
+    pipeline = [{"$match": {"source.id": ObjectId(source_id)}}]
     return get_works_for_api_expert(pipeline, pipeline_params, query_params)
 
 
@@ -85,6 +95,11 @@ def count_works_for_api_expert(query_params: QueryParams) -> int:
 
 def count_works_by_person_for_api_expert(person_id: str, query_params: QueryParams) -> int:
     base_pipeline = [{"$match": {"authors.id": person_id}}]
+    return count_works(query_params, base_pipeline)
+
+
+def count_works_by_source_for_api_expert(source_id: str, query_params: QueryParams) -> int:
+    base_pipeline = [{"$match": {"source.id": ObjectId(source_id)}}]
     return count_works(query_params, base_pipeline)
 
 
