@@ -11,6 +11,20 @@ from quyca.domain.constants.clean_source import source_type_mapping
 
 
 def get_source_by_id(source_id: str) -> Source:
+    """
+    Parameters:
+    -----------
+    source_id : str
+        The unique identifier of the source to be retrieved.
+    Returns:
+    --------
+    Source
+        The Source object corresponding to the provided source_id.
+    Raises:
+    -------
+    NotEntityException
+        If no source with the given source_id exists in the database.
+    """
     source_data = database["sources"].find_one({"_id": ObjectId(source_id)})
     if not source_data:
         raise NotEntityException(f"The source with id {source_id} does not exist.")

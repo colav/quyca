@@ -175,9 +175,14 @@ def parse_country_filter(countries: list) -> list:
     for country in countries:
         if country.get("_id"):
             parsed_countries.append(
-                {"value": country.get("_id"), "label": countries_iso.countries_dict.get(country.get("_id"), "Sin País")}
+                {
+                    "value": country.get("_id"),
+                    "label": countries_iso.countries_dict.get(country.get("_id"), "Sin País"),
+                    "count": country.get("count", 0),
+                }
             )
-    parsed_countries.sort(key=lambda x: x.get("label") or "")
+
+    parsed_countries.sort(key=lambda x: x.get("count", 0), reverse=True)
     return parsed_countries
 
 
@@ -191,13 +196,15 @@ def parse_subject_filter(subjects: list) -> list:
         for subject in entry.get("subjects", []):
             level = subject.get("level")
             name = subject.get("name")
+            count = subject.get("count", 0)
+
             if level in groups and name:
-                groups[level]["children"].append({"value": f"{level}_{name}", "title": name})
+                groups[level]["children"].append({"value": f"{level}_{name}", "title": name, "count": count})
 
     parsed_subjects = []
     for level, group in groups.items():
         if group["children"]:
-            group["children"].sort(key=lambda x: x["title"])
+            group["children"].sort(key=lambda x: x.get("count", 0), reverse=True)
             parsed_subjects.append(group)
 
     return parsed_subjects
@@ -206,19 +213,32 @@ def parse_subject_filter(subjects: list) -> list:
 def parse_status_filter(status: list) -> list:
     statuses = []
     open_children = []
+
     for oa_status in status:
+        count = oa_status.get("count", 0)
+
         if not oa_status.get("_id"):
-            statuses.append({"value": "unknown", "title": "Sin información"})
+            statuses.append({"value": "unknown", "title": "Sin información", "count": count})
         elif oa_status.get("_id") != "closed":
             open_children.append(
-                {"value": oa_status.get("_id"), "title": open_access_status_dict.get(oa_status.get("_id"))}
+                {
+                    "value": oa_status.get("_id"),
+                    "title": open_access_status_dict.get(oa_status.get("_id")),
+                    "count": count,
+                }
             )
         else:
-            statuses.append({"value": "closed", "title": "Cerrado"})
+            statuses.append({"value": "closed", "title": "Cerrado", "count": count})
+
     if len(open_children) > 0:
-        open_children.sort(key=lambda x: x.get("title") or "")  # type: ignore
-        statuses.append({"value": "open", "title": "Abierto", "children": open_children})  # type: ignore
-    statuses.sort(key=lambda x: x.get("title") or "")  # type: ignore
+        open_children.sort(key=lambda x: x.get("count", 0), reverse=True)
+
+        total_open_count = sum(child.get("count", 0) for child in open_children)
+
+        statuses.append({"value": "open", "title": "Abierto", "children": open_children, "count": total_open_count})
+
+    statuses.sort(key=lambda x: x.get("count", 0), reverse=True)
+
     return statuses
 
 
@@ -239,8 +259,11 @@ def parse_product_type_filter(product_types: list) -> list:
                     {
                         "value": product_type.get("_id") + "_" + inner_type.get("type"),
                         "title": inner_type.get("type"),
+                        "count": inner_type.get("count", 0),
                     }
                 )
+            children.sort(key=lambda x: x.get("count", 0), reverse=True)
+
         elif product_type.get("_id") == "scienti":
             second_level_children = []
             third_level_children = []
@@ -251,6 +274,7 @@ def parse_product_type_filter(product_types: list) -> list:
                             "value": "scienti_" + inner_type.get("type") + "_" + inner_type.get("code"),
                             "title": inner_type.get("code") + " " + inner_type.get("type"),
                             "code": inner_type.get("code"),
+                            "count": inner_type.get("count", 0),
                         }
                     )
                 elif inner_type.get("level") == 1:
@@ -259,6 +283,7 @@ def parse_product_type_filter(product_types: list) -> list:
                             "value": "scienti_" + inner_type.get("type") + "_" + inner_type.get("code"),
                             "title": inner_type.get("code") + " " + inner_type.get("type"),
                             "code": inner_type.get("code"),
+                            "count": inner_type.get("count", 0),
                         }
                     )
                 elif inner_type.get("level") == 2:
@@ -267,10 +292,13 @@ def parse_product_type_filter(product_types: list) -> list:
                             "value": "scienti_" + inner_type.get("type") + "_" + inner_type.get("code"),
                             "title": inner_type.get("code") + " " + inner_type.get("type"),
                             "code": inner_type.get("code"),
+                            "count": inner_type.get("count", 0),
                         }
                     )
-            second_level_children.sort(key=lambda x: x.get("title") or "")
-            third_level_children.sort(key=lambda x: x.get("title") or "")
+
+            second_level_children.sort(key=lambda x: x.get("count", 0), reverse=True)
+            third_level_children.sort(key=lambda x: x.get("count", 0), reverse=True)
+
             for child in second_level_children:
                 child["children"] = list(
                     filter(lambda x: str(x.get("code")).startswith(str(child.get("code"))), third_level_children)
@@ -285,9 +313,11 @@ def parse_product_type_filter(product_types: list) -> list:
                     {
                         "value": product_type.get("_id") + "_" + inner_type.get("type"),
                         "title": inner_type.get("type"),
+                        "count": inner_type.get("count", 0),
                     }
                 )
-        children.sort(key=lambda x: x.get("title") or "")
+            children.sort(key=lambda x: x.get("count", 0), reverse=True)
+
         types.append(
             {
                 "value": product_type.get("_id"),
