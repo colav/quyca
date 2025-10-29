@@ -61,6 +61,25 @@ def set_serials(work: Work, source: Source) -> None:
         work.source.external_ids = external_ids
 
 
+def get_source_by_id(source_id: str) -> Dict:
+    """
+    Retrieves a source by its ID.
+
+    Parameters:
+    -----------
+    source_id : str
+        The ID of the source to retrieve.
+
+    Returns:
+    --------
+    Dict
+        A dictionary representation of the source.
+    """
+    source = source_repository.get_source_by_id(source_id)
+    data = source_parser.parse_source(source)
+    return {"data": data}
+
+
 def search_sources(query_params: QueryParams) -> Dict:
     """
     Searches for sources based on the provided query parameters. Parameter keyword inside the query parameters is used for search by name.
