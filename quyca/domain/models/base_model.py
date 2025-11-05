@@ -167,6 +167,7 @@ class QueryParams(BaseModel):
     groups_ranking: str | None = None
     authors_ranking: str | None = None
     source_types: str | None = None
+    scimago_quartiles: str | None = None
 
     @model_validator(mode="after")
     def validate_pagination_and_sort(self) -> "QueryParams":
