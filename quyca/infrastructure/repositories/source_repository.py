@@ -89,7 +89,7 @@ def get_search_sources_available_filters(query_params: QueryParams) -> dict:
                             "ranking": {
                                 "$elemMatch": {
                                     "source": {"$in": ["scimago Best Quartile", "Scimago Best Quartile"]},
-                                    "rank": {"$in": ["Q1", "Q2", "Q3", "Q4", "-"]}
+                                    "rank": {"$in": ["Q1", "Q2", "Q3", "Q4", "-"]},
                                 }
                             }
                         }
