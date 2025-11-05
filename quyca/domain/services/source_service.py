@@ -2,15 +2,20 @@ from domain.models.source_model import Source
 from domain.models.work_model import Work
 from infrastructure.repositories import source_repository
 from quyca.domain.models.base_model import QueryParams
-from typing import Dict
 from quyca.domain.parsers import source_parser
 
 
 def update_work_source(work: Work) -> None:
-    if work.source.id:
-        source = source_repository.get_source_by_id(work.source.id)
-        set_serials(work, source)
-        set_scimago_quartile(work, source)
+    if not work.source or not work.source.id:
+        return
+
+    source = source_repository.get_source_by_id(work.source.id)
+
+    if not source:
+        return
+
+    set_serials(work, source)
+    set_scimago_quartile(work, source)
 
 
 def update_csv_work_source(work: Work) -> None:
@@ -61,7 +66,7 @@ def set_serials(work: Work, source: Source) -> None:
         work.source.external_ids = external_ids
 
 
-def get_source_by_id(source_id: str) -> Dict:
+def get_source_by_id(source_id: str) -> dict:
     """
     Retrieves a source by its ID.
 
@@ -72,7 +77,7 @@ def get_source_by_id(source_id: str) -> Dict:
 
     Returns:
     --------
-    Dict
+    dict
         A dictionary representation of the source.
     """
     source = source_repository.get_source_by_id(source_id)
@@ -80,7 +85,7 @@ def get_source_by_id(source_id: str) -> Dict:
     return {"data": data}
 
 
-def search_sources(query_params: QueryParams) -> Dict:
+def search_sources(query_params: QueryParams) -> dict:
     """
     Searches for sources based on the provided query parameters. Parameter keyword inside the query parameters is used for search by name.
 
@@ -91,7 +96,7 @@ def search_sources(query_params: QueryParams) -> Dict:
 
     Returns:
     --------
-    Dict
+    dict
         A dictionary containing the search data and the total number of results.
     """
     pipeline_params = get_sources_by_entity_pipeline_params()
@@ -105,12 +110,30 @@ def search_sources(query_params: QueryParams) -> Dict:
     return {"data": data, "total_results": total_sources}
 
 
-def get_sources_by_entity_pipeline_params() -> Dict:
+def get_search_sources_available_filters(query_params: QueryParams) -> dict:
+    """
+    Retrieves the available filters for searching sources based on the provided query parameters.
+
+    Parameters:
+    -----------
+    query_params : QueryParams
+        The query parameters to filter the sources.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the available filters for source search.
+    """
+    available_filters = source_repository.get_search_sources_available_filters(query_params)
+    return source_parser.parse_available_filters(available_filters)
+
+
+def get_sources_by_entity_pipeline_params() -> dict:
     """
     Returns:
     --------
-    Dictionary
-    This function retrieves a Dictionary with the params that gonna be used for searching.
+    dictionary
+    This function retrieves a dictionary with the params that gonna be used for searching.
     """
     pipeline_source_params = {
         "source": [
