@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Any, Dict, Generator, List
 
 
 from quyca.domain.models.base_model import QueryParams
@@ -8,7 +8,7 @@ from quyca.infrastructure.repositories import work_repository
 
 
 def get_works_csv_by_person(person_id: str, query_params: QueryParams) -> Generator:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
@@ -37,7 +37,7 @@ def get_works_csv_by_person(person_id: str, query_params: QueryParams) -> Genera
 
 
 def get_works_csv_by_affiliation(affiliation_id: str, query_params: QueryParams, affiliation_type: str) -> Generator:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.affiliations.id": affiliation_id, "authors.affiliations.types.type": affiliation_type}},
     ]
     work_repository.set_product_filters(pipeline, query_params)

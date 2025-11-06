@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Generator
+from typing import Any, Generator
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.models.work_model import Work
+from quyca.domain.models.work_model import BiblioGraphicInfo, Work
 from quyca.infrastructure.repositories import csv_repository
 from quyca.domain.constants.institutions import institutions_list
 from quyca.domain.constants.openalex_types import openalex_types_dict
@@ -132,7 +132,7 @@ def set_csv_citations_count(work: Work) -> None:
 
 
 def set_csv_bibliographic_info(work: Work) -> None:
-    biblio_info = work.bibliographic_info or {}
+    biblio_info: BiblioGraphicInfo | dict[str, Any] = work.bibliographic_info or {}
 
     work.bibtex = getattr(biblio_info, "bibtex", None)
     work.pages = getattr(biblio_info, "pages", None)
@@ -189,6 +189,6 @@ def set_csv_affiliations(work: Work) -> None:
     work.institutions = " | ".join(institutions) or None
     work.departments = " | ".join(departments) or None
     work.faculties = " | ".join(faculties) or None
-    work.groups = " | ".join(groups) or None
+    work.groups_csv = " | ".join(groups) or None
     work.groups_ranking = " | ".join(groups_ranking) or None
     work.countries = " | ".join(countries) or None
