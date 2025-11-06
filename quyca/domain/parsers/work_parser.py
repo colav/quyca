@@ -1,5 +1,6 @@
 import csv
 import io
+from typing import Any
 
 from quyca.domain.constants import countries_iso
 from quyca.domain.constants.open_access_status import open_access_status_dict
@@ -15,7 +16,7 @@ def parse_csv(works: list) -> str:
         "institutions",
         "faculties",
         "departments",
-        "groups",
+        "groups_csv",
         "countries",
         "groups_ranking",
         "ranking",
@@ -153,7 +154,7 @@ def parse_groups_ranking_filter(groups_ranking: list) -> list:
     for ranking in groups_ranking:
         if ranking.get("_id"):
             parsed_groups_ranking.append({"value": ranking.get("_id") or "", "label": ranking.get("_id") or ""})
-    parsed_groups_ranking.sort(key=lambda x: x.get("label") or "")  # type: ignore
+    parsed_groups_ranking.sort(key=lambda x: x.get("label") or "")
     return parsed_groups_ranking
 
 
@@ -187,7 +188,7 @@ def parse_country_filter(countries: list) -> list:
 
 
 def parse_subject_filter(subjects: list) -> list:
-    groups = {
+    groups: dict[int, dict[str, Any]] = {
         0: {"value": "0", "title": "Gran área de conocimiento", "children": []},
         1: {"value": "1", "title": "Áreas de especialidad", "children": []},
     }

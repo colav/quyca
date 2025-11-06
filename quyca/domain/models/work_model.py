@@ -96,6 +96,7 @@ class Work(BaseModel):
     external_ids: list[ExternalId] | None = None
     external_urls: list[ExternalUrl] | None = None
     groups: list[Group] | None = None
+    groups_csv: str | None = None
     keywords: list | None = None
     open_access: OpenAccess | None = Field(default_factory=OpenAccess)
     ranking: list[Ranking] | str | None = None

@@ -58,7 +58,7 @@ def get_works_with_source_by_affiliation(
 
 
 def get_works_count_by_affiliation(affiliation_id: str, query_params: QueryParams) -> int:
-    pipeline = [
+    pipeline: list[dict[str, Any]] = [
         {
             "$match": {
                 "authors.affiliations.id": affiliation_id,
@@ -102,7 +102,7 @@ def get_works_with_source_by_person(
 
 
 def get_works_count_by_person(person_id: str, query_params: QueryParams) -> int:
-    pipeline = [{"$match": {"authors.id": person_id}}]
+    pipeline: list[dict[str, Any]] = [{"$match": {"authors.id": person_id}}]
     set_product_filters(pipeline, query_params)
     pipeline += [{"$count": "total"}]
     return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)
@@ -290,7 +290,7 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
         ],
     }
 
-    def run_pipeline(key: str, pipe: list):
+    def run_pipeline(key: str, pipe: list) -> Tuple[str, list | dict]:
         if key == "years":
             cursor = collection.aggregate(pipe)
             return key, next(cursor, {"min_year": None, "max_year": None})
@@ -320,7 +320,7 @@ def set_product_filters(pipeline: list, query_params: QueryParams) -> None:
 def set_product_type_filters(pipeline: list, type_filters: str | None) -> None:
     if not type_filters:
         return
-    match_filters = []
+    match_filters: list[dict[str, Any]] = []
     for type_filter in type_filters.split(","):
         params = type_filter.split("_")
         if len(params) == 1:
@@ -346,7 +346,7 @@ def set_year_filters(pipeline: list, years: str | None) -> None:
 def set_status_filters(pipeline: list, status: str | None) -> None:
     if not status:
         return
-    match_filters = []
+    match_filters: list[dict[str, Any]] = []
     for single_status in status.split(","):
         if single_status == "unknown":
             match_filters.append({"open_access.open_access_status": None})
@@ -360,7 +360,7 @@ def set_status_filters(pipeline: list, status: str | None) -> None:
 def set_subject_filters(pipeline: list, subjects: str | None) -> None:
     if not subjects:
         return
-    match_filters = []
+    match_filters: list[dict[str, Any]] = []
     for subject in subjects.split(","):
         params = subject.split("_")
         if len(params) == 1:
@@ -372,7 +372,7 @@ def set_subject_filters(pipeline: list, subjects: str | None) -> None:
 def set_topic_filters(pipeline: list, topics: str | None) -> None:
     if not topics:
         return
-    match_filters = []
+    match_filters: list[str] = []
     for topic in topics.split(","):
         match_filters.append(topic.strip())
     pipeline += [{"$match": {"primary_topic.id": {"$in": match_filters}}}]
@@ -381,7 +381,7 @@ def set_topic_filters(pipeline: list, topics: str | None) -> None:
 def set_country_filters(pipeline: list, countries: str | None) -> None:
     if not countries:
         return
-    match_filters = []
+    match_filters: list[dict[str, Any]] = []
     for country in countries.split(","):
         match_filters.append({"authors.affiliations.addresses": {"$elemMatch": {"country_code": country}}})
     pipeline += [{"$match": {"$or": match_filters}}]
@@ -390,7 +390,7 @@ def set_country_filters(pipeline: list, countries: str | None) -> None:
 def set_groups_ranking_filters(pipeline: list, groups_ranking: str | None) -> None:
     if not groups_ranking:
         return
-    match_filters = []
+    match_filters: list[dict[str, Any]] = []
     for ranking in groups_ranking.split(","):
         match_filters.append({"groups": {"$elemMatch": {"ranking.rank": ranking}}})
     pipeline += [{"$match": {"$or": match_filters}}]
