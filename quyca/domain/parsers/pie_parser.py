@@ -185,8 +185,8 @@ def parse_articles_by_scimago_quartile(works: Generator) -> list:
 def parse_articles_by_publishing_institution(works: Generator, institution: Affiliation) -> list:
     result = {"Misma": 0, "Diferente": 0, "Sin información": 0}
     names = []
-    if institution:
-        names = list(set([name.name.lower() for name in institution.names]))
+    if institution and institution.names:
+        names = list(set([name.name.lower() for name in institution.names if name.name is not None]))
     for work in works:
         if (
             not work.source.publisher

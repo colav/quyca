@@ -1,4 +1,4 @@
-from typing import Generator, Tuple
+from typing import Any, Dict, Generator, List, Tuple
 
 from pymongo.command_cursor import CommandCursor
 
@@ -12,7 +12,7 @@ from quyca.infrastructure.repositories import affiliation_repository
 def get_affiliations_scienti_works_count_by_institution(
     institution_id: str, relation_type: str, query_params: QueryParams
 ) -> CommandCursor:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"relations.id": institution_id, "types.type": relation_type}},
         {"$unwind": "$works"},
         {"$unwind": "$works.types"},
@@ -52,7 +52,7 @@ def get_groups_scienti_works_count_by_faculty_or_department(
         .get("id", None)
     )
 
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {
             "$match": {
                 "relations.id": institution_id,
@@ -89,7 +89,7 @@ def get_groups_scienti_works_count_by_faculty_or_department(
 
 
 def get_affiliations_citations_count_by_institution(institution_id: str, relation_type: str) -> CommandCursor:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"relations.id": institution_id, "types.type": relation_type}},
         {"$project": {"_id": 0, "citations_count": 1, "name": {"$first": "$names.name"}}},
     ]
@@ -102,7 +102,7 @@ def get_departments_citations_count_by_faculty(affiliation_id: str) -> CommandCu
 
 def get_groups_citations_count_by_faculty_or_department(affiliation_id: str) -> CommandCursor:
     groups_ids = [group.id for group in affiliation_repository.get_groups_by_faculty_or_department(affiliation_id)]
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"groups.id": {"$in": groups_ids}}},
         {"$project": {"groups": 1}},
         {"$unwind": "$groups"},
@@ -120,7 +120,7 @@ def get_groups_citations_count_by_faculty_or_department(affiliation_id: str) -> 
 def get_affiliations_apc_expenses_by_institution(
     institution_id: str, relation_type: str, query_params: QueryParams
 ) -> CommandCursor:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"relations.id": institution_id, "types.type": relation_type}},
         {"$unwind": "$works"},
         {"$unwind": "$works.source"},
@@ -148,7 +148,7 @@ def get_groups_apc_expenses_by_faculty_or_department(affiliation_id: str, query_
         .get("relations", {})
         .get("id", None)
     )
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {
             "$match": {
                 "relations.id": institution_id,
@@ -166,7 +166,7 @@ def get_groups_apc_expenses_by_faculty_or_department(affiliation_id: str, query_
 def get_affiliations_works_citations_count_by_institution(
     institution_id: str, relation_type: str, query_params: QueryParams
 ) -> CommandCursor:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"relations.id": institution_id, "types.type": relation_type}},
         {"$unwind": "$works"},
     ]
@@ -203,7 +203,7 @@ def get_groups_works_citations_count_by_faculty_or_department(
         .get("relations", {})
         .get("id", None)
     )
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {
             "$match": {
                 "relations.id": institution_id,
@@ -226,7 +226,7 @@ def get_groups_works_citations_count_by_faculty_or_department(
 
 
 def get_active_authors_by_sex(affiliation_id: str) -> CommandCursor:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {
             "$match": {
                 "affiliations": {"$elemMatch": {"id": affiliation_id, "end_date": -1}},
@@ -239,7 +239,7 @@ def get_active_authors_by_sex(affiliation_id: str) -> CommandCursor:
 
 
 def get_active_authors_by_age_range(affiliation_id: str) -> CommandCursor:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {
             "$match": {
                 "affiliations": {"$elemMatch": {"id": affiliation_id, "end_date": -1}},
@@ -252,27 +252,27 @@ def get_active_authors_by_age_range(affiliation_id: str) -> CommandCursor:
 
 
 def get_products_by_author_age_and_person(person_id: str, query_params: QueryParams) -> CommandCursor:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
-        {"$project": {"authors": 1, "date_published": 1, "year_published": 1}},  # type: ignore
+        {"$project": {"authors": 1, "date_published": 1, "year_published": 1}},
         {
             "$lookup": {
-                "from": "person",  # type: ignore
-                "localField": "authors.id",  # type: ignore
-                "foreignField": "_id",  # type: ignore
-                "pipeline": [{"$project": {"birthdate": 1}}],  # type: ignore
-                "as": "author",  # type: ignore
+                "from": "person",
+                "localField": "authors.id",
+                "foreignField": "_id",
+                "pipeline": [{"$project": {"birthdate": 1}}],
+                "as": "author",
             }
         },
-        {"$unwind": "$author"},  # type: ignore
+        {"$unwind": "$author"},
         {
             "$project": {
-                "work.date_published": "$date_published",  # type: ignore
-                "work.year_published": "$year_published",  # type: ignore
-                "birthdate": "$author.birthdate",  # type: ignore
+                "work.date_published": "$date_published",
+                "work.year_published": "$year_published",
+                "birthdate": "$author.birthdate",
             }
         },
     ]
@@ -281,21 +281,21 @@ def get_products_by_author_age_and_person(person_id: str, query_params: QueryPar
 
 def get_coauthorship_by_country_map_by_affiliation(affiliation_id: str, query_params: QueryParams) -> list:
     data = []
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.affiliations.id": affiliation_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
-        {"$unwind": "$authors"},  # type: ignore
-        {"$unwind": "$authors.affiliations"},  # type: ignore
-        {"$group": {"_id": "$authors.affiliations.id", "count": {"$sum": 1}}},  # type: ignore
+        {"$unwind": "$authors"},
+        {"$unwind": "$authors.affiliations"},
+        {"$group": {"_id": "$authors.affiliations.id", "count": {"$sum": 1}}},
         {
             "$lookup": {
-                "from": "affiliations",  # type: ignore
-                "localField": "_id",  # type: ignore
-                "foreignField": "_id",  # type: ignore
-                "as": "affiliation",  # type: ignore
-                "pipeline": [  # type: ignore
+                "from": "affiliations",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "affiliation",
+                "pipeline": [
                     {
                         "$project": {
                             "addresses.country_code": 1,
@@ -305,8 +305,8 @@ def get_coauthorship_by_country_map_by_affiliation(affiliation_id: str, query_pa
                 ],
             }
         },
-        {"$unwind": "$affiliation"},  # type: ignore
-        {"$unwind": "$affiliation.addresses"},  # type: ignore
+        {"$unwind": "$affiliation"},
+        {"$unwind": "$affiliation.addresses"},
     ]
     for work in database["works"].aggregate(pipeline):
         data.append(work)
@@ -315,22 +315,22 @@ def get_coauthorship_by_country_map_by_affiliation(affiliation_id: str, query_pa
 
 def get_coauthorship_by_country_map_by_person(person_id: str, query_params: QueryParams) -> list:
     data = []
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
-        {"$unwind": "$authors"},  # type: ignore
-        {"$unwind": "$authors.affiliations"},  # type: ignore
-        {"$group": {"_id": "$authors.affiliations.id", "count": {"$sum": 1}}},  # type: ignore
-        {"$unwind": "$_id"},  # type: ignore
+        {"$unwind": "$authors"},
+        {"$unwind": "$authors.affiliations"},
+        {"$group": {"_id": "$authors.affiliations.id", "count": {"$sum": 1}}},
+        {"$unwind": "$_id"},
         {
             "$lookup": {
-                "from": "affiliations",  # type: ignore
-                "localField": "_id",  # type: ignore
-                "foreignField": "_id",  # type: ignore
-                "as": "affiliation",  # type: ignore
-                "pipeline": [  # type: ignore
+                "from": "affiliations",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "affiliation",
+                "pipeline": [
                     {
                         "$project": {
                             "addresses.country_code": 1,
@@ -342,13 +342,13 @@ def get_coauthorship_by_country_map_by_person(person_id: str, query_params: Quer
         },
         {
             "$project": {
-                "count": 1,  # type: ignore
-                "affiliation.addresses.country_code": 1,  # type: ignore
-                "affiliation.addresses.country": 1,  # type: ignore
+                "count": 1,
+                "affiliation.addresses.country_code": 1,
+                "affiliation.addresses.country": 1,
             }
         },
-        {"$unwind": "$affiliation"},  # type: ignore
-        {"$unwind": "$affiliation.addresses"},  # type: ignore
+        {"$unwind": "$affiliation"},
+        {"$unwind": "$affiliation.addresses"},
     ]
     for work in database["works"].aggregate(pipeline):
         data.append(work)
@@ -357,21 +357,21 @@ def get_coauthorship_by_country_map_by_person(person_id: str, query_params: Quer
 
 def get_coauthorship_by_colombian_department_map_by_affiliation(affiliation_id: str, query_params: QueryParams) -> list:
     data = []
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.affiliations.id": affiliation_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
-        {"$unwind": "$authors"},  # type: ignore
-        {"$group": {"_id": "$authors.affiliations.id", "count": {"$sum": 1}}},  # type: ignore
-        {"$unwind": "$_id"},  # type: ignore
+        {"$unwind": "$authors"},
+        {"$group": {"_id": "$authors.affiliations.id", "count": {"$sum": 1}}},
+        {"$unwind": "$_id"},
         {
             "$lookup": {
-                "from": "affiliations",  # type: ignore
-                "localField": "_id",  # type: ignore
-                "foreignField": "_id",  # type: ignore
-                "as": "affiliation",  # type: ignore
-                "pipeline": [  # type: ignore
+                "from": "affiliations",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "affiliation",
+                "pipeline": [
                     {
                         "$project": {
                             "addresses.country_code": 1,
@@ -381,8 +381,8 @@ def get_coauthorship_by_colombian_department_map_by_affiliation(affiliation_id: 
                 ],
             }
         },
-        {"$unwind": "$affiliation"},  # type: ignore
-        {"$unwind": "$affiliation.addresses"},  # type: ignore
+        {"$unwind": "$affiliation"},
+        {"$unwind": "$affiliation.addresses"},
     ]
     for work in database["works"].aggregate(pipeline):
         data.append(work)
@@ -391,31 +391,31 @@ def get_coauthorship_by_colombian_department_map_by_affiliation(affiliation_id: 
 
 def get_coauthorship_by_colombian_department_map_by_person(person_id: str, query_params: QueryParams) -> list:
     data = []
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
-        {"$unwind": "$authors"},  # type: ignore
-        {"$group": {"_id": "$authors.affiliations.id", "count": {"$sum": 1}}},  # type: ignore
-        {"$unwind": "$_id"},  # type: ignore
+        {"$unwind": "$authors"},
+        {"$group": {"_id": "$authors.affiliations.id", "count": {"$sum": 1}}},
+        {"$unwind": "$_id"},
         {
             "$lookup": {
-                "from": "affiliations",  # type: ignore
-                "localField": "_id",  # type: ignore
-                "foreignField": "_id",  # type: ignore
-                "as": "affiliation",  # type: ignore
+                "from": "affiliations",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "affiliation",
             }
         },
         {
             "$project": {
-                "count": 1,  # type: ignore
-                "affiliation.addresses.country_code": 1,  # type: ignore
-                "affiliation.addresses.city": 1,  # type: ignore
+                "count": 1,
+                "affiliation.addresses.country_code": 1,
+                "affiliation.addresses.city": 1,
             }
         },
-        {"$unwind": "$affiliation"},  # type: ignore
-        {"$unwind": "$affiliation.addresses"},  # type: ignore
+        {"$unwind": "$affiliation"},
+        {"$unwind": "$affiliation.addresses"},
     ]
     for work in database["works"].aggregate(pipeline):
         data.append(work)
@@ -423,7 +423,7 @@ def get_coauthorship_by_colombian_department_map_by_person(person_id: str, query
 
 
 def get_collaboration_network(affiliation_id: str) -> CommandCursor:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"_id": affiliation_id}},
         {"$project": {"coauthorship_network": 1}},
         {
@@ -453,7 +453,7 @@ def get_collaboration_network(affiliation_id: str) -> CommandCursor:
 
 
 def get_works_rankings_by_person(person_id: str, query_params: QueryParams) -> Tuple[Generator, int]:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
@@ -467,7 +467,7 @@ def get_works_rankings_by_person(person_id: str, query_params: QueryParams) -> T
             }
         },
     ]
-    count_pipeline = [
+    count_pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_product_filters(count_pipeline, query_params)
@@ -486,7 +486,7 @@ def get_products_by_database_by_affiliation(affiliation_id: str) -> dict:
     base_match = {"authors.affiliations.id": affiliation_id}
     valid_sources = ["minciencias", "openalex", "scholar", "scienti"]
 
-    def count_sources(sources):
+    def count_sources(sources: list) -> int:
         return database["works"].count_documents(
             {**base_match, "$expr": {"$setEquals": [{"$setIntersection": ["$updated.source", valid_sources]}, sources]}}
         )
@@ -684,14 +684,14 @@ def set_plot_year_filters(pipeline: list, years: str | None) -> None:
 def set_plot_status_filters(pipeline: list, status: str | None) -> None:
     if not status:
         return
-    match_filters = []
+    match_filters: List[Dict[str, Any]] = []
     for single_status in status.split(","):
         if single_status == "unknown":
             match_filters.append({"works.open_access.open_access_status": None})
         elif single_status == "open":
-            match_filters.append({"works.open_access.open_access_status": {"$nin": [None, "closed"]}})  # type: ignore
+            match_filters.append({"works.open_access.open_access_status": {"$nin": [None, "closed"]}})
         else:
-            match_filters.append({"works.open_access.open_access_status": single_status})  # type: ignore
+            match_filters.append({"works.open_access.open_access_status": single_status})
     pipeline += [{"$match": {"$or": match_filters}}]
 
 
