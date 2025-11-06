@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from quyca.domain.constants.source_types import (
     NORMALIZED_TYPE_MAPPING,
@@ -9,8 +9,8 @@ from quyca.domain.constants.source_types import (
 from quyca.domain.models.source_model import Source
 
 
-def parse_source(source: Source) -> dict:
-    include = [
+def parse_source(source: Source) -> Dict:
+    include: set = {
         "id",
         "updated",
         "names",
@@ -35,7 +35,7 @@ def parse_source(source: Source) -> dict:
         "subjects",
         "ranking",
         "review_process",
-    ]
+    }
     return source.model_dump(include=include, exclude_none=True)
 
 
@@ -46,12 +46,12 @@ def parse_search_result(sources: List) -> List:
     Parameters:
     -----------
     sources : List
-        A list of source entities to be parsed.
+        A List of source entities to be parsed.
 
     Returns:
     --------
     List
-        A list of dictionaries containing the relevant fields from each source entity.
+        A List of dictionaries containing the relevant fields from each source entity.
     """
     source_fields = [
         "id",
@@ -86,21 +86,21 @@ def parse_search_result(sources: List) -> List:
     ]
 
 
-def parse_available_filters(filters: dict) -> dict:
+def parse_available_filters(filters: Dict) -> Dict:
     """
     Parses the available filters from the search results.
 
     Parameters:
     -----------
-    filters : dict
+    filters : Dict
         The available filters to be parsed.
 
     Returns:
     --------
-    dict
+    Dict
         A dictionary containing the parsed filters.
     """
-    parsed_filters: dict = {}
+    parsed_filters: Dict = {}
 
     if source_types := filters.get("source_types"):
         parsed_filters["source_types"] = parse_source_type_filter(source_types)
@@ -110,21 +110,21 @@ def parse_available_filters(filters: dict) -> dict:
     return parsed_filters
 
 
-def parse_source_type_filter(source_types: list) -> list:
+def parse_source_type_filter(source_types: List) -> List:
     """
     Parses the source type filter from the search results.
 
     Parameters
     ----------
-    source_types : list
+    source_types : List
         The source type filter to be parsed.
 
     Returns
     -------
-    list
-        A list containing the parsed source type filter.
+    List
+        A List containing the parsed source type filter.
     """
-    parsed_sources: list = []
+    parsed_sources: List = []
 
     for source_doc in source_types:
         source_id = source_doc.get("_id")
@@ -132,7 +132,7 @@ def parse_source_type_filter(source_types: list) -> list:
             continue
 
         types = source_doc.get("types", [])
-        type_counts = {}
+        type_counts: Dict[str, int] = {}
 
         for t in types:
             raw_type = t.get("type")
@@ -144,7 +144,7 @@ def parse_source_type_filter(source_types: list) -> list:
             normalized = NORMALIZED_TYPE_MAPPING.get(raw_type, "other")
             type_counts[normalized] = type_counts.get(normalized, 0) + count
 
-        children = []
+        children: List[Dict[str, int | str]] = []
         for normalized_type, total_count in type_counts.items():
             title = TYPE_DISPLAY_MAPPING.get(normalized_type, normalized_type)
             value = f"{source_id}_{title}"
@@ -168,21 +168,21 @@ def parse_source_type_filter(source_types: list) -> list:
     return parsed_sources
 
 
-def parse_scimago_quartile_filter(quartiles: list) -> list:
+def parse_scimago_quartile_filter(quartiles: List) -> List:
     """
     Parses the Scimago quartile filter from the search results.
 
     Parameters
     ----------
-    quartiles : list
+    quartiles : List
         The Scimago quartile filter to be parsed.
 
     Returns
     -------
-    list
-        A list containing the parsed Scimago quartile filter.
+    List
+        A List containing the parsed Scimago quartile filter.
     """
-    parsed_quartiles: list = []
+    parsed_quartiles: List = []
 
     quartile_order = ["Q1", "Q2", "Q3", "Q4", "-"]
     quartile_dict = {q.get("_id"): q.get("count", 0) for q in quartiles if q.get("_id")}

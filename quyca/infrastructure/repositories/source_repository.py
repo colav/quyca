@@ -1,4 +1,4 @@
-from typing import Generator, Tuple
+from typing import Any, Generator, Tuple
 from bson import ObjectId
 
 from infrastructure.mongo import database
@@ -6,8 +6,8 @@ from infrastructure.repositories import base_repository
 from infrastructure.generators import source_generator
 from domain.models.source_model import Source
 from domain.exceptions.not_entity_exception import NotEntityException
+from quyca.domain.constants.source_types import NORMALIZED_TYPE_MAPPING
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.constants.clean_source import source_type_mapping
 
 
 def get_source_by_id(source_id: str) -> Source:
@@ -45,12 +45,16 @@ def search_sources(query_params: QueryParams, pipeline_params: dict) -> Tuple[Ge
     Tuple[Generator, int]
         A tuple containing a generator for the search results and the total number of results.
     """
-    pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    pipeline: list[dict[str, Any]] = []
+    if query_params.keywords:
+        pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
     set_source_filters(pipeline, query_params)
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     sources = database["sources"].aggregate(pipeline)
 
-    count_pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    count_pipeline: list[dict[str, Any]] = []
+    if query_params.keywords:
+        count_pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
     set_source_filters(count_pipeline, query_params)
 
     count_pipeline += [{"$count": "total_results"}]
@@ -70,7 +74,9 @@ def get_search_sources_available_filters(query_params: QueryParams) -> dict:
     dict
         A dictionary containing the available filters for the search.
     """
-    pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    pipeline: list[dict[str, Any]] = []
+    if query_params.keywords:
+        pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
     set_source_filters(pipeline, query_params)
 
     pipeline += [
@@ -111,7 +117,7 @@ def get_search_sources_available_filters(query_params: QueryParams) -> dict:
         }
     ]
 
-    available_filters = next(database["sources"].aggregate(pipeline), {})
+    available_filters: dict = next(database["sources"].aggregate(pipeline), {})
     return available_filters
 
 
@@ -134,7 +140,7 @@ def set_source_types(pipeline: list, type_filters: str | None) -> None:
         type = type.strip().lower()
         if not type:
             continue
-        mapped = source_type_mapping.get(type, None)
+        mapped = NORMALIZED_TYPE_MAPPING.get(type, None)
         if mapped:
             source_types.append(mapped)
 
