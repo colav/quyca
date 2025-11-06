@@ -29,7 +29,7 @@ def cc_from_person(person_id: str) -> Optional[str]:
         {"external_ids.$": 1},
     )
     if doc and doc.get("external_ids"):
-        return doc["external_ids"][0]["id"]
+        return str(doc["external_ids"][0]["id"])
     return None
 
 
@@ -172,7 +172,7 @@ def news_count_by_person(person_id: str) -> int:
         {"$count": "total"},
     ]
     result = list(db.news_professors_collection.aggregate(pipeline))
-    return result[0]["total"] if result else 0
+    return int(result[0]["total"]) if result else 0
 
 
 def get_news_by_affiliation(affiliation_id: str, affiliation_type: str, query_params: QueryParams) -> Generator:
@@ -301,4 +301,4 @@ def news_count_by_affiliation(affiliation_id: str, affiliation_type: str) -> int
         {"$count": "total"},
     ]
     result = list(db.news_professors_collection.aggregate(pipeline))
-    return result[0]["total"] if result else 0
+    return int(result[0]["total"]) if result else 0
