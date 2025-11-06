@@ -35,6 +35,7 @@ EXTRA_ALLOWED = {"estado_de_validación", "observación"}
 class StaffValidator:
     """Convert DataFrame index to real Excel row number (header=1, first data row=2)."""
 
+    @staticmethod
     def excel_row_index(idx: int) -> int:
         return idx + 2
 
@@ -81,7 +82,10 @@ class StaffValidator:
 
         errors.extend(RequiredFieldsValidator.validate(row, index))
 
-        errors.extend(DocumentValidator.validate(row.get("tipo_documento"), row.get("identificación"), index))
+        document_type: str = str(row.get("tipo_documento"))
+        identification: str = str(row.get("identificación"))
+
+        errors.extend(DocumentValidator.validate(document_type, identification, index))
 
         errors.extend(NameValidator.validate(row, index))
 

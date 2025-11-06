@@ -1,4 +1,4 @@
-from typing import Iterator, List, Type, Union
+from typing import Iterator, Union
 from urllib.parse import urlparse
 
 from quyca.domain.constants.external_urls import external_urls_dict
@@ -42,8 +42,8 @@ def set_product_types(workable: Union[Work, Patent, Project]) -> None:
                 return (product_type.level or 0) >= 1
         return True
 
-    types: Iterator[Type] = filter(filter_func, workable.types or [])
-    product_types: List[ProductType] = list(map(lambda x: ProductType(name=x.type, source=x.source), types))
+    types: Iterator[ProductType] = filter(filter_func, workable.types or [])  # type: ignore[arg-type]
+    product_types: list[ProductType] = [ProductType(name=x.type, source=x.source) for x in types]
     workable.product_types = sorted(product_types, key=order)
 
 
