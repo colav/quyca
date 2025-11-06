@@ -1,14 +1,14 @@
-from typing import Generator, Tuple
+from typing import Any, Generator, Tuple
 
 
 from domain.models.base_model import QueryParams
 from domain.constants.institutions import institutions_list
-from infrastructure.generators import affiliation_generator
 from domain.models.affiliation_model import Affiliation
 from infrastructure.repositories import base_repository
 from infrastructure.mongo import database
 from infrastructure.repositories.base_repository import set_project
 from domain.exceptions.not_entity_exception import NotEntityException
+from quyca.infrastructure.generators import affiliation_generator
 
 
 def get_affiliation_by_id(affiliation_id: str) -> Affiliation:
@@ -20,7 +20,7 @@ def get_affiliation_by_id(affiliation_id: str) -> Affiliation:
     return Affiliation(**affiliation_data)
 
 
-def get_affiliations_by_institution(institution_id: str, relation_type: str) -> Generator:
+def get_affiliations_by_institution(institution_id: str, relation_type: str) -> Generator[Affiliation, None, None]:
     pipeline = [
         {
             "$match": {
@@ -38,7 +38,7 @@ def get_departments_by_faculty(faculty_id: str) -> Generator:
     return get_affiliations_by_institution(faculty_id, "department")
 
 
-def get_groups_by_faculty_or_department(affiliation_id: str) -> Generator:
+def get_groups_by_faculty_or_department(affiliation_id: str) -> Generator[Affiliation, None, None]:
     institution_id = (
         database["affiliations"]
         .aggregate(
@@ -77,7 +77,11 @@ def search_affiliations(
     pipeline_params: dict | None = None,
 ) -> Tuple[Generator, int]:
     types = institutions_list if affiliation_type == "institution" else [affiliation_type]
-    pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    pipeline: list[dict[str, Any]] = []
+
+    if query_params.keywords:
+        pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
+
     pipeline += [
         {
             "$match": {
@@ -96,7 +100,10 @@ def search_affiliations(
     ]
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     affiliations = database["affiliations"].aggregate(pipeline)
-    count_pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+
+    count_pipeline: list[dict[str, Any]] = []
+    if query_params.keywords:
+        count_pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
     count_pipeline += [
         {"$match": {"types.type": {"$in": types}}},
         {"$count": "total_results"},

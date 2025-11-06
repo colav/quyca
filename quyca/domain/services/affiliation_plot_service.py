@@ -1,3 +1,4 @@
+from typing import Any, Callable
 from pymongo.command_cursor import CommandCursor
 
 from quyca.domain.constants.articles_types import articles_types_list
@@ -17,16 +18,20 @@ from quyca.domain.parsers import (
 )
 
 
-def get_affiliation_plot(affiliation_id: str, affiliation_type: str, query_params: QueryParams) -> dict | None:
+def get_affiliation_plot(
+    affiliation_id: str, affiliation_type: str, query_params: QueryParams
+) -> dict[str, Any] | None:
     plot_type = query_params.plot
     plot_type_dict = {
         "faculties_by_product_type": "faculty",
         "departments_by_product_type": "department",
         "research_groups_by_product_type": "group",
     }
-    if plot_type is not None and plot_type in plot_type_dict.keys():
+
+    if plot_type is not None and plot_type in plot_type_dict:
         relation_type = plot_type_dict[plot_type]
         return plot_affiliations_by_product_type(affiliation_id, affiliation_type, relation_type, query_params)
+
     if plot_type in [
         "citations_by_faculty",
         "citations_by_department",
@@ -34,6 +39,7 @@ def get_affiliation_plot(affiliation_id: str, affiliation_type: str, query_param
     ]:
         relation_type = plot_type.split("_")[-1]
         return plot_citations_by_affiliations(affiliation_id, affiliation_type, relation_type)
+
     if plot_type in [
         "apc_expenses_by_faculty",
         "apc_expenses_by_department",
@@ -41,6 +47,7 @@ def get_affiliation_plot(affiliation_id: str, affiliation_type: str, query_param
     ]:
         relation_type = plot_type.split("_")[-1]
         return plot_apc_expenses_by_affiliation(affiliation_id, affiliation_type, relation_type, query_params)
+
     if plot_type in [
         "h_index_by_faculty",
         "h_index_by_department",
@@ -48,13 +55,21 @@ def get_affiliation_plot(affiliation_id: str, affiliation_type: str, query_param
     ]:
         relation_type = plot_type.split("_")[-1]
         return plot_h_index_by_affiliation(affiliation_id, affiliation_type, relation_type, query_params)
-    return globals().get(f"plot_{plot_type}", lambda *_: None)(affiliation_id, query_params)
+
+    func: Callable[[str, QueryParams], dict[str, Any] | None] | None = globals().get(f"plot_{plot_type}")
+    if func is None:
+        return None
+
+    result = func(affiliation_id, query_params)
+    if not (result is None or isinstance(result, dict)):
+        raise TypeError(f"La función plot_{plot_type} debe retornar un dict o None, no {type(result)}.")
+    return result
 
 
 def plot_affiliations_by_product_type(
     affiliation_id: str, affiliation_type: str, relation_type: str, query_params: QueryParams
-) -> dict | None:
-    data: CommandCursor | None = None
+) -> dict[str, Any] | None:
+    data: CommandCursor[Any] | None = None
     if affiliation_type == "institution":
         data = plot_repository.get_affiliations_scienti_works_count_by_institution(
             affiliation_id, relation_type, query_params
@@ -63,6 +78,9 @@ def plot_affiliations_by_product_type(
         data = plot_repository.get_departments_scienti_works_count_by_faculty(affiliation_id, query_params)
     elif affiliation_type in ["faculty", "department"] and relation_type == "group":
         data = plot_repository.get_groups_scienti_works_count_by_faculty_or_department(affiliation_id, query_params)
+
+    if data is None:
+        return None
     return bar_parser.parse_affiliations_by_product_type(data)
 
 
