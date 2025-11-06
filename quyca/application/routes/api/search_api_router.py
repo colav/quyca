@@ -1,6 +1,7 @@
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
 from flask import Blueprint, url_for, redirect, request, Response, jsonify
+from werkzeug.wrappers.response import Response as WerkzeugResponse
 from sentry_sdk import capture_exception
 
 from domain.models.base_model import QueryParams
@@ -26,8 +27,9 @@ search_api_router = Blueprint("search_api_router", __name__)
 
 
 @search_api_router.route("/person", methods=["GET"])
-def search_persons() -> Response:
-    return redirect(url_for("router.search_app_router.search_persons", **request.args))
+def search_persons() -> WerkzeugResponse:
+    query_params: Dict[str, Any] = request.args.to_dict()
+    return redirect(url_for("router.search_app_router.search_persons", **query_params))
 
 
 """
@@ -119,12 +121,13 @@ def search_works() -> Response | Tuple[Response, int]:
 
 
 @search_api_router.route("/affiliations/<affiliation_type>", methods=["GET"])
-def search_affiliations(affiliation_type: str) -> Response:
+def search_affiliations(affiliation_type: str) -> WerkzeugResponse:
+    query_params: Dict[str, Any] = request.args.to_dict()
     return redirect(
         url_for(
             "router.search_app_router.search_affiliations",
             affiliation_type=affiliation_type,
-            **request.args,
+            **query_params,
         )
     )
 
@@ -146,5 +149,6 @@ def search_affiliations(affiliation_type: str) -> Response:
 
 
 @search_api_router.route("/sources", methods=["GET"])
-def search_sources() -> Response | Tuple[Response, int]:
-    return redirect(url_for("router.search_app_router.search_sources", **request.args))
+def search_sources() -> WerkzeugResponse:
+    query_params: Dict[str, Any] = request.args.to_dict()
+    return redirect(url_for("router.search_app_router.search_sources", **query_params))
