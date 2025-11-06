@@ -1,29 +1,34 @@
 <center><img src="https://raw.githubusercontent.com/colav/colav.github.io/master/img/Logo.png"/></center>
 
 # Quyca
-ImpactU Backend written in Python with flask, it is used to provide the API for the Colav platform.
 
+ImpactU Backend written in Python with flask, it is used to provide the API for the Colav platform.
 
 # Installation
 
 ## Dependencies
+
 Docker and docker-compose is required.
-* https://docs.docker.com/engine/install/ubuntu/ (or https://docs.docker.com/engine/install/debian/, etc)
-* Install `docker-compose`:  
+
+- https://docs.docker.com/engine/install/ubuntu/ (or https://docs.docker.com/engine/install/debian/, etc)
+- Install `docker-compose`:
+
 ```bash
 apt install docker-compose
 ```
+
 or
+
 ```bash
 pip install docker-compose
 ```
 
-* https://docs.docker.com/engine/install/linux-postinstall/
+- https://docs.docker.com/engine/install/linux-postinstall/
 
-* Deploy Elastic Search from Chia https://github.com/colav/Chia/tree/main/elasticsaerch
-
+- Deploy Elastic Search from Chia https://github.com/colav/Chia/tree/main/elasticsaerch
 
 To install the package, you can use the following command:
+
 ```shell
 pip install quyca
 ```
@@ -35,14 +40,30 @@ To deploy you need to edit .env.example file and rename it to:
 .env.prod to deploy the code in a production environment.
 .env.dev to deploy the code in a development environment.
 
-## Data 
+### Pre-commit
+
+If you dont have pre-commit installed
+
+```bash
+poetry add --dev pre-commit
+```
+
+Then install the hook in `.pre-commit-config.yaml` in your local repo, using:
+
+```bash
+pre-commit install
+```
+
+And then you have it.
+
+## Data
+
 Required data is stored in MongoDB, produced with kahi.
-usually  database named kahi or kahi_dev, please read 
-
-
+usually database named kahi or kahi_dev, please read
 
 # Usage
-edit the .env.example  renaming it to .env.dev or .env.prod and set the variables.
+
+edit the .env.example renaming it to .env.dev or .env.prod and set the variables.
 
 ```bash
 APP_NAME=quyca
@@ -89,27 +110,33 @@ Please read the Makefile to see the available commands to run the package.
 https://github.com/colav/quyca/blob/develop/Makefile
 
 To tests requests to the API, you can use the next urls:
+
 - :8010/app/your/endpoint/here
 - :8010/api/your/endpoint/here
 
 where /app is the endpoint for the web application and /api is the endpoint for the expert API.
 :8010 is the default port for the application but it can be changed in the .env file.
 
-
 # Start the application
+
 ```bash
 make up-dev  # to call "docker-compose up -d" for development
 ```
+
 or
+
 ```bash
 make up-prod  # to call "docker-compose up -d" for production
 ```
 
 ## Running tests
+
 ```bash
 make tests-dev    # to run the tests
 ```
-could be the same for prod with 
+
+could be the same for prod with
+
 ```bash
 make tests-prod    # to run the tests
 ```
@@ -117,27 +144,35 @@ make tests-prod    # to run the tests
 ### Format the code
 
 Dependencies:
+
 ```shell
 pip install black poetry autoflake
 ```
 
 To format the code, you can use the following command:
+
 ```shell
 python format.py
 ```
 
 # List of endpoints
+
 Run the next command to see the list of endpoints
+
 ```bash
 docker compose  exec dev bash
 ```
+
 luego dentro del contenedor
+
 ```bash
 FLASK_APP='app' flask routes
 ```
 
 # License
+
 BSD-3-Clause License
 
 # Links
+
 http://colav.udea.edu.co/
