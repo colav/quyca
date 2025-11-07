@@ -1,4 +1,5 @@
 import pytest
+from flask.testing import FlaskClient
 from quyca.infrastructure.mongo import database
 from quyca.domain.constants.institutions import institutions_list
 
@@ -8,17 +9,17 @@ affiliation_institution = database["affiliations"].find_one(
 person = database["person"].find_one({"products_count": {"$gt": 10}})
 
 
-def test_search_works(client) -> None:
+def test_search_works(client: FlaskClient) -> None:
     response = client.get(f"/app/search/works/filters?keywords=quantum&max=10&page=10&sort=citations_desc")
     assert response.status_code == 200
 
 
-def test_search_works_without_keywords(client) -> None:
+def test_search_works_without_keywords(client: FlaskClient) -> None:
     response = client.get(f"/app/search/works/filters?max=10&page=10&sort=citations_desc")
     assert response.status_code == 200
 
 
-def test_get_affiliation_research_products_filters_basic(client):
+def test_get_affiliation_research_products_filters_basic(client: FlaskClient) -> None:
     if not affiliation_institution:
         pytest.skip("No hay afiliaciones con productos en la base de datos")
 
@@ -28,7 +29,6 @@ def test_get_affiliation_research_products_filters_basic(client):
     if not affiliation_types:
         pytest.skip("La afiliación no tiene tipos definidos")
 
-    print(f"/app/affiliation/institution/{affiliation_id}/research/products/filters")
     response = client.get(f"/app/affiliation/institution/{affiliation_id}/research/products/filters")
 
     assert response.status_code == 200
@@ -37,7 +37,7 @@ def test_get_affiliation_research_products_filters_basic(client):
     assert isinstance(data, dict)
 
 
-def test_get_affiliation_filters_response_structure(client):
+def test_get_affiliation_filters_response_structure(client: FlaskClient) -> None:
     if not affiliation_institution:
         pytest.skip("No hay afiliaciones con productos en la base de datos")
 
@@ -55,7 +55,7 @@ def test_get_affiliation_filters_response_structure(client):
             assert isinstance(data[field], (list, dict))
 
 
-def test_get_affiliation_filters_product_types_structure(client):
+def test_get_affiliation_filters_product_types_structure(client: FlaskClient) -> None:
     if not affiliation_institution:
         pytest.skip("No hay afiliaciones con productos en la base de datos")
 
@@ -78,7 +78,7 @@ def test_get_affiliation_filters_product_types_structure(client):
                 assert isinstance(product_type["children"], list)
 
 
-def test_get_affiliation_filters_status_structure(client):
+def test_get_affiliation_filters_status_structure(client: FlaskClient) -> None:
     if not affiliation_institution:
         pytest.skip("No hay afiliaciones con productos en la base de datos")
 
@@ -102,7 +102,7 @@ def test_get_affiliation_filters_status_structure(client):
                 assert isinstance(status_item["children"], list)
 
 
-def test_get_affiliation_filters_countries_structure(client):
+def test_get_affiliation_filters_countries_structure(client: FlaskClient) -> None:
     if not affiliation_institution:
         pytest.skip("No hay afiliaciones con productos en la base de datos")
 
@@ -124,7 +124,7 @@ def test_get_affiliation_filters_countries_structure(client):
             assert isinstance(country["count"], int)
 
 
-def test_get_affiliation_filters_subjects_structure(client):
+def test_get_affiliation_filters_subjects_structure(client: FlaskClient) -> None:
     if not affiliation_institution:
         pytest.skip("No hay afiliaciones con productos en la base de datos")
 
@@ -147,7 +147,7 @@ def test_get_affiliation_filters_subjects_structure(client):
                 assert isinstance(subject["children"], list)
 
 
-def test_get_affiliation_filters_topics_structure(client):
+def test_get_affiliation_filters_topics_structure(client: FlaskClient) -> None:
     if not affiliation_institution:
         pytest.skip("No hay afiliaciones con productos en la base de datos")
 
@@ -172,19 +172,18 @@ def test_get_affiliation_filters_topics_structure(client):
     "affiliation_type,type_filter",
     [("institution", institutions_list), ("department", ["department"]), ("faculty", ["faculty"])],
 )
-def test_get_affiliation_filters_different_types(client, affiliation_type, type_filter):
+def test_get_affiliation_filters_different_types(client: FlaskClient, affiliation_type: str, type_filter: str) -> None:
     affiliation = database["affiliations"].find_one({"products_count": {"$gt": 0}, "types.type": {"$in": type_filter}})
 
     if not affiliation:
         pytest.skip(f"No hay afiliaciones de tipo institution con productos en la base de datos")
 
     affiliation_id = str(affiliation["_id"])
-    print(f"/app/affiliation/{affiliation_type}/{affiliation_id}/research/products/filters")
     response = client.get(f"/app/affiliation/{affiliation_type}/{affiliation_id}/research/products/filters")
     assert response.status_code in [200, 400]
 
 
-def test_get_person_research_products_filters_basic(client):
+def test_get_person_research_products_filters_basic(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
@@ -198,7 +197,7 @@ def test_get_person_research_products_filters_basic(client):
     assert isinstance(data, dict)
 
 
-def test_get_person_filters_response_structure(client):
+def test_get_person_filters_response_structure(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
@@ -216,7 +215,7 @@ def test_get_person_filters_response_structure(client):
             assert isinstance(data[field], (list, dict))
 
 
-def test_get_person_filters_product_types_structure(client):
+def test_get_person_filters_product_types_structure(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
@@ -245,7 +244,7 @@ def test_get_person_filters_product_types_structure(client):
                     assert "count" in child
 
 
-def test_get_person_filters_authors_ranking_structure(client):
+def test_get_person_filters_authors_ranking_structure(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
@@ -265,7 +264,7 @@ def test_get_person_filters_authors_ranking_structure(client):
             assert "value" in ranking
 
 
-def test_get_person_filters_groups_ranking_structure(client):
+def test_get_person_filters_groups_ranking_structure(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
@@ -285,7 +284,7 @@ def test_get_person_filters_groups_ranking_structure(client):
             assert "value" in group
 
 
-def test_get_person_filters_status_structure(client):
+def test_get_person_filters_status_structure(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
@@ -315,7 +314,7 @@ def test_get_person_filters_status_structure(client):
                     assert "count" in child
 
 
-def test_get_person_filters_years_structure(client):
+def test_get_person_filters_years_structure(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
@@ -335,7 +334,7 @@ def test_get_person_filters_years_structure(client):
         assert data["years"]["min_year"] <= data["years"]["max_year"]
 
 
-def test_get_person_filters_countries_structure(client):
+def test_get_person_filters_countries_structure(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
@@ -358,7 +357,7 @@ def test_get_person_filters_countries_structure(client):
             assert country["count"] > 0
 
 
-def test_get_person_filters_subjects_structure(client):
+def test_get_person_filters_subjects_structure(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
@@ -381,7 +380,7 @@ def test_get_person_filters_subjects_structure(client):
                 assert isinstance(subject["children"], list)
 
 
-def test_get_person_filters_topics_structure(client):
+def test_get_person_filters_topics_structure(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
@@ -403,7 +402,7 @@ def test_get_person_filters_topics_structure(client):
             assert isinstance(topic["count"], int)
 
 
-def test_get_person_filters_with_query_params(client):
+def test_get_person_filters_with_query_params(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
@@ -417,7 +416,7 @@ def test_get_person_filters_with_query_params(client):
     assert isinstance(data, dict)
 
 
-def test_get_person_filters_multiple_persons(client):
+def test_get_person_filters_multiple_persons(client: FlaskClient) -> None:
     persons = list(database["person"].find({"products_count": {"$gt": 0}}).limit(3))
 
     if len(persons) == 0:
@@ -433,7 +432,7 @@ def test_get_person_filters_multiple_persons(client):
         assert isinstance(data, dict)
 
 
-def test_get_person_filters_product_types_hierarchy(client):
+def test_get_person_filters_product_types_hierarchy(client: FlaskClient) -> None:
     if not person:
         pytest.skip("No hay personas con productos en la base de datos")
 
