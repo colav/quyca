@@ -102,7 +102,7 @@ def parse_works_by_entity(works: list) -> list:
 
 
 def parse_work(work: Work) -> dict:
-    return work.model_dump(exclude_none=True)
+    return dict(work.model_dump(exclude_none=True))
 
 
 def parse_api_expert(works: list) -> list:

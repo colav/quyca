@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from quyca.domain.constants.source_types import (
     NORMALIZED_TYPE_MAPPING,
@@ -9,7 +9,7 @@ from quyca.domain.constants.source_types import (
 from quyca.domain.models.source_model import Source
 
 
-def parse_source(source: Source) -> Dict:
+def parse_source(source: Source) -> dict[str, Any]:
     include: set = {
         "id",
         "updated",
@@ -36,7 +36,7 @@ def parse_source(source: Source) -> Dict:
         "ranking",
         "review_process",
     }
-    return source.model_dump(include=include, exclude_none=True)
+    return dict(source.model_dump(include=include, exclude_none=True))
 
 
 def parse_search_result(sources: List) -> List:

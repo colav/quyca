@@ -119,7 +119,7 @@ def count_works(query_params: QueryParams, base_pipeline: list[dict[str, Any]] |
     is_full_scan = set(query_dict.keys()).issubset(base_params)
 
     if is_full_scan and not base_pipeline:
-        return database["works"].estimated_document_count()
+        return int(database["works"].estimated_document_count())
 
     count_pipeline: list[dict[str, Any]] = list(base_pipeline)
 
@@ -131,4 +131,4 @@ def count_works(query_params: QueryParams, base_pipeline: list[dict[str, Any]] |
     count_pipeline.append({"$count": "total_count"})
 
     result = next(database["works"].aggregate(count_pipeline), {"total_count": 0})
-    return result.get("total_count", 0)
+    return int(result.get("total_count", 0))
