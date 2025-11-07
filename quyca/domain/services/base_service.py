@@ -2,7 +2,7 @@ from typing import Iterator, Union
 from urllib.parse import urlparse
 
 from quyca.domain.constants.external_urls import external_urls_dict
-from quyca.domain.models.base_model import Title, ProductType, ExternalUrl
+from quyca.domain.models.base_model import Title, ProductType, ExternalUrl, Type
 from quyca.domain.models.patent_model import Patent
 from quyca.domain.models.project_model import Project
 from quyca.domain.models.work_model import Work
@@ -32,7 +32,7 @@ def set_product_types(workable: Union[Work, Patent, Project]) -> None:
 
     scienti_levels = {ptype.level for ptype in workable.types or [] if ptype.source == "scienti"}
 
-    def filter_func(product_type: ProductType) -> bool:
+    def filter_func(product_type: Type) -> bool:
         if product_type.source == "minciencias" and product_type.level == 0:
             return False
         if product_type.source == "scienti":
@@ -42,7 +42,7 @@ def set_product_types(workable: Union[Work, Patent, Project]) -> None:
                 return (product_type.level or 0) >= 1
         return True
 
-    types: Iterator[ProductType] = filter(filter_func, workable.types or [])  # type: ignore[arg-type]
+    types: Iterator[Type] = filter(filter_func, workable.types or [])
     product_types: list[ProductType] = [ProductType(name=x.type, source=x.source) for x in types]
     workable.product_types = sorted(product_types, key=order)
 

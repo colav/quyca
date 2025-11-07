@@ -288,8 +288,6 @@ class Title(BaseModel):
 class ProductType(BaseModel):
     name: str | None = None
     source: str | None = None
-    level: int | None = None
-    type: str | None = None
 
 
 class TopicBase(BaseModel):
