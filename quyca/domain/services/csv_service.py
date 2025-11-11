@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Generator
+from typing import Any, Generator
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.models.work_model import Work
+from quyca.domain.models.work_model import BiblioGraphicInfo, Work
 from quyca.infrastructure.repositories import csv_repository
 from quyca.domain.constants.institutions import institutions_list
 from quyca.domain.constants.openalex_types import openalex_types_dict
@@ -14,15 +14,75 @@ from quyca.domain.parsers import work_parser
 def get_works_csv_by_affiliation(affiliation_id: str, query_params: QueryParams, affiliation_type: str) -> str:
     if affiliation_type == "institution":
         affiliation_type = "education"
-    works = csv_repository.get_works_csv_by_affiliation(affiliation_id, query_params, affiliation_type)
+    pipeline_params = get_works_project_pipeline_params()
+    works = csv_repository.get_works_csv_by_affiliation(affiliation_id, query_params, affiliation_type, pipeline_params)
     data = get_csv_data(works)
     return work_parser.parse_csv(data)
 
 
 def get_works_csv_by_person(person_id: str, query_params: QueryParams) -> str:
-    works = csv_repository.get_works_csv_by_person(person_id, query_params)
+    pipeline_params = get_works_project_pipeline_params()
+    works = csv_repository.get_works_csv_by_person(person_id, query_params, pipeline_params)
     data = get_csv_data(works)
     return work_parser.parse_csv(data)
+
+
+def get_works_csv_by_source(source_id: str, query_params: QueryParams) -> str:
+    """
+    Orchestrate the complete CSV generation process for works from a specific source.
+
+    This is the main service function that coordinates the entire workflow:
+    1. Define which fields to retrieve from database (projection)
+    2. Query works from database with filters
+    3. Process and transform raw data for CSV format
+    4. Generate final CSV string
+
+    Args:
+        source_id: Unique identifier of the source (institution, journal, etc.)
+        query_params: Query parameters for filtering and pagination
+
+    Returns:
+        str: Complete CSV file content as string, ready for HTTP response
+    """
+    pipeline_params = get_works_project_pipeline_params()
+    works = csv_repository.get_works_csv_by_source(source_id, query_params, pipeline_params)
+    data = get_csv_data(works)
+    return work_parser.parse_csv(data)
+
+
+def get_works_project_pipeline_params() -> dict:
+    """
+    Define database projection parameters for CSV export.
+
+    Specifies which fields should be retrieved from the database to minimize
+    data transfer and improve query performance. Only fields needed for CSV
+    export are included.
+
+    Returns:
+        dict: Pipeline parameters with 'project' key containing list of field names
+
+    Note:
+        Adding new columns to CSV requires adding corresponding fields here
+    """
+    pipeline_params = {
+        "project": [
+            "external_ids",
+            "authors",
+            "bibliographic_info",
+            "open_access",
+            "citations_count",
+            "subjects",
+            "titles",
+            "types",
+            "source",
+            "groups",
+            "year_published",
+            "ranking",
+            "primary_topic",
+            "doi",
+        ]
+    }
+    return pipeline_params
 
 
 def get_csv_data(works: Generator) -> list:
@@ -132,7 +192,7 @@ def set_csv_citations_count(work: Work) -> None:
 
 
 def set_csv_bibliographic_info(work: Work) -> None:
-    biblio_info = work.bibliographic_info or {}
+    biblio_info: BiblioGraphicInfo | dict[str, Any] = work.bibliographic_info or {}
 
     work.bibtex = getattr(biblio_info, "bibtex", None)
     work.pages = getattr(biblio_info, "pages", None)
@@ -189,6 +249,6 @@ def set_csv_affiliations(work: Work) -> None:
     work.institutions = " | ".join(institutions) or None
     work.departments = " | ".join(departments) or None
     work.faculties = " | ".join(faculties) or None
-    work.groups = " | ".join(groups) or None
+    work.groups_csv = " | ".join(groups) or None
     work.groups_ranking = " | ".join(groups_ranking) or None
     work.countries = " | ".join(countries) or None
