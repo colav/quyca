@@ -11,11 +11,9 @@ from quyca.domain.services import work_service
 from quyca.domain.parsers import work_parser
 
 
-def get_works_csv_by_affiliation(affiliation_id: str, query_params: QueryParams, affiliation_type: str) -> str:
-    if affiliation_type == "institution":
-        affiliation_type = "education"
+def get_works_csv_by_affiliation(affiliation_id: str, query_params: QueryParams) -> str:
     pipeline_params = get_works_project_pipeline_params()
-    works = csv_repository.get_works_csv_by_affiliation(affiliation_id, query_params, affiliation_type, pipeline_params)
+    works = csv_repository.get_works_csv_by_affiliation(affiliation_id, query_params, pipeline_params)
     data = get_csv_data(works)
     return work_parser.parse_csv(data)
 

@@ -20,10 +20,10 @@ def get_works_csv_by_person(person_id: str, query_params: QueryParams, pipeline_
 
 
 def get_works_csv_by_affiliation(
-    affiliation_id: str, query_params: QueryParams, affiliation_type: str, pipeline_params: dict
+    affiliation_id: str, query_params: QueryParams, pipeline_params: dict
 ) -> Generator:
     pipeline: List[Dict[str, Any]] = [
-        {"$match": {"authors.affiliations.id": affiliation_id, "authors.affiliations.types.type": affiliation_type}},
+        {"$match": {"authors.affiliations.id": affiliation_id}},
     ]
     base_repository.set_project(pipeline, pipeline_params.get("project"))
     work_repository.set_product_filters(pipeline, query_params)
