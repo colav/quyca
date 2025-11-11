@@ -19,9 +19,7 @@ def get_works_csv_by_person(person_id: str, query_params: QueryParams, pipeline_
     return work_generator.get(cursor)
 
 
-def get_works_csv_by_affiliation(
-    affiliation_id: str, query_params: QueryParams, pipeline_params: dict
-) -> Generator:
+def get_works_csv_by_affiliation(affiliation_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:
     pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.affiliations.id": affiliation_id}},
     ]
