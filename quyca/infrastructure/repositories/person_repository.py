@@ -1,4 +1,4 @@
-from typing import Generator, Tuple
+from typing import Any, Dict, Generator, List, Tuple
 from bson import ObjectId
 
 from quyca.infrastructure.generators import person_generator
@@ -18,7 +18,7 @@ def get_person_by_id(person_id: str, pipeline_params: dict = {}) -> Person:
 
     match_stage = {"$match": {"$or": [{"_id": person_id}] + ([{"_id_old": old_id}] if old_id else [])}}
 
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         match_stage,
         {
             "$addFields": {
@@ -54,15 +54,15 @@ def get_person_by_id(person_id: str, pipeline_params: dict = {}) -> Person:
 
     base_repository.set_project(pipeline, pipeline_params.get("project"))
 
-    person_data = database["person"].aggregate(pipeline)
-    person_data = next(person_data, None)
+    person_cursor = database["person"].aggregate(pipeline)
+    person_data: Dict[str, Any] | None = next(person_cursor, None)
     if not person_data:
         raise NotEntityException(f"The person with id {person_id} does not exist.")
     return Person(**person_data)
 
 
 def get_persons_by_affiliation(affiliation_id: str) -> Generator:
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"affiliations.id": affiliation_id}},
         {"$sort": {"products_count": -1}},
         {"$project": {"_id": 1, "full_name": 1}},
@@ -74,7 +74,9 @@ def get_persons_by_affiliation(affiliation_id: str) -> Generator:
 def search_persons(query_params: QueryParams, pipeline_params: dict | None = None) -> Tuple[Generator, int]:
     if pipeline_params is None:
         pipeline_params = {}
-    pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    pipeline: List[Dict[str, Any]] = []
+    if query_params.keywords:
+        pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
     pipeline += [
         {
             "$addFields": {
@@ -109,7 +111,10 @@ def search_persons(query_params: QueryParams, pipeline_params: dict | None = Non
     ]
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     persons = database["person"].aggregate(pipeline)
-    count_pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+
+    count_pipeline: List[Dict[str, Any]] = []
+    if query_params.keywords:
+        count_pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
     count_pipeline += [
         {"$count": "total_results"},
     ]

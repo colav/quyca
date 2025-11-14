@@ -28,6 +28,13 @@ def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams, aff
     return build_metadata(works, total_count, query_params, start_time)
 
 
+def get_works_by_source(source_id: str, query_params: QueryParams) -> dict:
+    start_time = time.time()
+    works = api_expert_repository.get_works_by_source_for_api_expert(source_id, query_params)
+    total_count = api_expert_repository.count_works_by_source_for_api_expert(source_id, query_params)
+    return build_metadata(works, total_count, query_params, start_time)
+
+
 def search_works(query_params: QueryParams) -> dict:
     start_time = time.time()
     works = api_expert_repository.search_works_for_api_expert(query_params)

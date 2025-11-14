@@ -19,7 +19,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
       - name: Install Poetry
         run: curl -sSL https://install.python-poetry.org | python3 -
       - name: Add Poetry to PATH
@@ -32,8 +32,8 @@ jobs:
           poetry run autoflake --in-place --recursive \
           --remove-unused-variables --remove-all-unused-imports \
           --remove-duplicate-keys --ignore-init-module-import --check .
-#      - name: Run static analyzer
-#        run: poetry run mypy ./quyca/
+      - name: Run static analyzer
+        run: poetry run mypy ./quyca/
 
   deploy-dev:
     needs: [tests]

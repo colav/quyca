@@ -1,6 +1,6 @@
 import csv
 import io
-from typing import Tuple
+from typing import Any, Generator, Iterable, Tuple
 
 from flask import Blueprint, request, jsonify, Response
 from sentry_sdk import capture_exception
@@ -15,7 +15,9 @@ apc_api_router = Blueprint("apc_api_router", __name__)
 def apc_search() -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+        pipeline: list[dict[str, Any]] = []
+        if query_params.keywords:
+            pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}]
         pipeline += [
             {
                 "$project": {
@@ -137,7 +139,7 @@ def apc_affiliation(affiliation_id: str) -> Response | Tuple[Response, int]:
             "work_apc_currency",
         ]
 
-        def generate_csv(cursor, fieldnames):
+        def generate_csv(cursor: Iterable[Any], fieldnames: list[str]) -> Generator[str, None, None]:
             yield ",".join(fieldnames) + "\n"
             for doc in cursor:
                 row = {field: doc.get(field, "") for field in fieldnames}
