@@ -75,7 +75,7 @@ def get_affiliation_affiliations(affiliation_type: str, affiliation_id: str) -> 
 
 
 @affiliation_app_router.route("/<affiliation_type>/<affiliation_id>/research/products", methods=["GET"])
-def get_affiliation_research_products(affiliation_id: str, affiliation_type: str) -> Response | Tuple[Response, int]:
+def get_affiliation_research_products(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
         if query_params.plot:
@@ -102,7 +102,7 @@ def get_affiliation_research_products(affiliation_id: str, affiliation_type: str
 
 @affiliation_app_router.route("/<affiliation_type>/<affiliation_id>/research/products/filters", methods=["GET"])
 def get_affiliation_research_products_filters(
-    affiliation_id: str, affiliation_type: str
+    affiliation_type: str, affiliation_id: str
 ) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
@@ -129,7 +129,7 @@ def get_affiliation_research_products_filters(
 def get_works_csv_by_affiliation(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        data = csv_service.get_works_csv_by_affiliation(affiliation_id, query_params, affiliation_type)
+        data = csv_service.get_works_csv_by_affiliation(affiliation_id, query_params)
         response = Response(data, content_type="text/csv")
         response.headers["Content-Disposition"] = "attachment; filename=affiliation.csv"
         return response
