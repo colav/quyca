@@ -2,10 +2,12 @@ from application.usecases.process_staff_file import ProcessStaffFileUseCase
 from application.usecases.save_staff_file import SaveStaffFileUseCase
 from infrastructure.repositories.user_repository import UserRepositoryMongo
 
-"""Validates a users JWT token and returns the associated data (ror_id, institution)"""
-
 
 class StaffService:
+    """
+    Application service orchestrating Staff upload flow (auth → process → persist).
+    """
+
     def __init__(
         self,
         process_usecase: ProcessStaffFileUseCase,
@@ -15,6 +17,10 @@ class StaffService:
         self.process_usecase = process_usecase
         self.save_usecase = save_usecase
         self.user_repo = user_repo
+
+        """
+        Validates token, processes DataFrame, emails report, saves file, returns HTTP tuple.
+        """
 
     def handle_staff_upload(self, file, claims, token: str, upload_date: str) -> tuple[dict, int]:
         email = claims.get("sub")

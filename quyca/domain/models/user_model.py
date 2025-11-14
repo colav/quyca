@@ -1,5 +1,9 @@
 from pydantic import BaseModel
 
+"""
+Auth user model used across services (JWT + persistence).
+"""
+
 
 class User(BaseModel):
     email: str

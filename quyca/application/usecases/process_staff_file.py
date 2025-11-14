@@ -1,3 +1,4 @@
+import os
 import io
 import base64
 import pandas as pd
@@ -7,21 +8,35 @@ from infrastructure.notifications.staff_notification import StaffNotification
 
 
 class ProcessStaffFileUseCase:
+    """
+    Use case: validate, report and notify for Staff Excel uploads.
+    """
+
     def __init__(self, report_service: StaffReportService, notification_service: StaffNotification):
         self.report_service = report_service
         self.notification_service = notification_service
 
     """
-    Use case: process a staff Excel file.
+    Reads Excel, validates schema/data, generates attachments, sends email, returns summary.
     """
 
     def execute(
         self, file: io.BytesIO, institution: str, filename: str, upload_date: str, user: str, email: str
     ) -> dict:
-        df = pd.read_excel(file)
-
+        extension = os.path.splitext(filename)[1].lower()
+        if extension != ".xlsx":
+            return {
+                "success": False,
+                "msg": f"Formato de archivo no permitido ({extension}). Solo se admiten archivos .xlsx.",
+            }
+        try:
+            df = pd.read_excel(file, engine="openpyxl")
+        except Exception as e:
+            return {
+                "success": False,
+                "msg": f"Error al leer el archivo Excel: {str(e)}",
+            }
         valid, errores_columnas, _ = StaffValidator.validate_columns(df)
-
         if not valid:
             return {
                 "success": False,

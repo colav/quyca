@@ -10,9 +10,16 @@ from googleapiclient.errors import HttpError
 from google.auth.transport.requests import Request
 from flask import current_app
 
+"""
+Gmail API repository to send HTML emails with attachments.
+"""
+
 
 class GmailRepository:
     SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
+    """
+    Loads pickled credentials from config, validates scopes and builds service client.
+    """
 
     def __init__(self):
         credentials_path = current_app.config.get("GOOGLE_CREDENTIALS")

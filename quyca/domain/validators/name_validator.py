@@ -6,8 +6,9 @@ NAME_RE = re.compile(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' \-]+$")
 
 
 class NameValidator:
-    """Validates name-related fields (first name, last names).
-    Ensures that only allowed characters are present."""
+    """
+    Validates human names (letters, spaces, accents, apostrophes, hyphens).
+    """
 
     @staticmethod
     def validate(row: dict, index: int) -> List[Dict[str, Any]]:
