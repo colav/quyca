@@ -44,6 +44,7 @@ pytest-asyncio = "^0.20.3"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 ignore_missing_imports = true
+pass_filenames = true
 warn_return_any = true
 warn_unused_ignores = true
 warn_redundant_casts = true
