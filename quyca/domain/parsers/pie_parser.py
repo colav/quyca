@@ -48,7 +48,8 @@ def parse_apc_expenses_by_affiliations(data: CommandCursor) -> list:
         if apc_currency not in available_currencies:
             continue
         usd_charges = currency_converter.convert(apc_charges, apc_currency, "USD")
-        result[item.get("names", [{"name": "No name"}])[0].get("name")] += int(usd_charges)
+        name = item.get("name", "No name")
+        result[name] += int(usd_charges)
 
     return sorted([{"name": n, "value": v} for n, v in result.items()], key=lambda x: x["value"], reverse=True)
 
