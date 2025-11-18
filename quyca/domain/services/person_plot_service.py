@@ -111,7 +111,7 @@ def plot_products_by_subject(person_id: str, query_params: QueryParams) -> dict:
 
 
 def plot_products_by_database(person_id: str, query_params: QueryParams) -> dict:
-    data = plot_repository.get_products_by_database_by_person(person_id)
+    data = plot_repository.get_products_by_database_by_person(person_id, query_params)
     return venn_parser.parse_products_by_database(data)
 
 
