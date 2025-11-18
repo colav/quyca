@@ -83,7 +83,6 @@ class Affiliation(BaseModel):
     logo: str | None = None
     affiliations: list[dict | Relation] | None = None
     relations_data: list[Relation] | None = None
-    works: list[Work] | None = None
 
     @field_validator("names", mode="before")
     @classmethod

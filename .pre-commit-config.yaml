@@ -4,6 +4,7 @@ repos:
     hooks:
       - id: mypy
         args: ["--ignore-missing-imports"]
+        files: ^quyca/
 
   - repo: https://github.com/psf/black
     rev: 24.4.2
