@@ -2,8 +2,8 @@ repos:
   - repo: local
     hooks:
       - id: mypy
-        name: mypy local (via poetry)
-        entry: poetry run mypy
+        name: Run mypy local (via poetry)
+        entry: poetry run mypy quyca/
         language: system
         types: [python]
 
