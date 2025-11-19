@@ -32,7 +32,7 @@ jobs:
           poetry run autoflake --in-place --recursive \
           --remove-unused-variables --remove-all-unused-imports \
           --remove-duplicate-keys --ignore-init-module-import --check .
-      - name: Run static analyzer
+      - name: Run mypy static analyzer
         run: poetry run mypy ./quyca/
 
   deploy-dev:
