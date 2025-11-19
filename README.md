@@ -54,7 +54,7 @@ Then install the hook in `.pre-commit-config.yaml` in your local repo, using:
 pre-commit install
 ```
 
-And then you have it.
+And then you have it. But it is **important that you have poetry, pre-commit and pre-commit hook installed.**
 
 ## Data
 
