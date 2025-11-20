@@ -4,6 +4,7 @@ from typing import Optional
 
 
 from quyca.domain.models.base_model import (
+    CitationsCount,
     Type,
     Updated,
     ExternalId,
@@ -40,8 +41,11 @@ class Source(BaseModel):
     id: PyObjectId = Field(alias="_id")
     abbreviations: list[str] | None = None
     addresses: list | None = None
+    affiliation_names: list[Name] | None = None
     apc: APC | None = None
+    citations_count: list[CitationsCount] | None = None
     copyright: Copyright | None = None
+    date_published: str | int | None = None
     external_ids: list[ExternalId] | None = None
     external_urls: list[ExternalUrl] | None = None
     keywords: list[str] | None = None
@@ -50,6 +54,7 @@ class Source(BaseModel):
     names: list[Name] | None = None
     open_access_start_year: int | None = None
     plagiarism_detection: bool | None = None
+    products_count: int | None = None
     publication_time_weeks: int | None = None
     publisher: Publisher | str | None = None
     ranking: list[Ranking] | None = None
@@ -60,9 +65,6 @@ class Source(BaseModel):
     types: list[Type] | None = None
     updated: list[Updated] | None = None
     waiver: Waiver | None = None
-
-    date_published: str | int | None = None
-    affiliation_names: list[Name] | None = None
 
     class Config:
         json_encoders = {ObjectId: str}

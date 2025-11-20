@@ -1,4 +1,5 @@
 from typing import Any, Generator
+from bson import ObjectId
 
 from quyca.infrastructure.generators import work_generator
 from quyca.domain.models.base_model import QueryParams
@@ -28,6 +29,15 @@ def get_works_by_person_for_api_expert(
     if pipeline_params is None:
         pipeline_params = {}
     pipeline = [{"$match": {"authors.id": person_id}}]
+    return get_works_for_api_expert(pipeline, pipeline_params, query_params)
+
+
+def get_works_by_source_for_api_expert(
+    source_id: str, query_params: QueryParams, pipeline_params: dict | None = None
+) -> Generator:
+    if pipeline_params is None:
+        pipeline_params = {}
+    pipeline = [{"$match": {"source.id": ObjectId(source_id)}}]
     return get_works_for_api_expert(pipeline, pipeline_params, query_params)
 
 
@@ -88,6 +98,11 @@ def count_works_by_person_for_api_expert(person_id: str, query_params: QueryPara
     return count_works(query_params, base_pipeline)
 
 
+def count_works_by_source_for_api_expert(source_id: str, query_params: QueryParams) -> int:
+    base_pipeline = [{"$match": {"source.id": ObjectId(source_id)}}]
+    return count_works(query_params, base_pipeline)
+
+
 def count_works_by_affiliation_for_api_expert(
     affiliation_id: str, query_params: QueryParams, affiliation_type: str
 ) -> int:
@@ -104,7 +119,7 @@ def count_works(query_params: QueryParams, base_pipeline: list[dict[str, Any]] |
     is_full_scan = set(query_dict.keys()).issubset(base_params)
 
     if is_full_scan and not base_pipeline:
-        return database["works"].estimated_document_count()
+        return int(database["works"].estimated_document_count())
 
     count_pipeline: list[dict[str, Any]] = list(base_pipeline)
 
@@ -116,4 +131,4 @@ def count_works(query_params: QueryParams, base_pipeline: list[dict[str, Any]] |
     count_pipeline.append({"$count": "total_count"})
 
     result = next(database["works"].aggregate(count_pipeline), {"total_count": 0})
-    return result.get("total_count", 0)
+    return int(result.get("total_count", 0))

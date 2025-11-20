@@ -1,3 +1,5 @@
+# mypy: disable-error-code=call-arg
+
 import os
 from typing import Optional
 from typing_extensions import Self
@@ -72,4 +74,4 @@ class Settings(BaseSettings):
         return self
 
 
-settings: Settings = Settings()  # type: ignore
+settings: Settings = Settings()
