@@ -4,17 +4,20 @@ from domain.models.user_model import User
 
 class IUserRepository(ABC):
     """
-    Repository adapter to check auth tokens stored in MongoDB.
+    Interface for auth repository (login, token operations).
     """
 
     @abstractmethod
     def get_by_email_and_pass(self, email: str, password: str) -> User:
+        """Fetches a user by email and password hash for login."""
         pass
 
     @abstractmethod
-    def update_token(self, emaail: str, token: str) -> None:
+    def update_token(self, email: str, token: str) -> None:
+        """Persists the latest JWT token for the user."""
         pass
 
     @abstractmethod
     def remove_token(self, email: str, token: str) -> bool:
+        """Invalidates a stored JWT token for the user."""
         pass

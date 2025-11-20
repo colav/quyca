@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from sentry_sdk import capture_exception
-
+from domain.exceptions.not_entity_exception import NotEntityException
 from domain.services import auth_service
 from infrastructure.repositories.user_repository import UserRepositoryMongo
 
@@ -12,20 +12,20 @@ user_auth_app_router = Blueprint("user_auth_app_router", __name__)
 @apiGroup Autenticación
 @apiVersion 1.0.0
 @apiDescription Permite autenticar un usuario con su correo y contraseña.
-Si las credenciales son válidas, retorna un token JWT junto con el rol del usuario.
+Si las credenciales son válidas, retorna un token JWT junto con el role del usuario.
 
 @apiBody {String} email Correo del usuario.
 @apiBody {String} password Contraseña del usuario.
 
 @apiSuccess {Boolean} success Indica si la autenticación fue exitosa.
-@apiSuccess {String} rolID Número id asociado a la entidad.
+@apiSuccess {String} rorID Número id asociado a la entidad.
 @apiSuccess {String} access_token Token JWT generado.
 
 @apiSuccessExample {json} Respuesta exitosa:
 HTTP/1.1 200 OK
 {
     "success": true,
-    "rolID": "admin",
+    "rorID": "admin",
     "access_token": "eyJhbGciOiJIUzI1NiIsInR..."
 }
 
@@ -59,9 +59,11 @@ def login():
 
         repo = UserRepositoryMongo()
         result = auth_service.authenticate_user(email, password, repo)
-        success = result.get("success")
-        status_code = 200 if success else 401
-        return jsonify(result), status_code
+        return jsonify(result), 200
+    except NotEntityException as e:
+        msg = str(e)
+        status = 403 if "desactivada" in msg.lower() else 401
+        return jsonify({"success": False, "msg": msg}), status
     except Exception as e:
         capture_exception(e)
         return jsonify({"success": False, "msg": str(e)}), 500
