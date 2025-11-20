@@ -1,5 +1,6 @@
 from typing import Any, Dict, Generator, List, Tuple
 
+from bson import ObjectId
 from pymongo.command_cursor import CommandCursor
 
 from quyca.domain.models.base_model import QueryParams
@@ -550,6 +551,23 @@ def get_works_rankings_by_person(person_id: str, query_params: QueryParams) -> T
 
     works = database["works"].aggregate(pipeline)
     return work_generator.get(works), total_results
+
+
+def get_annual_scimago_quartile_by_source(source_id: str) -> CommandCursor:
+    pipeline: List[Dict[str, Any]] = [
+        {"$match": {"_id": ObjectId(source_id)}},
+        {"$project": {"ranking.from_date": 1, "ranking.rank": 1, "ranking.source": 1}},
+        {"$unwind": "$ranking"},
+        {"$match": {"ranking.source": {"$in": ["scimago Best Quartile", "Scimago Best Quartile"]}}},
+        {
+            "$project": {
+                "year": {"$year": {"$toDate": {"$multiply": ["$ranking.from_date", 1000]}}},
+                "quartile": "$ranking.rank",
+            }
+        },
+        {"$sort": {"year": 1}},
+    ]
+    return database["sources"].aggregate(pipeline)
 
 
 def get_products_by_database_by_affiliation(affiliation_id: str, query_params: QueryParams) -> dict:

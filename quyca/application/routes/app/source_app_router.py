@@ -3,7 +3,7 @@ from flask import Blueprint, Response, jsonify, request
 from sentry_sdk import capture_exception
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.services import csv_service, source_service, work_service
+from quyca.domain.services import csv_service, source_plot_service, source_service, work_service
 
 
 source_app_router = Blueprint("source_app_router", __name__)
@@ -291,8 +291,9 @@ HTTP/1.1 200 OK
 def get_source_products(source_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        # Here goes the plots for source
-
+        if query_params.plot:
+            data = source_plot_service.get_source_products_plot(source_id, query_params)
+            return jsonify(data)
         data = work_service.get_works_by_source(source_id, query_params)
         return jsonify(data)
     except Exception as e:
