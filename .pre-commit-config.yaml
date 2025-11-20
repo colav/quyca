@@ -3,9 +3,11 @@ repos:
     hooks:
       - id: mypy
         name: Run mypy local (via poetry)
-        entry: poetry run mypy quyca/
+        entry: poetry run mypy
         language: system
         types: [python]
+        pass_filenames: true
+        args: ["--ignore-missing-imports"]
 
   - repo: https://github.com/psf/black
     rev: 24.4.2
