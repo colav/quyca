@@ -17,7 +17,7 @@ def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams, aff
     start_time = time.time()
 
     if affiliation_type == "institution":
-        affiliation_type = "education"
+        affiliation_type = "Education"
 
     works = api_expert_repository.get_works_by_affiliation_for_api_expert(
         affiliation_id, query_params, affiliation_type
