@@ -160,6 +160,7 @@ def search_sources() -> Response | Tuple[Response, int]:
         data = source_service.search_sources(query_params)
         return jsonify(data), 200
     except Exception as e:
+        capture_exception(e)
         return jsonify({"error": str(e)}), 400
 
 
@@ -180,4 +181,5 @@ def get_search_sources_filters() -> Response | Tuple[Response, int]:
         data = source_service.get_search_sources_available_filters(query_params)
         return jsonify(data), 200
     except Exception as e:
+        capture_exception(e)
         return jsonify({"error": str(e)}), 400
