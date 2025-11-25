@@ -5,6 +5,7 @@ from typing import Optional
 
 from quyca.domain.models.base_model import (
     CitationsCount,
+    Topic,
     Type,
     Updated,
     ExternalId,
@@ -62,6 +63,7 @@ class Source(BaseModel):
     review_process: list[str] | None = None
     review_processes: list | None = None
     subjects: list[Subject] | None = None
+    topics: list[Topic] | None = None
     types: list[Type] | None = None
     updated: list[Updated] | None = None
     waiver: Waiver | None = None

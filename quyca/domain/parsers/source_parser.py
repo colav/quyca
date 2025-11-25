@@ -35,6 +35,7 @@ def parse_source(source: Source) -> dict[str, Any]:
         "subjects",
         "ranking",
         "review_process",
+        "topics",
     }
     return dict(source.model_dump(include=include, exclude_none=True))
 
@@ -78,6 +79,7 @@ def parse_search_result(sources: List) -> List:
         "subjects",
         "ranking",
         "review_process",
+        "topics",
     ]
 
     return [

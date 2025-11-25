@@ -25,9 +25,38 @@ def get_source_by_id(source_id: str) -> Source:
     NotEntityException
         If no source with the given source_id exists in the database.
     """
-    source_data = database["sources"].find_one({"_id": ObjectId(source_id)})
+    source_object_id = ObjectId(source_id)
+    source_data = database["sources"].find_one({"_id": source_object_id})
     if not source_data:
         raise NotEntityException(f"The source with id {source_id} does not exist.")
+
+    works_count = database["works"].count_documents({"source.id": source_object_id})
+    if works_count == 0:
+        source_data["topics"] = []
+        return Source(**source_data)
+
+    topics_limit = works_count * 0.02
+    pipeline = [
+        {"$match": {"source.id": source_object_id}},
+        {"$project": {"_id": 0, "primary_topic": 1}},
+        {"$match": {"primary_topic": {"$exists": True, "$ne": None}}},
+        {"$group": {"_id": "$primary_topic.id", "count": {"$sum": 1}, "topic": {"$first": "$primary_topic"}}},
+        {"$match": {"count": {"$gte": topics_limit}}},
+        {
+            "$project": {
+                "_id": 0,
+                "id": "$topic.id",
+                "display_name": "$topic.display_name",
+                "subfield": "$topic.subfield",
+                "field": "$topic.field",
+                "domain": "$topic.domain",
+            }
+        },
+    ]
+
+    topics = list(database["works"].aggregate(pipeline))
+    source_data["topics"] = topics
+
     return Source(**source_data)
 
 
@@ -50,7 +79,34 @@ def search_sources(query_params: QueryParams, pipeline_params: dict) -> Tuple[Ge
         pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
     set_source_filters(pipeline, query_params)
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
-    sources = database["sources"].aggregate(pipeline)
+    raw_sources = database["sources"].aggregate(pipeline)
+
+    # Topics for each source
+    sources = [Source(**source) for source in raw_sources]
+    for source in sources:
+        s_id = ObjectId(source.id)
+        works_count = database["works"].count_documents({"source.id": s_id})
+        if works_count == 0:
+            source.topics = []
+            continue
+        topics_limit = works_count * 0.02
+        topic_pipeline = [
+            {"$match": {"source.id": s_id, "primary_topic": {"$exists": True, "$ne": None}}},
+            {"$project": {"_id": 0, "primary_topic": 1}},
+            {"$group": {"_id": "$primary_topic.id", "count": {"$sum": 1}, "topic": {"$first": "$primary_topic"}}},
+            {"$match": {"count": {"$gte": topics_limit}}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": "$topic.id",
+                    "display_name": "$topic.display_name",
+                    "subfield": "$topic.subfield",
+                    "field": "$topic.field",
+                    "domain": "$topic.domain",
+                }
+            },
+        ]
+        source.topics = list(database["works"].aggregate(topic_pipeline))
 
     count_pipeline: list[dict[str, Any]] = []
     if query_params.keywords:
@@ -59,7 +115,7 @@ def search_sources(query_params: QueryParams, pipeline_params: dict) -> Tuple[Ge
 
     count_pipeline += [{"$count": "total_results"}]
     total_results = next(database["sources"].aggregate(count_pipeline), {"total_results": 0})["total_results"]
-    return source_generator.get(sources), total_results
+    return source_generator.generate_sources(sources), total_results
 
 
 def get_search_sources_available_filters(query_params: QueryParams) -> dict:
