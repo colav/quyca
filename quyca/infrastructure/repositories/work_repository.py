@@ -431,3 +431,29 @@ def set_authors_ranking_filters(pipeline: list, authors_ranking: str | None) -> 
 
     rankings = [r.strip() for r in authors_ranking.split(",") if r.strip()]
     pipeline.append({"$match": {"authors": {"$elemMatch": {"ranking": {"$elemMatch": {"rank": {"$in": rankings}}}}}}})
+
+
+def set_authors_filter_if_large(pipeline: list) -> None:
+    """
+    Filter authors ONLY when author_count > 50.
+    Keep only authors whose id has exactly 10 numeric digits (Colombian)
+    """
+    pipeline.append(
+        {
+            "$addFields": {
+                "authors": {
+                    "$cond": [
+                        {"$gt": ["$author_count", 50]},
+                        {
+                            "$filter": {
+                                "input": "$authors",
+                                "as": "a",
+                                "cond": {"$regexMatch": {"input": {"$toString": "$$a.id"}, "regex": "^[0-9]{10}$"}},
+                            }
+                        },
+                        "$authors",
+                    ]
+                }
+            }
+        }
+    )

@@ -57,6 +57,7 @@ def get_works_for_api_expert(pipeline: list, pipeline_params: dict, query_params
     if query_params.page and query_params.limit:
         base_repository.set_pagination(pipeline, query_params)
 
+    work_repository.set_authors_filter_if_large(pipeline)
     pipeline += [
         {
             "$project": {
