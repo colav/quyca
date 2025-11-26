@@ -2,9 +2,9 @@ import pandas as pd
 from domain.models.staff_report_model import StaffReport
 
 
-class StaffAnnotator:
+class Annotator:
     """
-    Infrastructure annotator: enriches the DataFrame with validation states and observations.
+    Adds validation state/notes to the DataFrame for Excel export.
     """
 
     @staticmethod
