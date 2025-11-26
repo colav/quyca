@@ -8,6 +8,7 @@ from domain.repositories.user_repository_interface import IUserRepository
 MongoDB repository for login + token management.
 """
 
+
 class UserRepositoryMongo(IUserRepository):
     def __init__(self):
         """Initializes Mongo collection handle."""
@@ -17,8 +18,10 @@ class UserRepositoryMongo(IUserRepository):
         """Validates credentials and returns a user or raises error."""
         email = email.strip().lower()
         password_hash = hashlib.md5(password.encode("utf-8")).hexdigest()
-        
-        user_data = self.collection.find_one({"email": email.strip().lower(), "password": password_hash}, {"password": 0})
+
+        user_data = self.collection.find_one(
+            {"email": email.strip().lower(), "password": password_hash}, {"password": 0}
+        )
         if not user_data:
             raise NotEntityException(f"Usuario con correo {email} no encontrado o contraseño no conciden")
         return User(
@@ -28,7 +31,7 @@ class UserRepositoryMongo(IUserRepository):
             rol=user_data["rol"],
             token=user_data.get("token"),
             is_active=user_data.get("is_active", True),
-            apikey=user_data.get("apikey")
+            apikey=user_data.get("apikey"),
         )
 
     def update_token(self, email: str, token: str):

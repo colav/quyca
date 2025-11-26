@@ -40,14 +40,13 @@ class StaffNotification:
         )
 
         return self.gmail_repo.send_email(to_email=email, subject=subject, body_html=body_html, attachments=attachments)
-    
+
     def send_custom_email(self, subject: str, rol: str, institution: str, email: str, password: str) -> dict:
         """
         Sends a plain custom email — used for user account notifications.
         """
 
-        body_html = (
-            f"""
+        body_html = f"""
             <html>
                 <body style='font-family: Arial, sans-serif; line-height: 1.6;'>
                     <p>Estimado(a) <b>{rol}</b> – {institution},</p>
@@ -75,7 +74,6 @@ class StaffNotification:
                 </body>
             </html>
             """
-        )
 
         return self.gmail_repo.send_email(
             to_email=email,
@@ -83,13 +81,12 @@ class StaffNotification:
             body_html=body_html,
             attachments=[],
         )
-        
+
     def send_email_change_password(self, email: str, subject: str, password: str) -> dict:
         """
         Send a simple email — used for password change notifications.
         """
-        body_html = (
-        f"""
+        body_html = f"""
         <html>
             <body>
                 <p><b><span style="color:#39658c;">Impact</span><span style="color:#f6a611;">U</span></b> te informa que tu contraseña ha sido restablecida por el administrador.</p>
@@ -103,8 +100,7 @@ class StaffNotification:
             </body>
         </html>
         """
-        )
-        
+
         return self.gmail_repo.send_email(
             to_email=email,
             subject=subject,
