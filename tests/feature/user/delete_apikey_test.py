@@ -25,7 +25,6 @@ def test_delete_apikey_wrong_user(client):
 def test_delete_apikey_user_not_found(client):
     usecase_mock = Mock()
     usecase_mock.delete_apikey.side_effect = NotEntityException("Usuario test@test.com no encontrado")
-
     with patch(f"{ROUTER}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER}.get_jwt_identity", return_value="test@test.com"
     ), patch(f"{ROUTER}.usecase", usecase_mock):
@@ -36,7 +35,6 @@ def test_delete_apikey_user_not_found(client):
 def test_delete_apikey_success(client):
     usecase_mock = Mock()
     usecase_mock.delete_apikey.return_value = {"success": True, "msg": "API key eliminada correctamente"}
-
     with patch(f"{ROUTER}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER}.get_jwt_identity", return_value="test@test.com"
     ), patch(f"{ROUTER}.usecase", usecase_mock):
