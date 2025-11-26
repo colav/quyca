@@ -2,6 +2,7 @@
 from unittest.mock import Mock, patch
 
 ROUTER_MOD = "application.routes.app.user_crud_app_router"
+
 def _admin_headers():
     return {"Authorization": "Bearer fake.jwt.token"}
 def test_list_users_no_token(client):
@@ -18,7 +19,6 @@ def test_list_users_non_admin(client):
 def test_list_users_success(client):
     usecase_mock = Mock()
     usecase_mock.get_all_users.return_value = [{"email": "a@a.com", "rol": "staff"}]
-
     with patch(f"{ROUTER_MOD}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER_MOD}.get_jwt", return_value={"rol": "admin"}
     ), patch(f"{ROUTER_MOD}.usecase", usecase_mock):
