@@ -17,7 +17,6 @@ def test_toggle_status_non_admin(client):
     with patch(f"{ROUTER_MOD}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER_MOD}.get_jwt", return_value={"rol": "staff"}
     ):
-
         resp = client.patch("/app/admin/users/x@x.com/restore", headers=_admin_headers())
         assert resp.status_code == 403
 
@@ -29,7 +28,6 @@ def test_toggle_status_success(client):
     with patch(f"{ROUTER_MOD}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER_MOD}.get_jwt", return_value={"rol": "admin"}
     ), patch(f"{ROUTER_MOD}.usecase", usecase_mock):
-
         resp = client.patch("/app/admin/users/x@x.com/restore", headers=_admin_headers())
         assert resp.status_code == 200
         assert resp.json["success"] is True

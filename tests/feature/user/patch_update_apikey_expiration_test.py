@@ -17,7 +17,6 @@ def test_update_apikey_exp_wrong_user(client):
     with patch(f"{ROUTER}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER}.get_jwt_identity", return_value="other@test.com"
     ):
-
         resp = client.patch("/app/users/test@test.com/apikey", json={"expires": 9999999999}, headers=_headers())
 
         assert resp.status_code == 403
@@ -30,7 +29,6 @@ def test_update_apikey_exp_invalid_timestamp(client):
     with patch(f"{ROUTER}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER}.get_jwt_identity", return_value="test@test.com"
     ), patch(f"{ROUTER}.usecase", usecase_mock):
-
         resp = client.patch("/app/users/test@test.com/apikey", json={"expires": 100}, headers=_headers())
 
         assert resp.status_code == 400
@@ -43,7 +41,6 @@ def test_update_apikey_exp_success(client):
     with patch(f"{ROUTER}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER}.get_jwt_identity", return_value="test@test.com"
     ), patch(f"{ROUTER}.usecase", usecase_mock):
-
         resp = client.patch("/app/users/test@test.com/apikey", json={"expires": 1900000000}, headers=_headers())
 
         assert resp.status_code == 200
