@@ -18,15 +18,17 @@ class UserRepositoryMongo(IUserRepository):
         email = email.strip().lower()
         password_hash = hashlib.md5(password.encode("utf-8")).hexdigest()
         
-        user_data = self.collection.find_one({"email": email.strip().lower(), "password": password_hash}, {"password": 0, "token": 0})
+        user_data = self.collection.find_one({"email": email.strip().lower(), "password": password_hash}, {"password": 0})
         if not user_data:
             raise NotEntityException(f"Usuario con correo {email} no encontrado o contraseño no conciden")
         return User(
+            id=str(user_data["_id"]),
             email=user_data["email"],
             institution=user_data["institution"],
-            ror_id=user_data["ror_id"],
             rol=user_data["rol"],
-            is_active=user_data.get("is_active", True)
+            token=user_data.get("token"),
+            is_active=user_data.get("is_active", True),
+            apikey=user_data.get("apikey")
         )
 
     def update_token(self, email: str, token: str):

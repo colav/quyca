@@ -19,7 +19,7 @@ def authenticate_user(email: str, password: str, repo: IUserRepository) -> dict:
     parse_user = user_ror_id_and_institution(user)
 
     additional_claims = {
-        "ror_id": parse_user["ror_id"],
+        "_id": parse_user["_id"],
         "institution": parse_user["institution"],
         "rol": parse_user["rol"],
     }

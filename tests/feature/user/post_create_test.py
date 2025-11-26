@@ -1,5 +1,5 @@
 # tests/user_crud/post_create_test.py
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, ANY
 
 ROUTER_MOD = "application.routes.app.user_crud_app_router"
 
@@ -54,7 +54,7 @@ def test_create_user_success(client):
         assert resp.status_code == 201
         assert resp.json["success"] is True
         assert "Usuario" in resp.json["msg"]
-        usecase_mock.create_user.assert_called_once_with("ok@udea.edu.co", "UdeA", "R100", "staff")
+        usecase_mock.create_user.assert_called_once_with("ok@udea.edu.co", "UdeA", "R100", "staff", ANY)
 
 
 """
@@ -78,4 +78,4 @@ def test_create_user_conflict(client):
         assert resp.status_code == 409
         assert resp.json["success"] is False
         assert "ya existe" in resp.json["msg"].lower()
-        usecase_mock.create_user.assert_called_once_with("dup@udea.edu.co", "UdeA", "R001", "staff")
+        usecase_mock.create_user.assert_called_once_with("dup@udea.edu.co", "UdeA", "R001", "staff", ANY)

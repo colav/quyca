@@ -1,6 +1,5 @@
 import hashlib
-import random
-import string
+import string, random, time
 from typing import List
 from domain.models.user_model import User
 from domain.repositories.user_crud_repository_interface import IUserCrudRepository
@@ -21,6 +20,10 @@ class UserCrudService:
         """Creates a random alphanumeric password."""
         characters = string.ascii_letters + string.digits
         return "".join(random.choice(characters) for _ in range(length))
+    
+    def _generate_apikey_id(self, length: int = 10) -> str:
+        chars = string.ascii_letters + string.digits
+        return ''.join(random.choice(chars) for _ in range(length))
     
     def _encrypt_md5(self, password: str) -> str:
         """Hashes a password with MD5 (legacy compatibility)."""
@@ -56,6 +59,22 @@ class UserCrudService:
         if extra:
             raise NotEntityException("Sobran: "+ ", ".join(sorted(extra)))
     
+    def _validate_apikey_expiration(self, expires):
+        """Validates that the API key expiration is a future timestamp and at least 1 day ahead."""
+        if expires is None:
+            return
+        
+        if not isinstance(expires, int):
+            raise NotEntityException("El campo 'expires' debe ser un timestamp enter o None")
+        
+        current = int(time.time())
+        
+        if expires <= current:
+            raise NotEntityException("La ficha de expiración debe ser futura")
+        
+        if expires - current < 86400:
+            raise NotEntityException("La expiración mínima del API key es de 1 día")
+    
     def create_user(self, email: str, institution: str, ror_id: str, rol: str, raw_payload: dict = None) -> dict:
         """
         Creates a user, validates payload strictly, enforces ROR uniqueness,
@@ -80,13 +99,14 @@ class UserCrudService:
         hashed_password = self._encrypt_md5(raw_password)
         
         user = User(
+            id=ror_id,  
             email=email.strip().lower(),
             password=hashed_password,
             institution=institution.strip(),
-            ror_id=ror_id,
             rol=rol.strip(),
             token="",
-            is_active=True
+            is_active=True,
+            apikey=None
         )
         
         self.user_repo.create(user)
@@ -105,7 +125,7 @@ class UserCrudService:
             {
                 "email": u.email,
                 "institucion": u.institution,
-                "ror_id": u.ror_id,
+                "id": u.id,
                 "rol": u.rol,
                 "is_active": u.is_active
             }
@@ -113,11 +133,13 @@ class UserCrudService:
         ]
         
     def deactivate_user(self, email: str) -> dict:
+        """Disables a user account by setting its 'is_active' flag to False."""
         self.user_repo.deactivate(email)
         return {"success": True, "msg": f"El usuario {email} ha sido desactivado."}
 
 
     def activate_user(self, email: str) -> dict:
+        """Reactivates a user account by setting its 'is_active' flag to True."""
         self.user_repo.activate(email)
         return {"success": True, "msg": f"El usuario {email} ha sido activado."}
     
@@ -197,3 +219,32 @@ class UserCrudService:
             )
 
             return {"success": True, "msg": msg}
+        
+    def regenerate_apikey(self, email: str, expires: int | None):
+        """
+        Generates a new API key for the user, after validating expiration rules,
+        and stores it in the database.
+        """
+        self._validate_apikey_expiration(expires)
+        
+        new_key = {
+            "id": self._generate_apikey_id(),
+            "expires": expires
+        }
+        self.user_repo.regenerate_apikey(email, new_key)
+        return {"success": True, "apikey": new_key}
+    
+    def update_apikey_expiration(self, email: str, expires: int | None):
+        """
+        Updates the expiration timestamp of the user's API key after validating
+        that the timestamp is valid.
+        """
+        self._validate_apikey_expiration(expires)
+        
+        self.user_repo.update_apikey_expiration(email, expires)
+        return {"success": True, "msg": "Expiración del API key actualizada"}
+    
+    def delete_apikey(self, email: str):
+        """Removes the user's API key by setting it to None."""
+        self.user_repo.delete_apikey(email)
+        return {"success": True, "msg": "API key eliminada correctamente"}

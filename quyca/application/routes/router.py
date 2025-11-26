@@ -63,7 +63,7 @@ router.register_blueprint(completer_app_router, url_prefix=f"{settings.APP_URL_P
 
 router.register_blueprint(user_auth_app_router, url_prefix=f"{settings.APP_URL_PREFIX}")
 
-router.register_blueprint(user_crud_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/admin")
+router.register_blueprint(user_crud_app_router, url_prefix=f"{settings.APP_URL_PREFIX}")
 
 router.register_blueprint(staff_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/submit")
 

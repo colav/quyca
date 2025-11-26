@@ -39,3 +39,15 @@ class IUserCrudRepository(ABC):
     @abstractmethod
     def activate(self, email: str) -> User:
         pass
+    
+    @abstractmethod
+    def regenerate_apikey(self, email: str, new_apikey: dict):
+        pass
+
+    @abstractmethod
+    def update_apikey_expiration(self, email: str, new_expiration: int | None):
+        pass
+
+    @abstractmethod
+    def delete_apikey(self, email: str):
+        pass

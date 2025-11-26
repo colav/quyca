@@ -36,6 +36,7 @@ class UserCrudUseCase:
 
 
     def activate_user(self, email: str) -> dict:
+        """Delegates user activation request to domain service."""
         self._ensure_service()
         return self.service.activate_user(email)
 
@@ -48,3 +49,18 @@ class UserCrudUseCase:
         """Delegates email/role edition to the service."""
         self._ensure_service()
         return self.service.update_user_info(old_email, new_email, new_rol, raw_payload=payload)
+    
+    def create_or_regenerate_apikey(self, email: str, expires: int | None):
+        """Delegates API key creation or regeneration to domain service."""
+        self._ensure_service()
+        return self.service.regenerate_apikey(email, expires)
+    
+    def update_apikey_expiration(self, email: str, expires: int | None):
+        """Delegates API key expiration update to domain service."""
+        self._ensure_service()
+        return self.service.update_apikey_expiration(email, expires)
+    
+    def delete_apikey(self, email: str):
+        """Delegates API key deletion to domain service."""
+        self._ensure_service()
+        return self.service.delete_apikey(email)

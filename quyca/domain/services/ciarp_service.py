@@ -24,7 +24,7 @@ class CiarpService:
 
     def handle_ciarp_upload(self, file, claims, token, upload_date):
         email = claims.get("sub")
-        ror_id = claims.get("ror_id")
+        ror_id = claims.get("_id")
         institution = claims.get("institution")
         user = claims.get("rol")
 
