@@ -1,4 +1,3 @@
-# tests/feature/user/get_list_test.py
 from unittest.mock import Mock, patch
 
 ROUTER_MOD = "application.routes.app.user_crud_app_router"
