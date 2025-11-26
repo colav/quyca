@@ -24,7 +24,7 @@ class StaffService:
 
     def handle_staff_upload(self, file, claims, token: str, upload_date: str) -> tuple[dict, int]:
         email = claims.get("sub")
-        ror_id = claims.get("ror_id")
+        ror_id = claims.get("_id")
         institution = claims.get("institution")
         user = claims.get("rol")
 
