@@ -1,5 +1,6 @@
-from typing import Dict
+from typing import Any, Dict
 from infrastructure.repositories.file_repository import FileRepository
+from werkzeug.datastructures import FileStorage
 
 
 class SaveStaffFileUseCase:
@@ -8,7 +9,7 @@ class SaveStaffFileUseCase:
 
     """Saves the uploaded file into Google Drive for the corresponding institution"""
 
-    def execute(self, file, ror_id: str, institution: str, file_type: str = "staff") -> Dict[str, str]:
+    def execute(self, file: FileStorage, ror_id: str, institution: str, file_type: str = "staff") -> dict[str, Any]:
         if not hasattr(file, "save"):
             raise TypeError("El objeto 'file' debe ser un FileStorage compatible.")
         if not ror_id:
@@ -24,4 +25,5 @@ class SaveStaffFileUseCase:
         except Exception:
             pass
 
-        return self.file_repo.save_file(file, ror_id, institution, file_type)
+        result: Dict[str, Any] = self.file_repo.save_file(file, ror_id, institution, file_type)
+        return result

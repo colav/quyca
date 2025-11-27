@@ -1,4 +1,7 @@
-def build_email_template(tipo: str, rol: str, institution: str, filename: str, upload_date: str):
+from typing import Tuple
+
+
+def build_email_template(tipo: str, rol: str, institution: str, filename: str, upload_date: str) -> Tuple[str, str]:
     subject = f"Reporte de Validación de Datos {tipo.upper()} - {institution} - {upload_date}"
 
     if tipo == "rechazado":

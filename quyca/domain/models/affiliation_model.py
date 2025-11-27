@@ -1,3 +1,4 @@
+from typing import Any
 from bson import ObjectId
 from pydantic import BaseModel, Field, model_validator, field_validator
 
@@ -36,7 +37,7 @@ class Relation(BaseModel):
 
     @field_validator("name")
     @classmethod
-    def set_name(cls, value: str) -> str:
+    def set_name(cls, value: str) -> Any:
         if isinstance(value, Name):
             return value.name
         return value
@@ -82,13 +83,12 @@ class Affiliation(BaseModel):
     logo: str | None = None
     affiliations: list[dict | Relation] | None = None
     relations_data: list[Relation] | None = None
-    works: list[Work] | None = None
 
     @field_validator("names", mode="before")
     @classmethod
-    def normalize_names(cls, value):
+    def normalize_names(cls, value: Any) -> list[Name]:
         if not value:
-            return value
+            return []
 
         normalized = []
         for item in value:
@@ -101,7 +101,7 @@ class Affiliation(BaseModel):
         return normalized
 
     @model_validator(mode="after")
-    def get_name(self):
+    def get_name(self) -> "Affiliation":
         if self.names:
             es_name = next(filter(lambda x: x.lang == "es", self.names), None)
             self.name = es_name.name if es_name else self.names[0].name

@@ -5,7 +5,7 @@ from domain.repositories.user_repository_interface import IUserRepository
 
 
 class UserRepositoryMongo(IUserRepository):
-    def __init__(self):
+    def __init__(self) -> None:
         self.collection = impactu_database["users"]
 
     """
@@ -30,7 +30,7 @@ class UserRepositoryMongo(IUserRepository):
     updates to the latest valid token
     """
 
-    def update_token(self, email: str, token: str):
+    def update_token(self, email: str, token: str) -> None:
         self.collection.update_one({"email": email.strip().lower()}, {"$set": {"token": token}})
 
     """Delete token"""

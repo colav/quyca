@@ -10,7 +10,7 @@ class IUserRepository(ABC):
         pass
 
     @abstractmethod
-    def update_token(self, emaail: str, token: str) -> None:
+    def update_token(self, email: str, token: str) -> None:
         pass
 
     @abstractmethod

@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Any, Generator
 from datetime import datetime, timezone
 from pydantic import BaseModel, field_validator, Field, conint, model_validator
 from bson import ObjectId
@@ -92,8 +92,8 @@ class Ranking(BaseModel):
 
     @field_validator("rank", mode="before")
     @classmethod
-    def replace_nan_in_rank(cls, v):
-        return clean_nan(v)
+    def replace_nan_in_rank(cls, value: Any) -> Any:
+        return clean_nan(value)
 
 
 class Status(BaseModel):
@@ -134,8 +134,8 @@ class Publisher(BaseModel):
 
     @field_validator("name", mode="before")
     @classmethod
-    def replace_nan_in_name(cls, v):
-        return clean_nan(v)
+    def replace_nan_in_name(cls, value: Any) -> Any:
+        return clean_nan(value)
 
 
 class Paid(BaseModel):
@@ -167,6 +167,7 @@ class QueryParams(BaseModel):
     groups_ranking: str | None = None
     authors_ranking: str | None = None
     source_types: str | None = None
+    scimago_quartiles: str | None = None
 
     @model_validator(mode="after")
     def validate_pagination_and_sort(self) -> "QueryParams":
@@ -240,7 +241,7 @@ class Author(BaseModel):
 
     @field_validator("affiliations", mode="before")
     @classmethod
-    def ensure_list_affiliations(cls, value):
+    def ensure_list_affiliations(cls, value: list | dict | None) -> list:
         if value is None:
             return []
         if isinstance(value, dict):
@@ -250,7 +251,7 @@ class Author(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def compute_age_and_remove_birthdate(self):
+    def compute_age_and_remove_birthdate(self) -> "Author":
         if self.birthdate:
             try:
                 birth_ts = int(self.birthdate)
@@ -301,7 +302,7 @@ class Topic(TopicBase):
     score: float | None = None
 
     @field_validator("subfield", "field", "domain", mode="before")
-    def normalize_subobjects(cls, value):
+    def normalize_subobjects(cls, value: Any) -> Any:
         # Sometimes these fields come as unknown strings
         if isinstance(value, str):
             return None
