@@ -58,33 +58,6 @@ def get_works_for_api_expert(pipeline: list, pipeline_params: dict, query_params
         base_repository.set_pagination(pipeline, query_params)
 
     work_repository.set_authors_filter_if_large(pipeline)
-    pipeline += [
-        {
-            "$project": {
-                "_id": 1,
-                "titles": 1,
-                "year_published": 1,
-                "doi": 1,
-                "authors": {
-                    "id": 1,
-                    "full_name": 1,
-                    "sex": 1,
-                    "first_names": 1,
-                    "last_names": 1,
-                    "external_ids": 1,
-                    "ranking": 1,
-                    "affiliations": 1,
-                },
-                "source": {
-                    "id": 1,
-                    "name": 1,
-                    "types": 1,
-                    "external_ids": 1,
-                    "updated": 1,
-                },
-            },
-        },
-    ]
     base_repository.set_project(pipeline, pipeline_params.get("project"))
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)

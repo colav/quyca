@@ -106,7 +106,10 @@ def parse_work(work: Work) -> dict:
 
 
 def parse_api_expert(works: list) -> list:
-    return [work.model_dump(exclude_none=True) for work in works]
+    field_exclude = {
+        "abstracts",
+    }
+    return [work.model_dump(exclude=field_exclude, exclude_none=True) for work in works]
 
 
 def parse_available_filters(filters: dict) -> dict:
