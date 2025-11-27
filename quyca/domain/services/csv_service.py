@@ -192,7 +192,13 @@ def set_csv_citations_count(work: Work) -> None:
 def set_csv_bibliographic_info(work: Work) -> None:
     biblio_info: BiblioGraphicInfo | dict[str, Any] = work.bibliographic_info or {}
 
-    work.bibtex = getattr(biblio_info, "bibtex", None)
+    raw_bibtex = getattr(biblio_info, "bibtex", None)
+
+    if isinstance(raw_bibtex, str):
+        work.bibtex = raw_bibtex.replace("\n", " ")
+    else:
+        work.bibtex = ""
+
     work.pages = getattr(biblio_info, "pages", None)
     work.issue = getattr(biblio_info, "issue", "") or ""
     work.start_page = getattr(biblio_info, "start_page", None)
