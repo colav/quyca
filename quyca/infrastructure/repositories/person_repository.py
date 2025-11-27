@@ -33,20 +33,34 @@ def get_person_by_id(person_id: str, pipeline_params: dict = {}) -> Person:
         },
         {
             "$addFields": {
-                "affiliations_data": {
-                    "$map": {
-                        "input": "$filtered_affiliations",
-                        "as": "filtered_aff",
-                        "in": {
-                            "external_urls": {
-                                "$filter": {
-                                    "input": "$$filtered_aff.external_urls",
-                                    "as": "external_url",
-                                    "cond": {"$eq": ["$$external_url.source", "logo"]},
-                                }
+                "logo": {
+                    "$arrayElemAt": [
+                        {
+                            "$map": {
+                                "input": {
+                                    "$filter": {
+                                        "input": {
+                                            "$reduce": {
+                                                "input": "$affiliations",
+                                                "initialValue": [],
+                                                "in": {
+                                                    "$concatArrays": [
+                                                        "$$value",
+                                                        {"$ifNull": ["$$this.external_urls", []]},
+                                                    ]
+                                                },
+                                            }
+                                        },
+                                        "as": "ext",
+                                        "cond": {"$eq": ["$$ext.source", "logo"]},
+                                    }
+                                },
+                                "as": "logo_item",
+                                "in": "$$logo_item.url",
                             }
                         },
-                    }
+                        0,
+                    ]
                 }
             }
         },
@@ -77,38 +91,43 @@ def search_persons(query_params: QueryParams, pipeline_params: dict | None = Non
     pipeline: List[Dict[str, Any]] = []
     if query_params.keywords:
         pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
+
     pipeline += [
         {
             "$addFields": {
-                "filtered_affiliations": {
-                    "$filter": {
-                        "input": "$affiliations",
-                        "as": "affiliation",
-                        "cond": {"$eq": ["$$affiliation.end_date", -1]},
-                    }
-                }
-            }
-        },
-        {
-            "$addFields": {
-                "affiliations_data": {
-                    "$map": {
-                        "input": "$filtered_affiliations",
-                        "as": "filtered_aff",
-                        "in": {
-                            "external_urls": {
-                                "$filter": {
-                                    "input": "$$filtered_aff.external_urls",
-                                    "as": "external_url",
-                                    "cond": {"$eq": ["$$external_url.source", "logo"]},
-                                }
+                "logo": {
+                    "$arrayElemAt": [
+                        {
+                            "$map": {
+                                "input": {
+                                    "$filter": {
+                                        "input": {
+                                            "$reduce": {
+                                                "input": "$affiliations",
+                                                "initialValue": [],
+                                                "in": {
+                                                    "$concatArrays": [
+                                                        "$$value",
+                                                        {"$ifNull": ["$$this.external_urls", []]},
+                                                    ]
+                                                },
+                                            }
+                                        },
+                                        "as": "ext",
+                                        "cond": {"$eq": ["$$ext.source", "logo"]},
+                                    }
+                                },
+                                "as": "logo_item",
+                                "in": "$$logo_item.url",
                             }
                         },
-                    }
+                        0,
+                    ]
                 }
             }
-        },
+        }
     ]
+
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     persons = database["person"].aggregate(pipeline)
 
