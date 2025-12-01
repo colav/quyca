@@ -17,7 +17,7 @@ def parse_coauthorship_by_country_map(data: list) -> dict:
             country_data["count"] += item["count"]
             country_data["name"] = country_name
     for country_data in countries.values():
-        country_data["log_count"] = log(country_data["count"])  # type: ignore
+        country_data["log_count"] = log(country_data["count"])
     worldmap_path = os.path.join(os.path.dirname(__file__), "concerns/worldmap.json")
     with open(worldmap_path, "r") as worldmap_file:
         plot = json.load(worldmap_file)

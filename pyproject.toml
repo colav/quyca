@@ -27,11 +27,13 @@ sentry-sdk = "^2.14.0"
 flask-compress = "^1.17"
 elasticsearch = "^8.17.0"
 flask-limiter = "^3.12"
+mypy = "^1.18.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
 autoflake = "^2.3.1"
 mypy = "^1.11.2"
+pre-commit = "^4.3.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.2.1"
@@ -42,6 +44,12 @@ pytest-asyncio = "^0.20.3"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 ignore_missing_imports = true
+warn_return_any = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+check_untyped_defs = true
+show_error_codes = true
+mypy_path = "."
 
 [build-system]
 requires = ["poetry-core"]

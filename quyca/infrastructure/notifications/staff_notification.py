@@ -1,3 +1,4 @@
+from typing import Any, cast
 from infrastructure.repositories.gmail_repository import GmailRepository
 from infrastructure.email_templates.staff_report_templates import build_email_template
 from domain.models.staff_report_model import StaffReport
@@ -11,7 +12,7 @@ from domain.models.staff_report_model import StaffReport
 
 class StaffNotification:
     def __init__(self, gmail_repo: GmailRepository):
-        self.gmail_repo = gmail_repo
+        self.gmail_repo: GmailRepository = gmail_repo
 
     def send_report(
         self,
@@ -22,7 +23,7 @@ class StaffNotification:
         user: str,
         email: str,
         attachments: list[dict],
-    ) -> dict:
+    ) -> dict[str, Any]:
         tipo_correo = (
             "rechazado"
             if staff_report.total_errores > 0
@@ -33,4 +34,7 @@ class StaffNotification:
             tipo=tipo_correo, rol=user, institution=institution, filename=filename, upload_date=upload_date
         )
 
-        return self.gmail_repo.send_email(to_email=email, subject=subject, body_html=body_html, attachments=attachments)
+        return cast(
+            dict[str, Any],
+            self.gmail_repo.send_email(to_email=email, subject=subject, body_html=body_html, attachments=attachments),
+        )

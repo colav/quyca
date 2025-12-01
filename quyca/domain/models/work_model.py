@@ -50,6 +50,7 @@ class Source(BaseModel):
     name: str | Any | None = None
 
     issn_l: str | None = None
+    issn: list[dict[str, str]] | None = None
     is_in_doaj: bool | None = None
     types: list[Type] | None = None
     names: list[Name] | None = None

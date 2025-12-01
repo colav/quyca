@@ -87,6 +87,20 @@ def get_works_filters_by_person(person_id: str, query_params: QueryParams) -> di
     return work_parser.parse_available_filters(available_filters)
 
 
+def get_works_by_source(source_id: str, query_params: QueryParams) -> dict:
+    pipeline_params = get_works_by_entity_pipeline_params()
+    works = work_repository.get_works_by_source(source_id, query_params, pipeline_params)
+    works_data = get_work_by_entity_data(works)
+    data = work_parser.parse_works_by_entity(works_data)
+    total_results = work_repository.get_works_count_by_source(source_id, query_params)
+    return {"data": data, "total_results": total_results}
+
+
+def get_works_filters_by_source(source_id: str, query_params: QueryParams) -> dict:
+    available_filters = work_repository.get_works_available_filters_by_source(source_id, query_params)
+    return work_parser.parse_available_filters(available_filters)
+
+
 def get_work_by_entity_data(works: Generator) -> list:
     works_data = []
     for work in works:

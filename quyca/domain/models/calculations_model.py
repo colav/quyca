@@ -1,3 +1,4 @@
+from typing import Iterable
 from pydantic import BaseModel, Field
 from quyca.domain.models.base_model import PyObjectId
 
@@ -17,8 +18,8 @@ class Edge(BaseModel):
 
 
 class CoauthorshipNetwork(BaseModel):
-    nodes: list[Node] | None = Field(default_factory=list)
-    edges: list[Edge] | None = Field(default_factory=list)
+    nodes: Iterable[Node] | None = Field(default_factory=list)
+    edges: Iterable[Edge] | None = Field(default_factory=list)
 
 
 class TopWord(BaseModel):

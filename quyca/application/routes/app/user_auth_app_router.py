@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify
+from typing import Tuple
+from flask import Blueprint, request, jsonify, Response
 from sentry_sdk import capture_exception
 
 from domain.services import auth_service
@@ -48,7 +49,7 @@ HTTP/1.1 400 Bad Request
 
 
 @user_auth_app_router.route("/login", methods=["POST"])
-def login():
+def login() -> Tuple[Response, int]:
     try:
         data = request.get_json(force=True) or {}
         email = (data.get("email") or "").strip()
@@ -90,7 +91,7 @@ HTTP/1.1 200 OK
 
 
 @user_auth_app_router.route("/logout", methods=["POST"])
-def logout():
+def logout() -> Tuple[Response, int]:
     try:
         data = request.get_json()
         token = data.get("token")

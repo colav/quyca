@@ -1,8 +1,9 @@
+from typing import Any, Dict, List
 from quyca.infrastructure.mongo import database
 
 
-def set_works_authors_affiliations_country():  # type: ignore
-    pipeline = [
+def set_works_authors_affiliations_country() -> None:
+    pipeline: List[Dict[str, Any]] = [
         {
             "$lookup": {
                 "from": "affiliations",
@@ -88,8 +89,8 @@ def set_works_authors_affiliations_country():  # type: ignore
     database["works"].aggregate(pipeline)
 
 
-def set_works_authors_affiliations_country_code():  # type: ignore
-    pipeline = [
+def set_works_authors_affiliations_country_code() -> None:
+    pipeline: List[Dict[str, Any]] = [
         {
             "$lookup": {
                 "from": "affiliations",
@@ -175,8 +176,8 @@ def set_works_authors_affiliations_country_code():  # type: ignore
     database["works"].aggregate(pipeline)
 
 
-def set_works_groups_ranking():  # type: ignore
-    pipeline = [
+def set_works_groups_ranking() -> None:
+    pipeline: List[Dict[str, Any]] = [
         {
             "$lookup": {
                 "from": "affiliations",
@@ -266,8 +267,8 @@ def set_works_groups_ranking():  # type: ignore
     database["works"].aggregate(pipeline)
 
 
-def set_works_authors_ranking():  # type: ignore
-    pipeline = [
+def set_works_authors_ranking() -> None:
+    pipeline: List[Dict[str, Any]] = [
         {
             "$lookup": {
                 "from": "person",

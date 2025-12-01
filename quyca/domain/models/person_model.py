@@ -81,7 +81,7 @@ class Person(BaseModel):
     external_ids: list[ExternalId] | None = Field(default_factory=list)
     first_names: list[str] | None = Field(default_factory=list)
     full_name: str | None = Field(serialization_alias="name")
-    initials: str | None = None
+    initials: str | list[str] | None = None
     keywords: list | None = Field(default_factory=list)
     last_names: list[str] | None = Field(default_factory=list)
     marital_status: str | None = None

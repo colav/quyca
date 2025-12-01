@@ -1,4 +1,5 @@
 import io
+from typing import Tuple, Union
 import pandas as pd
 
 
@@ -11,7 +12,7 @@ class XlsxWriteExporter:
     def to_excel_bytes(df: pd.DataFrame) -> io.BytesIO:
         output = io.BytesIO()
 
-        def sort_identification(val):
+        def sort_identification(val: int) -> Tuple[int, Union[int, str]]:
             try:
                 return (0, int(val))
             except:

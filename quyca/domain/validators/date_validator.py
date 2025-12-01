@@ -8,7 +8,7 @@ class DateValidator:
     """Validates if a field contains a valid date in DD/MM/YYYY format."""
 
     @staticmethod
-    def validate(value, field: str, index: int) -> Optional[Dict[str, Any]]:
+    def validate(value: Any, field: str, index: int) -> Optional[Dict[str, Any]]:
         if BaseValidator.is_empty(value):
             return None
         if isinstance(value, (pd.Timestamp, datetime, date)):
