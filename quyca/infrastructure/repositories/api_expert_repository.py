@@ -51,6 +51,7 @@ def search_works_for_api_expert(query_params: QueryParams, pipeline_params: dict
 def get_works_for_api_expert(pipeline: list, pipeline_params: dict, query_params: QueryParams) -> Generator:
     work_repository.set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
+    work_repository.set_issn_to_pipeline(pipeline)
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
 
@@ -58,7 +59,6 @@ def get_works_for_api_expert(pipeline: list, pipeline_params: dict, query_params
         base_repository.set_pagination(pipeline, query_params)
 
     work_repository.set_authors_filter_if_large(pipeline)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
