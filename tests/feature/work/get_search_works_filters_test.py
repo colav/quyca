@@ -172,7 +172,9 @@ def test_get_affiliation_filters_topics_structure(client: FlaskClient) -> None:
     "affiliation_type,type_filter",
     [("institution", institutions_list), ("department", ["department"]), ("faculty", ["faculty"])],
 )
-def test_get_affiliation_filters_different_types(client: FlaskClient, affiliation_type: str, type_filter: str) -> None:
+def test_get_affiliation_filters_different_types(
+    client: FlaskClient, affiliation_type: str, type_filter: list[str]
+) -> None:
     affiliation = database["affiliations"].find_one({"products_count": {"$gt": 0}, "types.type": {"$in": type_filter}})
 
     if not affiliation:

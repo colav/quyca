@@ -160,7 +160,7 @@ def get_search_sources_available_filters(query_params: QueryParams) -> dict:
                     {
                         "$match": {
                             "ranking.source": {"$in": ["scimago Best Quartile", "Scimago Best Quartile"]},
-                            "ranking.rank": {"$exists": True, "$ne": None, "$ne": ""},
+                            "ranking.rank": {"$exists": True, "$nin": [None, ""]},
                         }
                     },
                     {"$sort": {"_id": 1, "ranking.to_date": -1}},
