@@ -23,7 +23,7 @@ class UserRepositoryMongo(IUserRepository):
             {"email": email.strip().lower(), "password": password_hash}, {"password": 0}
         )
         if not user_data:
-            raise NotEntityException(f"Usuario con correo {email} no encontrado o contraseño no conciden")
+            raise NotEntityException(f"Usuario con correo {email} no encontrado o contraseña no conciden")
         return User(
             id=str(user_data["_id"]),
             email=user_data["email"],
@@ -40,7 +40,7 @@ class UserRepositoryMongo(IUserRepository):
 
     def remove_token(self, email: str, token: str) -> bool:
         """Clears token if it matches the stored one."""
-        user = self.collection.find_one({"email": email.strip().lower()}, {"password": 0, "token": 0})
+        user = self.collection.find_one({"email": email.strip().lower()}, {"password": 0})
         if user and user.get("token") == token:
             self.collection.update_one({"email": email.strip().lower()}, {"$set": {"token": ""}})
             return True

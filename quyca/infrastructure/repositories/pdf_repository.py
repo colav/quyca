@@ -187,7 +187,6 @@ class PDFRepository(IPDFRepository):
             for err in errors:
                 columna_e = err.get("columna", "")
                 detalle_e = err.get("detalle", "")
-                ", ".join(map(str, err.get("ejemplos", [])))
                 total_e = err.get("total_filas", 0)
                 html += f"""
                     <tr>

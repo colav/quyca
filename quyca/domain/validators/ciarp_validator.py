@@ -74,7 +74,7 @@ class CiarpValidator:
         extra = [c for c in usecols if c not in expected and c not in EXTRA_ALLOWED]
 
         if missing:
-            errors.append(f"Columna faltantes: {', '.join(missing)}")
+            errors.append(f"Columnas faltantes: {', '.join(missing)}")
         if extra:
             errors.append(f"Columnas no permitidas: {', '.join(extra)}")
 
@@ -127,9 +127,9 @@ class CiarpValidator:
 
         df = df.dropna(how="all").reset_index(drop=True)
 
-        df = df.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
+        df = df.apply(lambda x: str(x).strip() if isinstance(x, str) else x)
 
-        df = df.applymap(lambda x: str(int(x)) if isinstance(x, float) and x.is_integer() else x)
+        df = df.apply(lambda x: str(int(x)) if isinstance(x, float) and x.is_integer() else x)
 
         for idx, row in df.iterrows():
             result = CiarpValidator.validate_row(row.to_dict(), idx)

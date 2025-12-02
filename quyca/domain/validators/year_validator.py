@@ -17,9 +17,9 @@ class YearValidator:
                 return {
                     "fila": index,
                     "columna": field,
-                    "detalle": "Año no valido",
+                    "detalle": "Año no válido",
                     "valor": value,
                 }
         except Exception:
-            return {"fila": index, "columna": field, "detalle": f"Formato inválido, debe ser númerico", "valor": value}
+            return {"fila": index, "columna": field, "detalle": f"Formato inválido, debe ser numérico", "valor": value}
         return None

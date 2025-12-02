@@ -8,11 +8,6 @@ def _admin_headers():
     return {"Authorization": "Bearer fake.jwt.token"}
 
 
-"""
-Test: Crear usuario sin token → 401 (verify_jwt_in_request lanza y caemos en el 401 del router).
-"""
-
-
 def test_create_user_no_token(client):
     resp = client.post(
         "/app/admin/users/test@udea.edu.co",
@@ -20,11 +15,6 @@ def test_create_user_no_token(client):
     )
     assert resp.status_code == 401
     assert "Token" in resp.json["msg"]
-
-
-"""
-Test: Crear usuario con rol NO admin → 403.
-"""
 
 
 def test_create_user_non_admin(client):
@@ -38,12 +28,6 @@ def test_create_user_non_admin(client):
         )
         assert resp.status_code == 403
         assert "Permiso denegado" in resp.json["msg"]
-
-
-"""
-Test: Crear usuario exitosamente → 201.
-(Parcheamos el usecase INSTANCIADO en el módulo del router)
-"""
 
 
 def test_create_user_success(client):
@@ -62,11 +46,6 @@ def test_create_user_success(client):
         assert resp.json["success"] is True
         assert "Usuario" in resp.json["msg"]
         usecase_mock.create_user.assert_called_once_with("ok@udea.edu.co", "UdeA", "R100", "staff", ANY)
-
-
-"""
-Test: Conflicto (mismo ROR/ya existe) → 409.
-"""
 
 
 def test_create_user_conflict(client):
