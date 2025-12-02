@@ -1,4 +1,4 @@
-from typing import Generator, Tuple
+from typing import Any, Dict, Generator, List, Tuple
 
 from bson import ObjectId
 
@@ -60,8 +60,9 @@ def get_projects_by_person(person_id: str, query_params: QueryParams, pipeline_p
 
 
 def get_projects_count_by_person(person_id: str) -> int:
-    pipeline = [{"$match": {"authors.id": person_id}}, {"$count": "total"}]
-    return next(database["projects"].aggregate(pipeline), {"total": 0}).get("total", 0)
+    pipeline: List[Dict[str, Any]] = [{"$match": {"authors.id": person_id}}, {"$count": "total"}]
+    result = next(database["projects"].aggregate(pipeline), {"total": 0})
+    return result.get("total", 0)
 
 
 def search_projects(query_params: QueryParams, pipeline_params: dict | None = None) -> Tuple[Generator, int]:

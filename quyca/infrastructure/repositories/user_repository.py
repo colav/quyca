@@ -10,7 +10,7 @@ MongoDB repository for login + token management.
 
 
 class UserRepositoryMongo(IUserRepository):
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes Mongo collection handle."""
         self.collection = impactu_database["users"]
 
@@ -34,7 +34,7 @@ class UserRepositoryMongo(IUserRepository):
             apikey=user_data.get("apikey"),
         )
 
-    def update_token(self, email: str, token: str):
+    def update_token(self, email: str, token: str) -> None:
         """Stores or refreshes the latest token for a user."""
         self.collection.update_one({"email": email.strip().lower()}, {"$set": {"token": token}})
 

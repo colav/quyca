@@ -4,7 +4,11 @@ from quyca.infrastructure.mongo import database
 
 def get_last_db_update() -> int:
     doc = database["log"].find_one(sort=[("time", -1)], projection={"time": 1})
-    return doc["time"] if doc else 0
+
+    if doc:
+        return int(doc["time"])
+
+    return 0
 
 
 def get_entity_count(entity: str, affiliation_type: str | None = None) -> int:

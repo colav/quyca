@@ -88,7 +88,10 @@ class StaffValidator:
 
         errors.extend(RequiredFieldsValidator.validate(row, index))
 
-        errors.extend(DocumentValidator.validate(row.get("tipo_documento"), row.get("identificación"), index))
+        document_type: str = str(row.get("tipo_documento"))
+        identification: str = str(row.get("identificación"))
+
+        errors.extend(DocumentValidator.validate(document_type, identification, index))
 
         errors.extend(NameValidator.validate(row, index))
 

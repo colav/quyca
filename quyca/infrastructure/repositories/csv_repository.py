@@ -13,6 +13,7 @@ def get_works_csv_by_person(person_id: str, query_params: QueryParams, pipeline_
     pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.id": person_id}},
     ]
+    work_repository.set_authors_filter_if_large(pipeline)
     base_repository.set_project(pipeline, pipeline_params.get("project"))
     work_repository.set_product_filters(pipeline, query_params)
     cursor = database["works"].aggregate(pipeline)
@@ -23,6 +24,7 @@ def get_works_csv_by_affiliation(affiliation_id: str, query_params: QueryParams,
     pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.affiliations.id": affiliation_id}},
     ]
+    work_repository.set_authors_filter_if_large(pipeline)
     base_repository.set_project(pipeline, pipeline_params.get("project"))
     work_repository.set_product_filters(pipeline, query_params)
     cursor = database["works"].aggregate(pipeline)
@@ -54,6 +56,7 @@ def get_works_csv_by_source(source_id: str, query_params: QueryParams, pipeline_
     pipeline: List[Dict[str, Any]] = [
         {"$match": {"source.id": ObjectId(source_id)}},
     ]
+    work_repository.set_authors_filter_if_large(pipeline)
     base_repository.set_project(pipeline, pipeline_params.get("project"))
     work_repository.set_product_filters(pipeline, query_params)
     cursor = database["works"].aggregate(pipeline)

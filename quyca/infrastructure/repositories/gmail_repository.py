@@ -5,6 +5,7 @@ from email import encoders
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
+from typing import Any
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google.auth.transport.requests import Request
@@ -21,7 +22,7 @@ class GmailRepository:
     Loads pickled credentials from config, validates scopes and builds service client.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         credentials_path = current_app.config.get("GOOGLE_CREDENTIALS")
         if not credentials_path:
             raise ValueError("GOOGLE_CREDENTIALS no está configurado")
@@ -40,7 +41,7 @@ class GmailRepository:
 
         self.service = build("gmail", "v1", credentials=creds)
 
-    def send_email(self, to_email: str, subject: str, body_html: str, attachments: list[dict]) -> dict:
+    def send_email(self, to_email: str, subject: str, body_html: str, attachments: list[dict]) -> dict[str, Any]:
         message = MIMEMultipart()
         message["to"] = to_email
         message["subject"] = subject

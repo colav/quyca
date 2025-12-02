@@ -1,3 +1,4 @@
+from typing import Tuple
 from infrastructure.repositories.pdf_repository import PDFRepository
 from infrastructure.repositories.gmail_repository import GmailRepository
 from infrastructure.repositories.google_drive_repository import GoogleDriveRepository
@@ -16,7 +17,7 @@ DI composer for Staff: builds infrastructure, use cases and service.
 """
 
 
-def build_staff_service():
+def build_staff_service() -> Tuple[ProcessStaffFileUseCase, SaveStaffFileUseCase, UserRepositoryMongo]:
     pdf_repo = PDFRepository()
     gmail_repo = GmailRepository()
     drive_repo = GoogleDriveRepository()

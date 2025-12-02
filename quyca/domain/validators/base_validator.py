@@ -1,3 +1,4 @@
+from typing import Union
 import pandas as pd
 
 
@@ -8,7 +9,7 @@ class BaseValidator:
     """
 
     @staticmethod
-    def is_empty(value) -> bool:
+    def is_empty(value: Union[str, float, None]) -> bool:
         if value is None:
             return True
         if isinstance(value, float) and pd.isna(value):

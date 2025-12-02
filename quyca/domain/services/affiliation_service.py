@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Union, cast
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.constants.institutions import institutions_list
 from quyca.domain.parsers import affiliation_parser
@@ -78,7 +79,21 @@ def set_relation_external_urls(affiliation: Affiliation) -> None:
     if not affiliation.relations:
         return
 
-    for relation in affiliation.relations:
+    relations_iterable: List[Relation]
+
+    if isinstance(affiliation.relations, (list, tuple)):
+        relations_iterable = affiliation.relations
+    elif isinstance(affiliation.relations, Dict):
+        relations_iterable = [Relation(**affiliation.relations)]
+    elif isinstance(affiliation.relations, (Dict, Relation)):
+        relations_iterable = [affiliation.relations]
+    else:
+        return
+
+    for relation in relations_iterable:
+        if not isinstance(relation, Relation):
+            continue
+
         if getattr(relation, "external_urls", None):
             continue
 
@@ -86,7 +101,7 @@ def set_relation_external_urls(affiliation: Affiliation) -> None:
 
         if getattr(affiliation, "relations_data", None):
             relation_data = next(
-                (x for x in affiliation.relations_data if x.id == relation.id),
+                (x for x in affiliation.relations_data or [] if x.id == relation.id),
                 None,
             )
             if relation_data and getattr(relation_data, "external_urls", None):
@@ -113,12 +128,25 @@ def set_upper_affiliations_and_logo(affiliation: Affiliation, affiliation_type: 
         if logo_url:
             affiliation.logo = str(logo_url)
 
-    upper_affiliations = []
+    relations_iterable: List[Relation]
+    if isinstance(affiliation.relations, (list, tuple)):
+        relations_iterable = affiliation.relations
+    elif isinstance(affiliation.relations, Dict):
+        relations_iterable = [Relation(**affiliation.relations)]
+    elif isinstance(affiliation.relations, Relation):
+        relations_iterable = [affiliation.relations]
+    else:
+        affiliation.affiliations = []
+        return
+
+    upper_affiliations: list[Relation] = []
     if not affiliation.relations:
         affiliation.affiliations = []
         return
 
-    for relation in affiliation.relations:
+    for relation in relations_iterable:
+        if not isinstance(relation, Relation):
+            continue
         if not relation.types:
             continue
 
@@ -136,7 +164,7 @@ def set_upper_affiliations_and_logo(affiliation: Affiliation, affiliation_type: 
             set_logo(affiliation, relation)
             upper_affiliations.append(relation)
 
-    affiliation.affiliations = upper_affiliations or []
+    affiliation.affiliations = cast(List[Union[Dict[Any, Any], Relation]], upper_affiliations) or []
 
 
 def set_logo(affiliation: Affiliation, relation: Relation) -> None:

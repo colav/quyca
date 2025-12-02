@@ -1,9 +1,11 @@
 import os
 import shutil
 from datetime import datetime
+from typing import Any
 from zoneinfo import ZoneInfo
 from flask import current_app
 from infrastructure.repositories.google_drive_repository import GoogleDriveRepository
+from werkzeug.datastructures import FileStorage
 
 
 class FileRepository:
@@ -15,7 +17,7 @@ class FileRepository:
     the temporary server
     """
 
-    def save_file(self, file, ror_id: str, institution: str, file_type: str):
+    def save_file(self, file: FileStorage, ror_id: str, institution: str, file_type: str) -> dict[str, Any]:
         timestamp = datetime.now(ZoneInfo("America/Bogota")).strftime("%d_%m_%Y_%H:%M")
         filename = f"{file_type}_{ror_id}_{timestamp}.xlsx"
 

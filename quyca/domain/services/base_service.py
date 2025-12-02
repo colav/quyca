@@ -1,14 +1,15 @@
+from typing import Iterator, Union
 from urllib.parse import urlparse
 
 from quyca.domain.constants.external_urls import external_urls_dict
-from quyca.domain.models.base_model import Title, ProductType, ExternalUrl
+from quyca.domain.models.base_model import Title, ProductType, ExternalUrl, Type
 from quyca.domain.models.patent_model import Patent
 from quyca.domain.models.project_model import Project
 from quyca.domain.models.work_model import Work
 from quyca.infrastructure.repositories import person_repository
 
 
-def set_title_and_language(workable: Work | Patent | Project) -> None:
+def set_title_and_language(workable: Union[Work, Patent, Project]) -> None:
     if not workable.titles:
         workable.title = None
         workable.language = None
@@ -24,56 +25,65 @@ def set_title_and_language(workable: Work | Patent | Project) -> None:
     workable.language = first_title.lang
 
 
-def set_product_types(workable: Work | Patent | Project) -> None:
+def set_product_types(workable: Union[Work, Patent, Project]) -> None:
     def order(product_type: ProductType) -> float:
         hierarchy = ["openalex", "scienti", "minciencias", "scholar"]
         return hierarchy.index(product_type.source) if product_type.source in hierarchy else float("inf")
 
-    scienti_levels = {ptype.level for ptype in workable.types if ptype.source == "scienti"}
+    scienti_levels = {ptype.level for ptype in workable.types or [] if ptype.source == "scienti"}
 
-    def filter_func(product_type: ProductType) -> bool:
+    def filter_func(product_type: Type) -> bool:
         if product_type.source == "minciencias" and product_type.level == 0:
             return False
         if product_type.source == "scienti":
             if 2 in scienti_levels:
-                return product_type.level >= 2
+                return (product_type.level or 0) >= 2
             else:
-                return product_type.level >= 1
+                return (product_type.level or 0) >= 1
         return True
 
-    types = filter(filter_func, workable.types)
-    product_types = list(map(lambda x: ProductType(name=x.type, source=x.source), types))
+    types: Iterator[Type] = filter(filter_func, workable.types or [])
+    product_types: list[ProductType] = [ProductType(name=x.type, source=x.source) for x in types]
     workable.product_types = sorted(product_types, key=order)
 
 
-def set_authors_external_ids(workable: Work | Patent | Project) -> None:
+def set_authors_external_ids(workable: Union[Work, Patent, Project]) -> None:
     if not workable.authors:
         return
+
+    if isinstance(workable.authors, str):
+        return
+
     for author in workable.authors:
         if author.id:
             author.external_ids = person_repository.get_person_by_id(str(author.id)).external_ids
 
 
-def limit_authors(workable: Work | Patent | Project, limit: int = 10) -> None:
+def limit_authors(workable: Union[Work, Patent, Project], limit: int = 10) -> None:
     if not workable.authors:
         return
     if len(workable.authors) > limit:
         workable.authors = workable.authors[:limit]
 
 
-def set_external_ids(workable: Work | Patent | Project) -> None:
+def set_external_ids(workable: Union[Work, Patent, Project]) -> None:
     if not workable.external_ids:
         return
+
+    if workable.external_urls is None:
+        workable.external_urls = []
+
     new_external_ids = []
     for external_id in workable.external_ids:
         if external_id.source in ["minciencias", "scienti"]:
             new_external_ids.append(external_id)
         else:
-            workable.external_urls.append(ExternalUrl(url=external_id.id, source=external_id.source))
+            url_value = str(external_id.id)
+            workable.external_urls.append(ExternalUrl(url=url_value, source=external_id.source))
     workable.external_ids = list(set(new_external_ids))
 
 
-def set_external_urls(workable: Work | Patent | Project) -> None:
+def set_external_urls(workable: Union[Work, Patent, Project]) -> None:
     if not workable.external_urls:
         return
     new_external_urls = []
