@@ -34,7 +34,7 @@ class StaffService:
         if not file:
             return {"success": False, "msg": "Archivo requerido"}, 400
 
-        result = self.process_usecase.execute(file, institution, file.filename, upload_date, user, email)
+        result = self.process_usecase.execute(file, institution, file.filename, upload_date, user, email, ror_id)
 
         if not result["success"]:
             if result.get("msg", "").startswith("El archivo enviado no cumple con el formato requerido de columnas"):

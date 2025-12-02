@@ -119,8 +119,8 @@ class StaffValidator:
 
         df = df.dropna(how="all").reset_index(drop=True)
         df = df[~df.apply(lambda row: row.astype(str).str.strip().eq("").all(), axis=1)]
-        df = df.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
-        df = df.applymap(lambda x: str(int(x)) if isinstance(x, float) and x.is_integer() else x)
+        df = df.apply(lambda x: str(x).strip() if isinstance(x, str) else x)
+        df = df.apply(lambda x: str(int(x)) if isinstance(x, float) and x.is_integer() else x)
 
         for idx, row in df.iterrows():
             r = StaffValidator.validate_row(row.to_dict(), idx)

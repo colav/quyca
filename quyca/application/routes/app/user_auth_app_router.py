@@ -10,19 +10,19 @@ user_auth_app_router = Blueprint("user_auth_app_router", __name__)
 """
 @api {post} /app/login
 @apiName PostLoginUser
-@apiGroup Autenticación
+@apiGroup Authentication
 @apiVersion 1.0.0
-@apiDescription Permite autenticar un usuario con su correo y contraseña.
-Si las credenciales son válidas, retorna un token JWT junto con el role del usuario.
+@apiDescription Allows authenticating a user using their email and password.
+If the credentials are valid, it returns a JWT token along with the user's role.
 
-@apiBody {String} email Correo del usuario.
-@apiBody {String} password Contraseña del usuario.
+@apiBody {String} email User email.
+@apiBody {String} password User password.
 
-@apiSuccess {Boolean} success Indica si la autenticación fue exitosa.
-@apiSuccess {String} rorID Número id asociado a la entidad.
-@apiSuccess {String} access_token Token JWT generado.
+@apiSuccess {Boolean} success Indicates whether the authentication was successful.
+@apiSuccess {String} rorID ID number associated with the entity.
+@apiSuccess {String} access_token Generated JWT token.
 
-@apiSuccessExample {json} Respuesta exitosa:
+@apiSuccessExample {json} Successful Response:
 HTTP/1.1 200 OK
 {
     "success": true,
@@ -30,20 +30,20 @@ HTTP/1.1 200 OK
     "access_token": "eyJhbGciOiJIUzI1NiIsInR..."
 }
 
-@apiError {Boolean} success Indica si la autenticación falló.
-@apiError {String} msg Mensaje de error.
+@apiError {Boolean} success Indicates that authentication failed.
+@apiError {String} msg Error message.
 
-@apiErrorExample {json} Respuesta error credenciales inválidas:
+@apiErrorExample {json} Error Response - Invalid Credentials:
 HTTP/1.1 401 Unauthorized
 {
     "success": false
 }
 
-@apiErrorExample {json} Respuesta error datos faltantes:
+@apiErrorExample {json} Error Response - Missing Fields:
 HTTP/1.1 400 Bad Request
 {
     "success": false,
-    "msg": "correo y contraseña requeridos"
+    "msg": "email and password are required"
 }
 """
 
@@ -60,11 +60,17 @@ def login() -> Tuple[Response, int]:
 
         repo = UserRepositoryMongo()
         result = auth_service.authenticate_user(email, password, repo)
+
+        if not result.get("success"):
+            return jsonify(result), 401
+
         return jsonify(result), 200
+
     except NotEntityException as e:
         msg = str(e)
         status = 403 if "desactivada" in msg.lower() else 401
         return jsonify({"success": False, "msg": msg}), status
+
     except Exception as e:
         capture_exception(e)
         return jsonify({"success": False, "msg": str(e)}), 500
@@ -73,21 +79,21 @@ def login() -> Tuple[Response, int]:
 """
 @api {post} /app/logout
 @apiName PostLogoutUser
-@apiGroup Autenticación
+@apiGroup Authentication
 @apiVersion 1.0.0
-@apiDescription Permite cerrar la sesión de un usuario invalidando su token JWT.  
-Si el token es válido, se elimina de la base de datos.
+@apiDescription Allows logging out a user by invalidating their JWT token.  
+If the token is valid, it is removed from the database.
 
-@apiBody {String} token Token JWT que se desea invalidar.
+@apiBody {String} token JWT token to be invalidated.
 
-@apiSuccess {Boolean} success Indica si el cierre de sesión fue exitoso.
-@apiSuccess {String} msg Mensaje de confirmación.
+@apiSuccess {Boolean} success Indicates whether the logout was successful.
+@apiSuccess {String} msg Confirmation message.
 
-@apiSuccessExample {json} Respuesta exitosa:
+@apiSuccessExample {json} Successful Response:
 HTTP/1.1 200 OK
 {
     "success": true,
-    "msg": "Sesión cerrada correctamente"
+    "msg": "Session closed successfully"
 }
 """
 

@@ -14,7 +14,7 @@ def authenticate_user(email: str, password: str, repo: IUserRepository) -> dict:
     user = repo.get_by_email_and_pass(email, password)
 
     if not getattr(user, "is_active", True):
-        raise NotEntityException("El usuario está desactivada. Contacte al administrador del sistema.")
+        raise NotEntityException("El usuario está desactivado. Contacte al administrador del sistema.")
 
     parse_user = user_ror_id_and_institution(user)
 

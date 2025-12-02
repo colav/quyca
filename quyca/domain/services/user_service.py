@@ -66,12 +66,12 @@ class UserCrudService:
             return
 
         if not isinstance(expires, int):
-            raise NotEntityException("El campo 'expires' debe ser un timestamp enter o None")
+            raise NotEntityException("El campo 'expires' debe ser un timestamp entero o None")
 
         current = int(time.time())
 
         if expires <= current:
-            raise NotEntityException("La ficha de expiración debe ser futura")
+            raise NotEntityException("La fecha de expiración debe ser futura")
 
         if expires - current < 86400:
             raise NotEntityException("La expiración mínima del API key es de 1 día")
@@ -114,7 +114,7 @@ class UserCrudService:
 
         subject = "Tu cuenta en la plataforma ImpactU ha sido creada exitosamente."
 
-        self.notifier.send_custom_email(subject, rol, institution, email, raw_password)
+        self.notifier.send_custom_email(subject, rol, institution, email, raw_password, ror_id=ror_id)
 
         return {
             "success": True,
@@ -159,7 +159,9 @@ class UserCrudService:
 
         subject = "Tu contraseña ha sido restablecida"
 
-        self.notifier.send_email_change_password(email, subject, new_password)
+        self.notifier.send_email_change_password(
+            email=email, subject=subject, password=new_password, institution=user.institution, ror_id=user.id
+        )
         return {"success": True, "msg": f"La contraseña de {email} se actualizó correctamente."}
 
     def update_user_info(self, old_email: str, new_email: str, new_rol: str, raw_payload: dict) -> dict:
@@ -204,6 +206,7 @@ class UserCrudService:
                 institution=updated_user.institution,
                 email=updated_user.email,
                 password=new_password,
+                ror_id=updated_user.id,
             )
 
             msg = (

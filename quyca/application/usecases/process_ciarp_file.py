@@ -21,7 +21,7 @@ class ProcessCiarpFileUseCase:
     """
 
     def execute(
-        self, file: io.BytesIO, institution: str, filename: str, upload_date: str, user: str, email: str
+        self, file: io.BytesIO, institution: str, filename: str, upload_date: str, user: str, email: str, ror_id: str
     ) -> dict:
         extension = os.path.splitext(filename)[1].lower()
         if extension != ".xlsx":
@@ -45,7 +45,9 @@ class ProcessCiarpFileUseCase:
             }
 
         report, attachments = self.report_service.generate_report(df, institution, filename, upload_date, user)
-        self.notification_service.send_report(report, institution, filename, upload_date, user, email, attachments)
+        self.notification_service.send_report(
+            report, institution, filename, upload_date, user, email, "Ciarp", attachments, ror_id
+        )
 
         pdf_base64 = None
         for att in attachments:

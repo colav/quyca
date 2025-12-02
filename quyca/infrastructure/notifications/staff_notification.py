@@ -3,10 +3,6 @@ from infrastructure.repositories.gmail_repository import GmailRepository
 from infrastructure.email_templates.staff_report_templates import build_email_template
 from domain.models.staff_report_model import StaffReport
 
-"""
-Envía resultados de validación por Gmail usando plantillas según el contexto.
-"""
-
 
 class StaffNotification:
     """
@@ -28,7 +24,9 @@ class StaffNotification:
         upload_date: str,
         user: str,
         email: str,
+        file_type: str,
         attachments: list[dict],
+        ror_id: str,
     ) -> dict[str, Any]:
         tipo_correo = (
             "rechazado"
@@ -40,9 +38,19 @@ class StaffNotification:
             tipo=tipo_correo, rol=user, institution=institution, filename=filename, upload_date=upload_date
         )
 
-        return self.gmail_repo.send_email(to_email=email, subject=subject, body_html=body_html, attachments=attachments)
+        return self.gmail_repo.send_labeled_email(
+            to_email=email,
+            subject=subject,
+            body_html=body_html,
+            attachments=attachments,
+            institution=institution,
+            tipo=file_type,
+            ror_id=ror_id,
+        )
 
-    def send_custom_email(self, subject: str, rol: str, institution: str, email: str, password: str) -> dict:
+    def send_custom_email(
+        self, subject: str, rol: str, institution: str, email: str, password: str, ror_id: str
+    ) -> dict:
         """
         Sends a plain custom email — used for user account notifications.
         """
@@ -76,14 +84,19 @@ class StaffNotification:
             </html>
             """
 
-        return self.gmail_repo.send_email(
+        return self.gmail_repo.send_labeled_email(
             to_email=email,
             subject=subject,
             body_html=body_html,
             attachments=[],
+            institution=institution,
+            tipo="Usuarios",
+            ror_id=ror_id,
         )
 
-    def send_email_change_password(self, email: str, subject: str, password: str) -> dict:
+    def send_email_change_password(
+        self, email: str, subject: str, password: str, institution: str, ror_id: str
+    ) -> dict:
         """
         Send a simple email — used for password change notifications.
         """
@@ -102,9 +115,12 @@ class StaffNotification:
         </html>
         """
 
-        return self.gmail_repo.send_email(
+        return self.gmail_repo.send_labeled_email(
             to_email=email,
             subject=subject,
             body_html=body_html,
             attachments=[],
+            institution=institution,
+            tipo="Usuarios",
+            ror_id=ror_id,
         )
