@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 from infrastructure.repositories.gmail_repository import GmailRepository
 from infrastructure.email_templates.staff_report_templates import build_email_template
 from domain.models.staff_report_model import StaffReport

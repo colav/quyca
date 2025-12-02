@@ -108,7 +108,7 @@ class GmailRepository:
         index = num % len(LABEL_COLOR_PAIRS)
         return LABEL_COLOR_PAIRS[index]
 
-    def _ensure_label(self, name: str, ror_id) -> str:
+    def _ensure_label(self, name: str, ror_id: str) -> str:
         """
         Ensures that a hierarchical Gmail label exists and creates it if missing.
         """
@@ -119,7 +119,7 @@ class GmailRepository:
         current_path = ""
         label_id = None
 
-        for part in enumerate(parts):
+        for part in parts:
             current_path = part if current_path == "" else f"{current_path}/{part}"
 
             if current_path in existing:
