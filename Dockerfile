@@ -1,5 +1,7 @@
 FROM python:3.10-slim AS base
 
+WORKDIR /app
+
 ENV \ 
 	PIP_NO_CACHE_DIR=off \ 
 	PIP_DISABLE_PIP_VERSION_CHECK=on \ 
