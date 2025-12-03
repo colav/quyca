@@ -117,7 +117,7 @@ class GmailRepository:
 
         parts = name.split("/")
         current_path = ""
-        label_id = None
+        label_id = ""
 
         for part in parts:
             current_path = part if current_path == "" else f"{current_path}/{part}"
