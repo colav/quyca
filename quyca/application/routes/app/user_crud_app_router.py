@@ -1,3 +1,4 @@
+from typing import Any
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity
 from application.usecases.user_crud import UserCrudUseCase
@@ -11,7 +12,7 @@ user_crud_app_router = Blueprint("user_crud_app_router", __name__)
 usecase = UserCrudUseCase()
 
 
-def check_admin_permission():
+def check_admin_permission() -> tuple[dict[str, Any] | None, int | None]:
     """Validates JWT exists and role is admin."""
     try:
         verify_jwt_in_request()
@@ -20,6 +21,9 @@ def check_admin_permission():
 
     claims = get_jwt()
     user_rol = claims.get("rol")
+
+    if not isinstance(user_rol, str):
+        return {"success": False, "msg": "Token inválido: rol no especificado."}, 403
 
     if user_rol.lower() != "admin":
         return {"success": False, "msg": "Permiso denegado: No pueden realizar esta acción."}, 403
@@ -66,10 +70,10 @@ Creates a new user in the platform. Only users with role admin can perform this 
 
 
 @user_crud_app_router.route("/admin/users/<email>", methods=["POST"])
-def create_user(email):
+def create_user(email: str) -> tuple[Any, int]:
     """Creates a user (admin-only)."""
     error_response, status = check_admin_permission()
-    if error_response:
+    if error_response is not None and status is not None:
         return jsonify(error_response), status
 
     try:
@@ -116,10 +120,10 @@ Returns a list of all users except those with admin role. Requires admin token.
 
 
 @user_crud_app_router.route("/admin/users", methods=["GET"])
-def list_users():
+def list_users() -> tuple[Any, int]:
     """Lists users (admin-only, excludes admins)."""
     error_response, status = check_admin_permission()
-    if error_response:
+    if error_response is not None and status is not None:
         return jsonify(error_response), status
 
     try:
@@ -154,9 +158,9 @@ Deactivates a user account by setting is_active to false.
 
 
 @user_crud_app_router.route("/admin/users/<email>", methods=["DELETE"])
-def deactivate_user(email):
+def deactivate_user(email: str) -> tuple[Any, int]:
     error_response, status = check_admin_permission()
-    if error_response:
+    if error_response is not None and status is not None:
         return jsonify(error_response), status
 
     try:
@@ -192,9 +196,9 @@ Reactivates a deactivated user by setting is_active to true.
 
 
 @user_crud_app_router.route("/admin/users/<email>/restore", methods=["PATCH"])
-def activate_user(email):
+def activate_user(email: str) -> tuple[Any, int]:
     error_response, status = check_admin_permission()
-    if error_response:
+    if error_response is not None and status is not None:
         return jsonify(error_response), status
 
     try:
@@ -230,10 +234,10 @@ Resets the user password and sends the new credentials via email.
 
 
 @user_crud_app_router.route("/admin/users/<email>", methods=["PATCH"])
-def update_password(email):
+def update_password(email: str) -> tuple[Any, int]:
     """Resets password and emails credentials (admin-only)."""
     error_response, status = check_admin_permission()
-    if error_response:
+    if error_response is not None and status is not None:
         return jsonify(error_response), status
 
     try:
@@ -278,10 +282,10 @@ Edits the email and/or role of a user. It is not allowed to assign admin role or
 
 
 @user_crud_app_router.route("/admin/users/<email>", methods=["PUT"])
-def edit_user(email):
+def edit_user(email: str) -> tuple[Any, int]:
     """Edits email and/or role (admin-only) with admin-safety rules."""
     error_response, status = check_admin_permission()
-    if error_response:
+    if error_response is not None and status is not None:
         return jsonify(error_response), status
 
     try:
@@ -336,7 +340,7 @@ Generates a new API Key for the authenticated user. If an API Key exists, it is 
 
 
 @user_crud_app_router.route("/users/<email>/apikey", methods=["POST"])
-def regenerate_apikey(email):
+def regenerate_apikey(email: str) -> tuple[Any, int]:
     try:
         verify_jwt_in_request()
         token_email = get_jwt_identity().lower()
@@ -396,7 +400,7 @@ Updates the expiration timestamp of the user's existing API Key.
 
 
 @user_crud_app_router.route("/users/<email>/apikey", methods=["PATCH"])
-def update_apikey_expiration(email):
+def update_apikey_expiration(email: str) -> tuple[Any, int]:
     try:
         verify_jwt_in_request()
         token_email = get_jwt_identity().lower()
@@ -454,7 +458,7 @@ Deletes the API Key associated with the authenticated user.
 
 
 @user_crud_app_router.route("/users/<email>/apikey", methods=["DELETE"])
-def delete_apikey(email):
+def delete_apikey(email: str) -> tuple[Any, int]:
     try:
         verify_jwt_in_request()
         token_email = get_jwt_identity().lower()

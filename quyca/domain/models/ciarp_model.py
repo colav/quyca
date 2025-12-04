@@ -8,11 +8,13 @@ Domain entity for CIARP records (research products metadata).
 @dataclass
 class CIARP:
     codigo_unidad_academica: str
-    codigo_subunidad_academica: str | None = None
     tipo_documento: str
     identificacion: str
     año: int
     titulo: str
+    pais_producto: str
+
+    codigo_subunidad_academica: str | None = None
     idioma: str | None = None
     revista: str | None = None
     editorial: str | None = None
@@ -23,6 +25,5 @@ class CIARP:
     issue: str | None = None
     primera_pagina: str | None = None
     ultima_pagina: str | None = None
-    pais_producto: str
     entidad_premiadora: str | None = None
     ranking: str | None = None

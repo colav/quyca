@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Any
 from infrastructure.repositories.file_repository import FileRepository
 
 
@@ -14,5 +14,6 @@ class SaveCiarpFileUseCase:
     Saves file and returns repository result payload.
     """
 
-    def execute(self, file, ror_id: str, institution: str, file_type: str = "ciarp") -> Dict[str, str]:
-        return self.file_repo.save_file(file, ror_id, institution, file_type)
+    def execute(self, file: Any, ror_id: str, institution: str, file_type: str = "ciarp") -> Dict[str, str]:
+        result: Dict[str, Any] = self.file_repo.save_file(file, ror_id, institution, file_type)
+        return result

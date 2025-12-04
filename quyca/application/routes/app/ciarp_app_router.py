@@ -1,5 +1,6 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from typing import Any
 from flask_jwt_extended import verify_jwt_in_request, get_jwt
 from flask import Blueprint, request, jsonify
 from infrastructure.container import build_ciarp_service
@@ -57,7 +58,7 @@ curl -X POST https://api.quyca.co/app/submit/ciarp \
 
 
 @ciarp_app_router.route("/ciarp", methods=["POST"])
-def submit_ciarp():
+def submit_ciarp() -> tuple[Any, int]:
     try:
         verify_jwt_in_request()
         claims = get_jwt()

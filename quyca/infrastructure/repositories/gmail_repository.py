@@ -70,7 +70,7 @@ LABEL_COLOR_PAIRS = [
 
 
 class GmailRepository:
-    SCOPES = [
+    SCOPES: list[str] = [
         "https://www.googleapis.com/auth/gmail.send",
         "https://www.googleapis.com/auth/gmail.modify",
     ]
@@ -100,7 +100,7 @@ class GmailRepository:
 
         self.service = build("gmail", "v1", credentials=creds)
 
-    def get_color_from_ror(self, ror_id: str) -> dict:
+    def get_color_from_ror(self, ror_id: str) -> dict[str, str]:
         """
         Always returns the same color for the same institution based on hash.
         """
@@ -117,7 +117,7 @@ class GmailRepository:
 
         parts = name.split("/")
         current_path = ""
-        label_id = ""
+        label_id: str = ""
 
         for part in parts:
             current_path = part if current_path == "" else f"{current_path}/{part}"
@@ -126,9 +126,9 @@ class GmailRepository:
                 label_id = existing[current_path]
                 continue
 
-            color = self.get_color_from_ror(ror_id)
+            color: dict[str, str] = self.get_color_from_ror(ror_id)
 
-            body = {
+            body: dict[str, Any] = {
                 "name": current_path,
                 "labelListVisibility": "labelShow",
                 "messageListVisibility": "show",
@@ -188,7 +188,7 @@ class GmailRepository:
         institution: str,
         tipo: str,
         ror_id: str,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Sends an email and assigns a hierarchical label based on institution and type.
         """
@@ -198,6 +198,8 @@ class GmailRepository:
             return result
 
         message_id = result.get("id")
+        if not isinstance(message_id, str):
+            return result
 
         label_name = f"{institution}/{tipo}"
 

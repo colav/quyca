@@ -1,6 +1,6 @@
 import hashlib
 import string, random, time
-from typing import List
+from typing import List, Any
 from domain.models.user_model import User
 from domain.repositories.user_crud_repository_interface import IUserCrudRepository
 from domain.exceptions.not_entity_exception import NotEntityException
@@ -12,7 +12,7 @@ Application service for admin user management (create, list, toggle, reset, edit
 
 
 class UserCrudService:
-    def __init__(self, user_repo: IUserCrudRepository, notifier: StaffNotification):
+    def __init__(self, user_repo: IUserCrudRepository, notifier: StaffNotification) -> None:
         """Wires repository and notifier for admin operations."""
         self.user_repo = user_repo
         self.notifier = notifier
@@ -30,7 +30,7 @@ class UserCrudService:
         """Hashes a password with MD5 (legacy compatibility)."""
         return hashlib.md5(password.encode("utf-8")).hexdigest()
 
-    def _validate_create_user_payload(self, payload: dict):
+    def _validate_create_user_payload(self, payload: dict[str, Any]) -> None:
         """Validates that only required fields are present and none are missing."""
         required = {"institution", "ror_id", "rol"}
         received = set(payload.keys())
@@ -46,7 +46,7 @@ class UserCrudService:
                 msg_parts.append("Sobran: " + ", ".join(sorted(extra)))
             raise NotEntityException(" | ".join(msg_parts))
 
-    def _validate_edit_user_payload(self, payload: dict):
+    def _validate_edit_user_payload(self, payload: dict[str, Any]) -> None:
         """Validates that only email and rol are present."""
 
         allowed = {"email", "rol"}
@@ -60,7 +60,7 @@ class UserCrudService:
         if extra:
             raise NotEntityException("Sobran: " + ", ".join(sorted(extra)))
 
-    def _validate_apikey_expiration(self, expires):
+    def _validate_apikey_expiration(self, expires: int | None) -> None:
         """Validates that the API key expiration is a future timestamp and at least 1 day ahead."""
         if expires is None:
             return
@@ -76,11 +76,16 @@ class UserCrudService:
         if expires - current < 86400:
             raise NotEntityException("La expiración mínima del API key es de 1 día")
 
-    def create_user(self, email: str, institution: str, ror_id: str, rol: str, raw_payload: dict = None) -> dict:
+    def create_user(
+        self, email: str, institution: str, ror_id: str, rol: str, raw_payload: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         Creates a user, validates payload strictly, enforces ROR uniqueness,
         and emails credentials.
         """
+        if raw_payload is None:
+            raise NotEntityException("Payload requerido: institution, ror_id y rol.")
+
         self._validate_create_user_payload(raw_payload)
 
         if rol.lower() == "admin":
@@ -121,7 +126,7 @@ class UserCrudService:
             "msg": f"Usuario {email} Creado exitosamente y contraseña enviada por correo electrónico.",
         }
 
-    def get_all_users(self) -> List[dict]:
+    def get_all_users(self) -> List[dict[str, Any]]:
         """Lists users excluding admins and sensitive fields."""
         users = self.user_repo.get_all()
         filtered_users = [u for u in users if u.rol.lower() != "admin"]
@@ -130,17 +135,17 @@ class UserCrudService:
             for u in filtered_users
         ]
 
-    def deactivate_user(self, email: str) -> dict:
+    def deactivate_user(self, email: str) -> dict[str, Any]:
         """Disables a user account by setting its 'is_active' flag to False."""
         self.user_repo.deactivate(email)
         return {"success": True, "msg": f"El usuario {email} ha sido desactivado."}
 
-    def activate_user(self, email: str) -> dict:
+    def activate_user(self, email: str) -> dict[str, Any]:
         """Reactivates a user account by setting its 'is_active' flag to True."""
         self.user_repo.activate(email)
         return {"success": True, "msg": f"El usuario {email} ha sido activado."}
 
-    def update_password(self, email: str) -> dict:
+    def update_password(self, email: str) -> dict[str, Any]:
         """Resets password, stores hash, and emails the new credentials."""
 
         all_users = self.user_repo.get_all()
@@ -164,7 +169,9 @@ class UserCrudService:
         )
         return {"success": True, "msg": f"La contraseña de {email} se actualizó correctamente."}
 
-    def update_user_info(self, old_email: str, new_email: str, new_rol: str, raw_payload: dict) -> dict:
+    def update_user_info(
+        self, old_email: str, new_email: str, new_rol: str, raw_payload: dict[str, Any]
+    ) -> dict[str, Any]:
         """Edits email and/or role, blocks admin role and admin account edits, and reissues credentials on email change."""
         self._validate_edit_user_payload(raw_payload)
 
@@ -217,7 +224,9 @@ class UserCrudService:
 
             return {"success": True, "msg": msg}
 
-    def regenerate_apikey(self, email: str, expires: int | None):
+        return {"success": True, "msg": "Usuario actualizado correctamente."}
+
+    def regenerate_apikey(self, email: str, expires: int | None) -> dict[str, Any]:
         """
         Generates a new API key for the user, after validating expiration rules,
         and stores it in the database.
@@ -228,7 +237,7 @@ class UserCrudService:
         self.user_repo.regenerate_apikey(email, new_key)
         return {"success": True, "apikey": new_key}
 
-    def update_apikey_expiration(self, email: str, expires: int | None):
+    def update_apikey_expiration(self, email: str, expires: int | None) -> dict[str, Any]:
         """
         Updates the expiration timestamp of the user's API key after validating
         that the timestamp is valid.
@@ -238,7 +247,7 @@ class UserCrudService:
         self.user_repo.update_apikey_expiration(email, expires)
         return {"success": True, "msg": "Expiración del API key actualizada"}
 
-    def delete_apikey(self, email: str):
+    def delete_apikey(self, email: str) -> dict[str, Any]:
         """Removes the user's API key by setting it to None."""
         self.user_repo.delete_apikey(email)
         return {"success": True, "msg": "API key eliminada correctamente"}

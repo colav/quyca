@@ -308,7 +308,7 @@ class PDFRepository(IPDFRepository):
     def generate_quality_report_ciarp(
         self,
         errors: List[Dict[str, Any]],
-        warnings: List[Dict[str, Any]],
+        warnings: Dict[str, Any],
         duplicados: List[Dict[str, Any]] | None = None,
         institution: str = "",
         filename: str = "",

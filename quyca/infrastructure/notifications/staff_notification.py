@@ -38,7 +38,7 @@ class StaffNotification:
             tipo=tipo_correo, rol=user, institution=institution, filename=filename, upload_date=upload_date
         )
 
-        return self.gmail_repo.send_labeled_email(
+        result: dict[str, Any] = self.gmail_repo.send_labeled_email(
             to_email=email,
             subject=subject,
             body_html=body_html,
@@ -48,9 +48,11 @@ class StaffNotification:
             ror_id=ror_id,
         )
 
+        return result
+
     def send_custom_email(
         self, subject: str, rol: str, institution: str, email: str, password: str, ror_id: str
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Sends a plain custom email — used for user account notifications.
         """
@@ -84,7 +86,7 @@ class StaffNotification:
             </html>
             """
 
-        return self.gmail_repo.send_labeled_email(
+        result: dict[str, Any] = self.gmail_repo.send_labeled_email(
             to_email=email,
             subject=subject,
             body_html=body_html,
@@ -94,9 +96,11 @@ class StaffNotification:
             ror_id=ror_id,
         )
 
+        return result
+
     def send_email_change_password(
         self, email: str, subject: str, password: str, institution: str, ror_id: str
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Send a simple email — used for password change notifications.
         """
@@ -115,7 +119,7 @@ class StaffNotification:
         </html>
         """
 
-        return self.gmail_repo.send_labeled_email(
+        result: dict[str, Any] = self.gmail_repo.send_labeled_email(
             to_email=email,
             subject=subject,
             body_html=body_html,
@@ -124,3 +128,5 @@ class StaffNotification:
             tipo="Usuarios",
             ror_id=ror_id,
         )
+
+        return result

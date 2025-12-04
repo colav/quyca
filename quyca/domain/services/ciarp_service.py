@@ -1,3 +1,4 @@
+from typing import Any
 from application.usecases.process_ciarp_file import ProcessCiarpFileUseCase
 from application.usecases.save_ciarp_file import SaveCiarpFileUseCase
 from infrastructure.repositories.user_repository import UserRepositoryMongo
@@ -22,7 +23,9 @@ class CiarpService:
     Validates token, processes file, emails report, saves file, and returns HTTP result tuple.
     """
 
-    def handle_ciarp_upload(self, file, claims, token, upload_date):
+    def handle_ciarp_upload(
+        self, file: Any, claims: dict[str, Any], token: str, upload_date: str
+    ) -> tuple[dict[str, Any], int]:
         email = claims.get("sub")
         ror_id = claims.get("_id")
         institution = claims.get("institution")

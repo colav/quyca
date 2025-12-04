@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 
 class YearValidator:
@@ -7,7 +8,7 @@ class YearValidator:
     """
 
     @staticmethod
-    def validate(value, field: str, index: int):
+    def validate(value: Any, field: str, index: int) -> Optional[Dict[str, Any]]:
         if value is None or str(value).strip() == "":
             return None
         try:

@@ -33,7 +33,7 @@ def build_staff_service() -> Tuple[ProcessStaffFileUseCase, SaveStaffFileUseCase
     return process_usecase, save_usecase, user_repo
 
 
-def build_ciarp_service():
+def build_ciarp_service() -> Tuple[ProcessCiarpFileUseCase, SaveCiarpFileUseCase, UserRepositoryMongo]:
     pdf_repo = PDFRepository()
     gmail_repo = GmailRepository()
     drive_repo = GoogleDriveRepository()
