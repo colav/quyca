@@ -27,7 +27,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from config import settings
 
-limiter = Limiter(get_remote_address, storage_uri=str(settings.MONGO_URI), strategy="fixed-window")
+limiter = Limiter(get_remote_address, storage_uri=str(settings.MONGO_URI), strategy="fixed-window", default_limits=[])
 
 for limit in settings.API_LIMITS.split(","):
     limiter.limit(limit)(person_api_router)
