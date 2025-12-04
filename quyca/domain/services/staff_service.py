@@ -4,10 +4,12 @@ from application.usecases.save_staff_file import SaveStaffFileUseCase
 from infrastructure.repositories.user_repository import UserRepositoryMongo
 from werkzeug.datastructures import FileStorage
 
-"""Validates a users JWT token and returns the associated data (ror_id, institution)"""
-
 
 class StaffService:
+    """
+    Application service orchestrating Staff upload flow (auth → process → persist).
+    """
+
     def __init__(
         self,
         process_usecase: ProcessStaffFileUseCase,
@@ -22,7 +24,7 @@ class StaffService:
         self, file: FileStorage, claims: dict[str, Any], token: str, upload_date: str
     ) -> tuple[dict, int]:
         email = claims.get("sub")
-        ror_id = claims.get("ror_id")
+        ror_id = claims.get("_id")
         institution = claims.get("institution")
         user = claims.get("rol")
 
@@ -32,7 +34,7 @@ class StaffService:
         if not file:
             return {"success": False, "msg": "Archivo requerido"}, 400
 
-        result = self.process_usecase.execute(file, institution, file.filename, upload_date, user, email)
+        result = self.process_usecase.execute(file, institution, file.filename, upload_date, user, email, ror_id)
 
         if not result["success"]:
             if result.get("msg", "").startswith("El archivo enviado no cumple con el formato requerido de columnas"):

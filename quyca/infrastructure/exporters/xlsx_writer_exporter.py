@@ -5,7 +5,7 @@ import pandas as pd
 
 class XlsxWriteExporter:
     """
-    Infrastructure service: exports annotated DataFrame to Excel using xlsxwriter.
+    Exports annotated DataFrame to XLSX, with row coloring and autofilter.
     """
 
     @staticmethod

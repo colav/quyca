@@ -1,0 +1,29 @@
+from dataclasses import dataclass
+
+"""
+Domain entity for CIARP records (research products metadata).
+"""
+
+
+@dataclass
+class CIARP:
+    codigo_unidad_academica: str
+    tipo_documento: str
+    identificacion: str
+    año: int
+    titulo: str
+    pais_producto: str
+
+    codigo_subunidad_academica: str | None = None
+    idioma: str | None = None
+    revista: str | None = None
+    editorial: str | None = None
+    doi: str | None = None
+    issn: str | None = None
+    isbn: str | None = None
+    volumen: str | None = None
+    issue: str | None = None
+    primera_pagina: str | None = None
+    ultima_pagina: str | None = None
+    entidad_premiadora: str | None = None
+    ranking: str | None = None

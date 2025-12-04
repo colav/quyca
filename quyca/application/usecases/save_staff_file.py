@@ -4,10 +4,16 @@ from werkzeug.datastructures import FileStorage
 
 
 class SaveStaffFileUseCase:
+    """
+    Use case: persist validated Staff file in Drive (or local fallback).
+    """
+
     def __init__(self, file_repo: FileRepository):
         self.file_repo = file_repo
 
-    """Saves the uploaded file into Google Drive for the corresponding institution"""
+    """
+    Saves file and returns repository result payload.
+    """
 
     def execute(self, file: FileStorage, ror_id: str, institution: str, file_type: str = "staff") -> dict[str, Any]:
         if not hasattr(file, "save"):

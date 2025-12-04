@@ -11,24 +11,24 @@ credentials are invalid
 
 
 def authenticate_user(email: str, password: str, repo: IUserRepository) -> dict:
-    try:
-        user = repo.get_by_email_and_pass(email, password)
+    user = repo.get_by_email_and_pass(email, password)
 
-        parse_user = user_ror_id_and_institution(user)
+    if not getattr(user, "is_active", True):
+        raise NotEntityException("El usuario está desactivado. Contacte al administrador del sistema.")
 
-        additional_claims = {
-            "ror_id": parse_user["ror_id"],
-            "institution": parse_user["institution"],
-            "rol": parse_user["rol"],
-        }
+    parse_user = user_ror_id_and_institution(user)
 
-        token = create_access_token(identity=user.email, additional_claims=additional_claims)
+    additional_claims = {
+        "_id": parse_user["_id"],
+        "institution": parse_user["institution"],
+        "rol": parse_user["rol"],
+    }
 
-        repo.update_token(user.email, token)
+    token = create_access_token(identity=user.email, additional_claims=additional_claims)
 
-        return {"success": True, **parse_user, "access_token": token}
-    except NotEntityException:
-        return {"success": False}
+    repo.update_token(user.email, token)
+
+    return {"success": True, **parse_user, "access_token": token}
 
 
 """

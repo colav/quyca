@@ -3,8 +3,10 @@ import pandas as pd
 
 
 class BaseValidator:
-    """Checks if a given value is considered empty.
-    Supports None, NaN, and empty strings."""
+    """
+    Lightweight utility to determine if a value is empty/blank.
+    Returns True when value is None, NaN or empty string (trimmed).
+    """
 
     @staticmethod
     def is_empty(value: Union[str, float, None]) -> bool:

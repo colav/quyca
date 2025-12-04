@@ -7,8 +7,9 @@ UNIT_RE = re.compile(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9, \-]+$")
 
 
 class UnitValidator:
-    """Validates academic unit fields (codes and names).
-    Codes must be numeric/underscores; names must be alphanumeric and spaces."""
+    """
+    Validates unit/subunit codes and names (format + allowed characters).
+    """
 
     @staticmethod
     def validate(row: dict, index: int) -> List[Dict[str, Any]]:
