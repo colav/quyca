@@ -20,7 +20,7 @@ class CiarpReportService:
     ):
         self.pdf_repo = pdf_repo
         self.annotator = annotator
-        self.xlsx_expoter = xlsx_exporter
+        self.xlsx_exporter = xlsx_exporter
 
     def generate_report(
         self, df: pd.DataFrame, institution: str, filename: str, upload_date: str, user: str
@@ -47,7 +47,7 @@ class CiarpReportService:
             attachments = [{"bytes": pdf_bytes, "filename": "reporte_ciarp.pdf", "mime": "application/pdf"}]
 
             annotated_df = self.annotator.annotate(df, ciarp_report)
-            excel_bytes = self.xlsx_expoter.to_excel_bytes(annotated_df)
+            excel_bytes = self.xlsx_exporter.to_excel_bytes(annotated_df)
             attachments.append(
                 {
                     "bytes": excel_bytes,
