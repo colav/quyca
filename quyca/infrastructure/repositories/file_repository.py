@@ -58,7 +58,7 @@ class FileRepository(IFileRepository):
                 os.makedirs(type_folder, exist_ok=True)
 
                 safe_institution = institution.strip().replace(" ", "-")
-                user_folder = os.path.join(type_folder, f"{ror_id}_{institution}")
+                user_folder = os.path.join(type_folder, f"{ror_id}_{safe_institution}")
                 os.makedirs(user_folder, exist_ok=True)
 
                 local_path = os.path.join(user_folder, filename)
