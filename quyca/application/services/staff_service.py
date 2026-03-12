@@ -19,7 +19,7 @@ class StaffUploadError(Enum):
     into the corresponding HTTP responses.
     """
 
-    UNAUTHORIZED = "unathorized"
+    UNAUTHORIZED = "unauthorized"
     BAD_REQUEST = "bad_request"
     UNPROCESSABLE_ENTITY = "unprocessable_entity"
 
