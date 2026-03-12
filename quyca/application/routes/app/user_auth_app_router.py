@@ -42,8 +42,8 @@ Autentica con email y contraseña. Si es válido:
 @apiError (400) {String} msg "correo y contraseña requeridos"
 @apiError (401) {Boolean} success false
 @apiError (401) {String} msg "Credenciales inválidas"
-@apiError (404) {Boolean} success false
-@apiError (404) {String} msg "El usuario está desactivado..." (o equivalente)
+@apiError (403) {Boolean} success false
+@apiError (403) {String} msg "El usuario está desactivado..."
 @apiError (500) {Boolean} success false
 @apiError (500) {String} msg "Error interno del servidor"
 """
@@ -79,7 +79,14 @@ def login() -> Tuple[Response, int]:
         return response, status_code
 
     except NotEntityException as e:
-        return jsonify({"success": False, "msg": str(e)}), 404
+        msg = str(e)
+
+        if "desactivada" in msg.lower():
+            status = 403
+        else:
+            status = 401
+
+        return jsonify({"success": False, "msg": msg}), status
 
     except Exception as e:
         capture_exception(e)
