@@ -51,7 +51,7 @@ def submit_scienti() -> Tuple[Response, int]:
 
         file = request.files.get("file")
         if file is None:
-            return jsonify({"sucess": False, "msg": "Archivo requerido"}), 400
+            return jsonify({"success": False, "msg": "Archivo requerido"}), 400
 
         upload_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
 
