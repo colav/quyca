@@ -13,6 +13,6 @@ def test_login_success(client: FlaskClient) -> None:
 
 def test_login_fail_invalid_password(client: FlaskClient) -> None:
     response = client.post("/app/login", json={"email": "test@test.com", "password": "BADPASS"})
-    assert response.status_code in (401, 404)
+    assert response.status_code == 401
     json_data = cast(dict[str, Any], response.get_json())
     assert json_data["success"] is False
