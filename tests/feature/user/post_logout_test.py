@@ -29,7 +29,7 @@ def test_logout_invalid_token(client: FlaskClient) -> None:
 
     response = client.post("/app/logout")
 
-    assert response.status_code in (200, 401)
+    assert response.status_code == 200
 
     json_data = cast(dict[str, Any], response.get_json())
     assert "success" in json_data
@@ -37,4 +37,4 @@ def test_logout_invalid_token(client: FlaskClient) -> None:
 
 def test_logout_no_token(client: FlaskClient) -> None:
     response = client.post("/app/logout")
-    assert response.status_code in (200, 401)
+    assert response.status_code == 200
