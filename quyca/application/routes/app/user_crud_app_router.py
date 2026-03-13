@@ -1,9 +1,9 @@
 from typing import Any
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity
+from sentry_sdk import capture_exception
 from quyca.application.usecases.user_crud import UserCrudUseCase
 from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.infrastructure.repositories.user_repository import UserRepositoryMongo
 
 """
 HTTP routes for admin user management (JWT-protected).
@@ -18,24 +18,20 @@ def check_admin_permission() -> tuple[dict[str, Any] | None, int | None]:
     try:
         verify_jwt_in_request()
     except Exception:
-        return {"success": False, "msg": "Token no proporcionado o inválido. Por favor, inicia sesión nuevamente."}, 401
+        return {
+            "success": False,
+            "msg": "Token no proporcionado o inválido. Por favor, inicia sesión nuevamente.",
+        }, 401
 
     claims = get_jwt()
-    user_rol = claims.get("rol")
+    user_role = claims.get("role")
 
-    if not isinstance(user_rol, str) or user_rol.lower() != "admin":
+    if not isinstance(user_role, str) or user_role.lower() != "admin":
         return {"success": False, "msg": "Permiso denegado: No pueden realizar esta acción."}, 403
 
-    auth = request.headers.get("Authorization", "") or ""
-    token = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
-
     email = get_jwt_identity()
-    if not token or not email:
-        return {"success": False, "msg": "Token no encontrado en headers"}, 401
-
-    user_repo = UserRepositoryMongo()
-    if not user_repo.is_token_valid(email, token):
-        return {"success": False, "msg": "Token inválido o expirado"}, 401
+    if not isinstance(email, str) or not email.strip():
+        return {"success": False, "msg": "Identidad de sesión inválida"}, 401
 
     return None, None
 
@@ -47,15 +43,16 @@ def check_admin_permission() -> tuple[dict[str, Any] | None, int | None]:
 @apiVersion 1.0.0
 
 @apiDescription
-Creates a new user in the platform. Only users with role admin can perform this action.
+Creates a new user in the platform. Requires admin role.
+Authentication uses HttpOnly cookie `access_token_cookie` (token is not sent in JSON).
 
-@apiHeader {String} Authorization JWT token in format "Bearer &lt;token&gt;"
+@apiHeader (Auth Cookie) {String} access_token_cookie JWT access cookie (HttpOnly)
 
 @apiParam (Path) {String} email User email passed in URL
 
 @apiBody {String} institution Institution name
 @apiBody {String} ror_id Institution ROR identifier
-@apiBody {String} rol User role in the application
+@apiBody {String} role User role in the application
 
 @apiSuccess (201) {Boolean} success true
 @apiSuccess (201) {String} msg Success message
@@ -66,14 +63,17 @@ Creates a new user in the platform. Only users with role admin can perform this 
 @apiError (401) {Boolean} success false
 @apiError (401) {String} msg Token missing or invalid
 
+@apiError (403) {Boolean} success false
+@apiError (403) {String} msg Permission denied
+
 @apiError (409) {Boolean} success false
 @apiError (409) {String} msg User already exists for the institution
 
 @apiExample {json} Request Body Example
 {
-    "institution": "Universidad de Antioquia",
-    "ror_id": "059yx9a68",
-    "rol": "staff"
+  "institution": "Universidad de Antioquia",
+  "ror_id": "059yx9a68",
+  "role": "staff"
 }
 """
 
@@ -90,9 +90,9 @@ def create_user(email: str) -> tuple[Any, int]:
         email = email.strip().lower()
         institution = data.get("institution")
         ror_id = data.get("ror_id")
-        rol = data.get("rol")
+        role = data.get("role")
 
-        result = usecase.create_user(email, institution, ror_id, rol, data)
+        result = usecase.create_user(email, institution, ror_id, role, data)
 
         if not result.get("success") and "ya existe" in result.get("msg", "").lower():
             return jsonify(result), 409
@@ -101,30 +101,35 @@ def create_user(email: str) -> tuple[Any, int]:
     except NotEntityException as e:
         return jsonify({"success": False, "msg": str(e)}), 400
     except Exception as e:
-        return jsonify({"success": False, "msg": str(e)}), 500
+        capture_exception(e)
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
 """
-@api {get} /app/users List users (non-admin)
+@api {get} /app/admin/users List users (admin only)
 @apiName ListUsers
 @apiGroup Users
 @apiVersion 1.0.0
 
 @apiDescription
-Returns a list of all users except those with admin role. Requires admin token.
+Returns a list of all users excluding admin accounts. Requires admin session.
+Authentication uses HttpOnly cookie `access_token_cookie`.
 
-@apiHeader {String} Authorization JWT token "Bearer &lt;token&gt;"
+@apiHeader (Auth Cookie) {String} access_token_cookie JWT cookie (HttpOnly)
 
 @apiSuccess (200) {Boolean} success true
 @apiSuccess (200) {Object[]} data List of users
 @apiSuccess (200) {String} data.email User email
-@apiSuccess (200) {String} data.institucion Institution name
+@apiSuccess (200) {String} data.institution Institution name
 @apiSuccess (200) {String} data.id User identifier
-@apiSuccess (200) {String} data.rol User role
+@apiSuccess (200) {String} data.role User role
 @apiSuccess (200) {Boolean} data.is_active Active status
 
 @apiError (401) {Boolean} success false
 @apiError (401) {String} msg Token missing or invalid
+
+@apiError (403) {Boolean} success false
+@apiError (403) {String} msg Permission denied
 """
 
 
@@ -139,7 +144,8 @@ def list_users() -> tuple[Any, int]:
         result = usecase.get_all_users()
         return jsonify({"success": True, "data": result}), 200
     except Exception as e:
-        return jsonify({"success": False, "msg": str(e)}), 500
+        capture_exception(e)
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
 """
@@ -180,7 +186,8 @@ def deactivate_user(email: str) -> tuple[Any, int]:
     except NotEntityException as e:
         return jsonify({"success": False, "msg": str(e)}), 404
     except Exception as e:
-        return jsonify({"success": False, "msg": str(e)}), 500
+        capture_exception(e)
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
 """
@@ -218,7 +225,8 @@ def activate_user(email: str) -> tuple[Any, int]:
     except NotEntityException as e:
         return jsonify({"success": False, "msg": str(e)}), 404
     except Exception as e:
-        return jsonify({"success": False, "msg": str(e)}), 500
+        capture_exception(e)
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
 """
@@ -257,7 +265,8 @@ def update_password(email: str) -> tuple[Any, int]:
     except NotEntityException as e:
         return jsonify({"success": False, "msg": str(e)}), 400
     except Exception as e:
-        return jsonify({"success": False, "msg": str(e)}), 500
+        capture_exception(e)
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
 """
@@ -301,20 +310,21 @@ def edit_user(email: str) -> tuple[Any, int]:
         old_email = email.strip().lower()
         data = request.get_json(force=True) or {}
         new_email = (data.get("email") or "").strip().lower()
-        new_rol = (data.get("rol") or "").strip().lower()
+        new_role = (data.get("role") or "").strip().lower()
 
-        if not new_email and not new_rol:
+        if not new_email and not new_role:
             return jsonify({"success": False, "msg": "Debes enviar al menos email o rol."}), 400
 
-        result = usecase.update_user_info(old_email, new_email or old_email, new_rol or "", data)
-        if not result.get("success") and "rol 'admin'" in result.get("msg", "").lower():
+        result = usecase.update_user_info(old_email, new_email or old_email, new_role or "", data)
+        if not result.get("success") and "role 'admin'" in result.get("msg", "").lower():
             return jsonify(result), 403
         return jsonify(result), (200 if result.get("success") else 400)
 
     except NotEntityException as e:
         return jsonify({"success": False, "msg": str(e)}), 404
     except Exception as e:
-        return jsonify({"success": False, "msg": str(e)}), 500
+        capture_exception(e)
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
 """
@@ -376,7 +386,8 @@ def regenerate_apikey(email: str) -> tuple[Any, int]:
         return jsonify({"success": False, "msg": str(e)}), 400
 
     except Exception as e:
-        return jsonify({"success": False, "msg": "Error interno del servidor", "detail": str(e)}), 500
+        capture_exception(e)
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
 """
@@ -436,7 +447,8 @@ def update_apikey_expiration(email: str) -> tuple[Any, int]:
     except NotEntityException as e:
         return jsonify({"success": False, "msg": str(e)}), 400
     except Exception as e:
-        return jsonify({"success": False, "msg": str(e)}), 500
+        capture_exception(e)
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
 """
@@ -491,4 +503,5 @@ def delete_apikey(email: str) -> tuple[Any, int]:
     except NotEntityException as e:
         return jsonify({"success": False, "msg": str(e)}), 404
     except Exception as e:
-        return jsonify({"success": False, "msg": str(e)}), 500
+        capture_exception(e)
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500

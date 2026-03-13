@@ -17,7 +17,7 @@ class IUserCrudRepository(ABC):
         """Updates a user's password and returns updated user."""
 
     @abstractmethod
-    def update_user_info(self, old_email: str, new_email: str, new_rol: str) -> Optional[User]:
+    def update_user_info(self, old_email: str, new_email: str, new_role: str) -> Optional[User]:
         """Updates email/role and returns updated user."""
 
     @abstractmethod

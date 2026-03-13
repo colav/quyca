@@ -9,15 +9,11 @@ ALLOWED_GENDERS = {"hombre", "mujer", "intersexual", ""}
 
 
 class AcademicValidator:
-    """
-    Validator for academic and employment-related attributes in staff data.
-    Ensures that values such as academic level, contract type, work schedule,
-    job category, and gender belong to the allowed lists. Invalid values
-    produce errors or warnings depending on their severity.
-    """
+    """Validates academic and employment attributes in staff records."""
 
     @staticmethod
     def validate(row: dict, index: int) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        """Checks allowed values and returns detected errors and warnings."""
         errors: List[Dict[str, Any]] = []
         warnings: List[Dict[str, Any]] = []
 

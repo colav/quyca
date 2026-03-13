@@ -11,11 +11,10 @@ class SaveStaffFileUseCase:
     def __init__(self, file_repo: FileRepository):
         self.file_repo = file_repo
 
-    """
-    Saves file and returns repository result payload.
-    """
-
     def execute(self, file: FileStorage, ror_id: str, institution: str, file_type: str = "staff") -> dict[str, Any]:
+        """
+        Saves file and returns repository result payload.
+        """
         if not hasattr(file, "save"):
             raise TypeError("El objeto 'file' debe ser un FileStorage compatible.")
         if not ror_id:

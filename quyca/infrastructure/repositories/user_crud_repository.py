@@ -14,9 +14,9 @@ class UserCrudRepository(IUserCrudRepository):
         self.collection = impactu_database["users"]
 
     def create(self, user: User) -> None:
-        """Creates a new user if email is unique."""
+        """Inserts a new user if the email is not already registered."""
         email = user.email.strip().lower()
-        existing = self.collection.find_one({"email": email}, {"password": 0, "token": 0})
+        existing = self.collection.find_one({"email": email}, {"password": 0})
         if existing:
             raise NotEntityException(f"El usuario con correo {email} ya existe.")
 
@@ -26,15 +26,15 @@ class UserCrudRepository(IUserCrudRepository):
                 "email": user.email,
                 "password": user.password,
                 "institution": user.institution,
-                "rol": user.rol,
-                "token": user.token,
+                "role": user.role,
                 "is_active": user.is_active,
                 "apikey": user.apikey,
             }
         )
 
     def get_all(self) -> List[User]:
-        users_cursor = self.collection.find({}, {"password": 0, "token": 0})
+        """Returns all users without exposing password hashes."""
+        users_cursor = self.collection.find({}, {"password": 0})
         users = list(users_cursor)
 
         return [
@@ -43,8 +43,7 @@ class UserCrudRepository(IUserCrudRepository):
                 email=u["email"],
                 password=None,
                 institution=u["institution"],
-                rol=u["rol"],
-                token=u.get("token"),
+                role=u["role"],
                 is_active=u.get("is_active", True),
                 apikey=u.get("apikey"),
             )
@@ -52,12 +51,13 @@ class UserCrudRepository(IUserCrudRepository):
         ]
 
     def update_password(self, email: str, new_password_hash: str) -> User:
+        """Updates the password hash for a user and returns the updated user."""
         result = self.collection.update_one({"email": email.lower()}, {"$set": {"password": new_password_hash}})
 
         if result.matched_count == 0:
             raise NotEntityException(f"Usuario con correo {email} no encontrado")
 
-        updated = self.collection.find_one({"email": email.lower()}, {"password": 0, "token": 0})
+        updated = self.collection.find_one({"email": email.lower()}, {"password": 0})
         if not updated:
             raise NotEntityException(f"Usuario con correo {email} no encontrado")
         return User(
@@ -65,14 +65,13 @@ class UserCrudRepository(IUserCrudRepository):
             email=updated["email"],
             password=None,
             institution=updated["institution"],
-            rol=updated["rol"],
+            role=updated["role"],
             is_active=updated.get("is_active", True),
-            token=updated.get("token"),
             apikey=updated.get("apikey"),
         )
 
     def deactivate(self, email: str) -> None:
-        """Marks user as inactive."""
+        """Sets is_active=False for the given email."""
         email = email.lower()
         user = self.collection.find_one({"email": email})
         if not user:
@@ -81,7 +80,7 @@ class UserCrudRepository(IUserCrudRepository):
         self.collection.update_one({"email": email}, {"$set": {"is_active": False}})
 
     def activate(self, email: str) -> None:
-        """Marks user as active."""
+        """Sets is_active=True for the given email."""
         email = email.lower()
         user = self.collection.find_one({"email": email})
         if not user:
@@ -89,8 +88,9 @@ class UserCrudRepository(IUserCrudRepository):
 
         self.collection.update_one({"email": email}, {"$set": {"is_active": True}})
 
-    def update_user_info(self, old_email: str, new_email: str, new_rol: str) -> Optional[User]:
-        doc = self.collection.find_one({"email": old_email}, {"password": 0, "token": 0})
+    def update_user_info(self, old_email: str, new_email: str, new_role: str) -> Optional[User]:
+        """Updates email and/or role and returns the updated user (or None if missing)."""
+        doc = self.collection.find_one({"email": old_email}, {"password": 0})
         if not doc:
             return None
 
@@ -101,8 +101,8 @@ class UserCrudRepository(IUserCrudRepository):
                 raise NotEntityException(f"Ya existe un usuario con el correo {new_email}")
             update["email"] = new_email
 
-        if new_rol:
-            update["rol"] = new_rol
+        if new_role:
+            update["role"] = new_role
 
         if not update:
             return User(
@@ -110,15 +110,14 @@ class UserCrudRepository(IUserCrudRepository):
                 email=doc["email"],
                 password=None,
                 institution=doc["institution"],
-                rol=doc["rol"],
+                role=doc["role"],
                 is_active=doc.get("is_active", True),
-                token=doc.get("token"),
                 apikey=doc.get("apikey"),
             )
 
         self.collection.update_one({"email": old_email}, {"$set": update})
 
-        updated = self.collection.find_one({"email": update.get("email", old_email)}, {"password": 0, "token": 0})
+        updated = self.collection.find_one({"email": update.get("email", old_email)}, {"password": 0})
         if not updated:
             return None
 
@@ -127,14 +126,14 @@ class UserCrudRepository(IUserCrudRepository):
             email=updated["email"],
             password=None,
             institution=updated["institution"],
-            rol=updated["rol"],
+            role=updated["role"],
             is_active=updated.get("is_active", True),
-            token=updated.get("token"),
             apikey=updated.get("apikey"),
         )
 
     def find_by_ror_id(self, ror_id: str) -> Optional[User]:
-        doc = self.collection.find_one({"_id": ror_id}, {"password": 0, "token": 0})
+        """Finds a user by their ROR id (stored as _id)."""
+        doc = self.collection.find_one({"_id": ror_id}, {"password": 0})
         if not doc:
             return None
 
@@ -143,23 +142,25 @@ class UserCrudRepository(IUserCrudRepository):
             email=doc["email"],
             password=None,
             institution=doc["institution"],
-            rol=doc["rol"],
-            token=doc.get("token"),
+            role=doc["role"],
             is_active=doc.get("is_active", True),
             apikey=doc.get("apikey"),
         )
 
     def regenerate_apikey(self, email: str, new_apikey: Dict[str, Any]) -> None:
+        """Replaces the user's API key object."""
         result = self.collection.update_one({"email": email.lower()}, {"$set": {"apikey": new_apikey}})
         if result.matched_count == 0:
             raise NotEntityException(f"Usuario {email} no encontrado")
 
     def update_apikey_expiration(self, email: str, new_expiration: int | None) -> None:
+        """Updates only the apikey.expires field."""
         result = self.collection.update_one({"email": email.lower()}, {"$set": {"apikey.expires": new_expiration}})
         if result.matched_count == 0:
             raise NotEntityException(f"Usuario {email} no encontrado")
 
     def delete_apikey(self, email: str) -> None:
+        """Removes the API key by setting apikey=None."""
         result = self.collection.update_one({"email": email.lower()}, {"$set": {"apikey": None}})
         if result.matched_count == 0:
             raise NotEntityException(f"Usuario {email} no encontrado")

@@ -4,9 +4,7 @@ from typing import List, Dict, Any
 
 
 class IPDFRepository(ABC):
-    """
-    Abstraction to generate PDF reports for Staff/CIARP validation results.
-    """
+    """Defines PDF report generation operations."""
 
     @abstractmethod
     def generate_quality_report(
@@ -19,7 +17,7 @@ class IPDFRepository(ABC):
         upload_date: str,
         user: str,
     ) -> io.BytesIO:
-        pass
+        """Generates a Staff quality validation PDF report."""
 
     @abstractmethod
     def generate_quality_report_ciarp(
@@ -32,4 +30,4 @@ class IPDFRepository(ABC):
         upload_date: str,
         user: str,
     ) -> io.BytesIO:
-        pass
+        """Generates a CIARP quality validation PDF report."""

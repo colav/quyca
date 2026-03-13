@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 
 from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import verify_jwt_in_request, get_jwt
+from sentry_sdk import capture_exception
 
 from quyca.infrastructure.container import build_scienti_service
 from quyca.domain.services.scienti_service import ScientiService
@@ -11,51 +12,54 @@ from quyca.domain.services.scienti_service import ScientiService
 scienti_app_router = Blueprint("scienti_app_router", __name__)
 
 """
-@api {post} /app/submit/scienti Carga de archivo comprimido SCIENTI
-@apiName PostScientiUpload
+@api {post} /app/submit/scienti Subir comprimido SCIENTI
+@apiName SubmitScienti
 @apiGroup SCIENTI
 @apiVersion 1.0.0
+
 @apiDescription
-Permite cargar un archivo <b>comprimido</b> asociado al sistema SCIENTI.
-Este endpoint:
-- Verifica el token JWT y su validez.
-- Valida que el archivo exista y sea un formato comprimido permitido.
-- Envía un correo de confirmación indicando que los datos fueron recibidos
-    con éxito para ser validados.
-No se procesa ni valida el contenido del archivo en este endpoint.
+Sube un archivo comprimido de SCIENTI para validación/procesamiento.
+Auth por cookie HttpOnly `access_token_cookie`.
 
-@apiHeader {String} Authorization Token JWT en formato `Bearer &lt;token&gt;`.
+@apiHeader (Auth Cookie) {String} access_token_cookie Cookie JWT HttpOnly.
 
-@apiBody {File} file Archivo comprimido a enviar.
+@apiBody {File} file Archivo comprimido (.zip, .rar, .7z, .tar, .gz, .tgz, .bz2, .tar.gz, .tar.bz2).
 
-@apiSuccess {Boolean} success Indica si el proceso fue exitoso.
-@apiSuccess {String} msg Mensaje de confirmación.
-@apiSuccess {String} filename Nombre del archivo recibido.
-@apiSuccess {String} upload_date Fecha y hora de recepción (zona America/Bogota).
+@apiSuccess (200) {Boolean} success
+@apiSuccess (200) {String} msg
+@apiSuccess (200) {String} upload_date
+@apiSuccess (200) {String} file_msg
+
+@apiError (400) {Boolean} success false
+@apiError (400) {String} msg "Archivo requerido"
+@apiError (401) {Boolean} success false
+@apiError (401) {String} msg "Token inválido o expirado"
+@apiError (415) {Boolean} success false
+@apiError (415) {String} msg "Tipo de archivo no permitido..."
+@apiError (500) {String} msg "Error interno del servidor"
 """
 
 
 @scienti_app_router.route("/scienti", methods=["POST"])
 def submit_scienti() -> Tuple[Response, int]:
     try:
-        verify_jwt_in_request()
-        claims: dict[str, Any] = get_jwt()
-    except Exception:
-        return jsonify({"success": False, "msg": "Token inválido o expirado"}), 401
+        try:
+            verify_jwt_in_request()
+            claims: dict[str, Any] = get_jwt()
+        except Exception:
+            return jsonify({"success": False, "msg": "Token inválido o expirado"}), 401
 
-    auth_header = request.headers.get("Authorization", None)
-    if not auth_header or not auth_header.startswith("Bearer"):
-        return jsonify({"success": False, "msg": "Token no encontrado en hearders"}), 401
+        file = request.files.get("file")
+        if file is None:
+            return jsonify({"success": False, "msg": "Archivo requerido"}), 400
 
-    token_from_header = auth_header.split(" ")[1]
-    file = request.files.get("file")
+        upload_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
 
-    upload_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
+        service: ScientiService = build_scienti_service()
 
-    service: ScientiService = build_scienti_service()
+        result, status = service.handle_scienti_upload(file=file, claims=claims, upload_date=upload_date)
 
-    result, status = service.handle_scienti_upload(
-        file=file, claims=claims, token=token_from_header, upload_date=upload_date
-    )
-
-    return jsonify(result), status
+        return jsonify(result), status
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500

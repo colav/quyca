@@ -2,47 +2,64 @@ from typing import List, Dict, Any
 
 
 class ErrorGrouper:
-    """
-    Groups errors by column and detail, aggregating row numbers.
-    """
+    """Groups validation errors and warnings by column and detail."""
+
+    @staticmethod
+    def _get(d: Dict[str, Any], *keys: str, default: Any = "") -> Any:
+        """Retrieves the first available key value from a dictionary."""
+        for k in keys:
+            if k in d:
+                return d[k]
+        return default
 
     @staticmethod
     def group_errors(errors: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        grouped = {}
+        """Groups errors by column and detail."""
+        grouped: dict[tuple[str, str], dict[str, Any]] = {}
         for e in errors:
-            key = (e["columna"], e["detalle"])
+            col = ErrorGrouper._get(e, "columna", "columna", default="")
+            detail = ErrorGrouper._get(e, "detalle", "detalle", default="")
+            row = ErrorGrouper._get(e, "fila", "fila", default=None)
+
+            key = (str(col), str(detail))
             if key not in grouped:
-                grouped[key] = {"detalle": e["detalle"], "filas": []}
-            grouped[key]["filas"].append(e["fila"])
+                grouped[key] = {"detalle": detail, "fila": []}
+            if row is not None:
+                grouped[key]["fila"].append(row)
+
         return [
             {
                 "columna": col,
                 "detalle": info["detalle"],
-                "ejemplos": info["filas"][:3],
-                "total_filas": len(info["filas"]),
+                "ejemplos": info["fila"][:3],
+                "total_filas": len(info["fila"]),
             }
             for (col, _), info in grouped.items()
         ]
 
-    """
-    Groups warnings by column, detail, and value, aggregating row numbers.
-    """
-
     @staticmethod
     def group_warnings(warnings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        grouped = {}
+        """Groups warnings by column, detail and value."""
+        grouped: dict[tuple[str, str, str], dict[str, Any]] = {}
         for w in warnings:
-            key = (w["columna"], w["detalle"], w.get("valor", ""))
+            col = ErrorGrouper._get(w, "columna", "columna", default="")
+            detail = ErrorGrouper._get(w, "detalle", "detalle", default="")
+            value = ErrorGrouper._get(w, "valor", "valor", default="")
+            row = ErrorGrouper._get(w, "fila", "fila", default=None)
+
+            key = (str(col), str(detail), str(value))
             if key not in grouped:
-                grouped[key] = {"detalle": w["detalle"], "valor": w.get("valor", ""), "filas": []}
-            grouped[key]["filas"].append(w["fila"])
+                grouped[key] = {"detalle": detail, "valor": value, "fila": []}
+            if row is not None:
+                grouped[key]["fila"].append(row)
+
         return [
             {
                 "columna": col,
                 "detalle": info["detalle"],
                 "valor": info["valor"],
-                "ejemplos": info["filas"][:3],
-                "total_filas": len(info["filas"]),
+                "ejemplos": info["fila"][:3],
+                "total_filas": len(info["fila"]),
             }
             for (col, _, _), info in grouped.items()
         ]

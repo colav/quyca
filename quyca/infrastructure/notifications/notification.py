@@ -1,3 +1,4 @@
+from quyca.domain.repositories.notification_service_interface import INotificationService
 from typing import Any
 from quyca.infrastructure.repositories.gmail_repository import GmailRepository
 from quyca.infrastructure.email_templates.staff_report_templates import build_email_template
@@ -5,17 +6,11 @@ from quyca.infrastructure.email_templates.scienti_upload_templeates import build
 from quyca.domain.models.staff_report_model import StaffReport
 
 
-class StaffNotification:
-    """
-    Injects Gmail repository dependency.
-    """
+class StaffNotification(INotificationService):
+    """Sends notification emails using the Gmail repository."""
 
     def __init__(self, gmail_repo: GmailRepository):
         self.gmail_repo: GmailRepository = gmail_repo
-
-    """
-    Chooses template (accepted/warnings/rejected) and sends email with attachments.
-    """
 
     def send_report(
         self,
@@ -29,14 +24,15 @@ class StaffNotification:
         attachments: list[dict],
         ror_id: str,
     ) -> dict[str, Any]:
+        """Sends the validation report email with attachments."""
         tipo_correo = (
             "rechazado"
-            if staff_report.total_errores > 0
-            else ("advertencias" if len(staff_report.advertencias) > 0 else "aceptado")
+            if staff_report.total_errors > 0
+            else ("advertencias" if len(staff_report.warnings) > 0 else "aceptado")
         )
 
         subject, body_html = build_email_template(
-            tipo=tipo_correo, rol=user, institution=institution, filename=filename, upload_date=upload_date
+            status_type=tipo_correo, role=user, institution=institution, filename=filename, upload_date=upload_date
         )
 
         result: dict[str, Any] = self.gmail_repo.send_labeled_email(
@@ -51,17 +47,14 @@ class StaffNotification:
 
         return result
 
-    """
-    Sends a plain custom email — used for user account notifications.
-    """
-
     def send_custom_email(
-        self, subject: str, rol: str, institution: str, email: str, password: str, ror_id: str
+        self, subject: str, role: str, institution: str, email: str, password: str, ror_id: str
     ) -> dict[str, Any]:
+        """Sends a custom email for user account creation."""
         body_html = f"""
             <html>
                 <body style='font-family: Arial, sans-serif; line-height: 1.6;'>
-                    <p>Estimado(a) <b>{rol}</b> – {institution},</p>
+                    <p>Estimado(a) <b>{role}</b> – {institution},</p>
                     <p>Nos complace informarte que tu cuenta ha sido creada exitosamente en <b><span style="color:#39658c;">Impact</span><span style="color:#f6a611;">U</span></b></p>
                     <p>Podrás acceder al módulo de <b>carga de datos institucionales</b> a través del siguiente enlace:</p>
                     <p><a href=https://impactu.colav.co/submit>https://impactu.colav.co/submit</p>
@@ -99,13 +92,10 @@ class StaffNotification:
 
         return result
 
-    """
-    Sends an email notifying the user that their password was reset.
-    """
-
     def send_email_change_password(
         self, email: str, subject: str, password: str, institution: str, ror_id: str
     ) -> dict[str, Any]:
+        """Sends the password reset notification email."""
         body_html = f"""
         <html>
             <body>
@@ -133,21 +123,18 @@ class StaffNotification:
 
         return result
 
-    """
-    Generic notification for SCIENTI when a compressed file is received.
-    """
-
     def send_scienti_compressed_received(
         self,
-        rol: str,
+        role: str,
         institution: str,
         filename: str,
         upload_date: str,
         email: str,
         ror_id: str,
     ) -> dict[str, Any]:
+        """Sends a confirmation email for received SCIENTI compressed files."""
         subject, body_html = build_scienti_received_templete(
-            rol=rol, institution=institution, filename=filename, upload_date=upload_date
+            role=role, institution=institution, filename=filename, upload_date=upload_date
         )
 
         result: dict[str, Any] = self.gmail_repo.send_labeled_email(

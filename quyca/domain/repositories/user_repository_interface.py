@@ -10,11 +10,3 @@ class IUserRepository(ABC):
     @abstractmethod
     def get_by_email_and_pass(self, email: str, password: str) -> User:
         """Fetches a user by email and password hash for login."""
-
-    @abstractmethod
-    def update_token(self, email: str, token: str) -> None:
-        """Persists the latest JWT token for the user."""
-
-    @abstractmethod
-    def remove_token(self, email: str, token: str) -> bool:
-        """Invalidates a stored JWT token for the user."""

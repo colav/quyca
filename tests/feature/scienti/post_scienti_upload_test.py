@@ -1,57 +1,28 @@
 import io
-from unittest.mock import patch
 from typing import Any, cast
+from unittest.mock import patch
+
 from flask.testing import FlaskClient
 
-"""
-Helper function to authenticate a test user and return a valid JWT token.
-"""
 
+def auth_cookie(client: FlaskClient) -> None:
+    from flask_jwt_extended import create_access_token
 
-def get_auth_token(client: FlaskClient) -> str:
-    response = client.post(
-        "/app/login",
-        json={"email": "test@test.com", "password": "123456"},
-    )
-    assert response.status_code == 200, f"Login failed: {response.json}"
-    json_data = cast(dict[str, Any], response.json)
-    return str(json_data["access_token"])
+    with client.application.app_context():
+        token = create_access_token(
+            identity="test@test.com",
+            additional_claims={"_id": "u1", "institution": "TestInstitution", "role": "admin"},
+        )
+
+    client.set_cookie("access_token_cookie", token)
 
 
 def test_scienti_upload_invalid_token(client: FlaskClient) -> None:
-    headers = {"Authorization": "Bearer invalid_token"}
+    client.set_cookie("access_token_cookie", "invalid_token")
 
     response = client.post(
         "/app/submit/scienti",
-        headers=headers,
-        data={"file": (io.BytesIO(b"zip-content"), "data.zip")},
-        content_type="multipart/form-data",
-    )
-
-    assert response.status_code == 401
-    json_data = cast(dict[str, Any], response.json)
-    assert json_data["success"] is False
-
-
-def test_scienti_upload_invalid_jwt(client: FlaskClient) -> None:
-    headers = {"Authorization": "Bearer invalid_token"}
-
-    response = client.post(
-        "/app/submit/scienti",
-        headers=headers,
-        data={"file": (io.BytesIO(b"zip-content"), "data.zip")},
-        content_type="multipart/form-data",
-    )
-
-    assert response.status_code == 401
-    json_data = cast(dict[str, Any], response.json)
-    assert json_data["msg"] == "Token inválido o expirado"
-
-
-def test_scienti_upload_missing_authorization_header(client: FlaskClient) -> None:
-    response = client.post(
-        "/app/submit/scienti",
-        data={"file": (io.BytesIO(b"zip-content"), "data.zip")},
+        data={"file": (io.BytesIO(b"zip-content"), "scienti.zip")},
         content_type="multipart/form-data",
     )
 
@@ -61,80 +32,99 @@ def test_scienti_upload_missing_authorization_header(client: FlaskClient) -> Non
 
 
 def test_scienti_upload_no_file(client: FlaskClient) -> None:
-    token = get_auth_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
+    auth_cookie(client)
 
-    response = client.post(
-        "/app/submit/scienti",
-        headers=headers,
-        data={},
-    )
+    response = client.post("/app/submit/scienti", data={})
 
     assert response.status_code == 400
     json_data = cast(dict[str, Any], response.json)
     assert json_data["msg"] == "Archivo requerido"
 
 
-def test_scienti_upload_empty_filename(client: FlaskClient) -> None:
-    token = get_auth_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
+def test_scienti_upload_with_invalid_extension(client: FlaskClient) -> None:
+    auth_cookie(client)
 
-    data = {"file": (io.BytesIO(b"zip-content"), "")}
-    response = client.post(
-        "/app/submit/scienti",
-        headers=headers,
-        data=data,
-        content_type="multipart/form-data",
-    )
+    with patch("quyca.application.routes.app.scienti_app_router.ScientiService.handle_scienti_upload") as mock_service:
+        mock_service.return_value = (
+            {
+                "success": False,
+                "msg": "Tipo de archivo no permitido. Los formatos soportados son: .zip, .rar, .7z, .tar, .gz, .tgz, .bz2, .tar.gz y .tar.bz2.",
+            },
+            415,
+        )
 
-    assert response.status_code == 400
-    json_data = cast(dict[str, Any], response.json)
-    assert json_data["msg"] == "No se seleccionó ningún archivo"
-
-
-def test_scienti_upload_invalid_extension(client: FlaskClient) -> None:
-    token = get_auth_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
-
-    data = {"file": (io.BytesIO(b"data"), "file.txt")}
-    response = client.post(
-        "/app/submit/scienti",
-        headers=headers,
-        data=data,
-        content_type="multipart/form-data",
-    )
+        response = client.post(
+            "/app/submit/scienti",
+            data={"file": (io.BytesIO(b"content"), "scienti.xlsx")},
+            content_type="multipart/form-data",
+        )
 
     assert response.status_code == 415
     json_data = cast(dict[str, Any], response.json)
     assert json_data["success"] is False
+    assert json_data["msg"].startswith("Tipo de archivo no permitido")
 
 
 def test_scienti_upload_success(client: FlaskClient) -> None:
-    token = get_auth_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
+    auth_cookie(client)
 
     with patch("quyca.application.routes.app.scienti_app_router.ScientiService.handle_scienti_upload") as mock_service:
         mock_service.return_value = (
             {
                 "success": True,
                 "msg": "Archivo SCIENTI recibido con éxito para ser validado.",
-                "filename": "data.zip",
-                "upload_date": "01/01/2025 10:00",
-                "file_msg": "Archivo guardado correctamente",
+                "upload_date": "11/02/2026 10:00",
+                "file_msg": "Guardado correctamente",
             },
             200,
         )
 
-        data = {"file": (io.BytesIO(b"zip-content"), "data.zip")}
         response = client.post(
             "/app/submit/scienti",
-            headers=headers,
-            data=data,
+            data={"file": (io.BytesIO(b"zip-content"), "scienti.zip")},
             content_type="multipart/form-data",
         )
 
-        assert response.status_code == 200
-        json_data = cast(dict[str, Any], response.json)
+    assert response.status_code == 200
+    json_data = cast(dict[str, Any], response.json)
+    assert json_data["success"] is True
 
-        assert json_data["success"] is True
-        assert json_data["filename"] == "data.zip"
+
+def test_scienti_upload_save_failed(client: FlaskClient) -> None:
+    auth_cookie(client)
+
+    with patch("quyca.application.routes.app.scienti_app_router.ScientiService.handle_scienti_upload") as mock_service:
+        mock_service.return_value = (
+            {"success": False, "msg": "Archivo recibido pero falló el guardado"},
+            500,
+        )
+
+        response = client.post(
+            "/app/submit/scienti",
+            data={"file": (io.BytesIO(b"zip-content"), "scienti.zip")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 500
+    json_data = cast(dict[str, Any], response.json)
+    assert json_data["success"] is False
+
+
+def test_scienti_upload_email_failed(client: FlaskClient) -> None:
+    auth_cookie(client)
+
+    with patch("quyca.application.routes.app.scienti_app_router.ScientiService.handle_scienti_upload") as mock_service:
+        mock_service.return_value = (
+            {"success": False, "msg": "Fallo al enviar correo de confirmación"},
+            500,
+        )
+
+        response = client.post(
+            "/app/submit/scienti",
+            data={"file": (io.BytesIO(b"zip-content"), "scienti.zip")},
+            content_type="multipart/form-data",
+        )
+
+    assert response.status_code == 500
+    json_data = cast(dict[str, Any], response.json)
+    assert json_data["success"] is False

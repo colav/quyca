@@ -3,17 +3,15 @@ from quyca.domain.models.staff_report_model import StaffReport
 
 
 class Annotator:
-    """
-    Adds validation state/notes to the DataFrame for Excel export.
-    """
+    """Annotates a dataframe with validation status and notes."""
 
-    @staticmethod
-    def annotate(df: pd.DataFrame, staff_report: StaffReport) -> pd.DataFrame:
+    def annotate(self, df: pd.DataFrame, staff_report: StaffReport) -> pd.DataFrame:
+        """Adds validation columns based on errors, warnings and duplicates."""
         df_copy = df.copy()
         df_copy["estado_de_validación"] = ""
         df_copy["observación"] = ""
 
-        for err in staff_report.errores:
+        for err in staff_report.errors:
             row = err.get("fila")
             detail = err.get("detalle", "")
             column = err.get("columna", "")
@@ -21,14 +19,14 @@ class Annotator:
                 df_copy.at[row, "estado_de_validación"] += "Error | "
                 df_copy.at[row, "observación"] += f"{detail} {column} | "
 
-        for warn in staff_report.advertencias:
+        for warn in staff_report.warnings:
             row = warn.get("fila")
             detail = warn.get("detalle", "")
             if row in df_copy.index:
                 df_copy.at[row, "estado_de_validación"] += "Advertencia | "
                 df_copy.at[row, "observación"] += f"{detail} | "
 
-        for dup in staff_report.duplicados:
+        for dup in staff_report.duplicates:
             row = dup.get("index")
             if row in df_copy.index:
                 df_copy.at[row, "estado_de_validación"] += "Duplicado | "
@@ -37,6 +35,7 @@ class Annotator:
         df_copy["observación"] = df_copy["observación"].str.rstrip(" |")
 
         def clean_state(value: str) -> str:
+            """Normalizes and orders validation states by priority."""
             states = [s.strip() for s in value.split("|") if s.strip()]
             priority = ["Error", "Advertencia", "Duplicado"]
             return " | ".join([p for p in priority if p in states])

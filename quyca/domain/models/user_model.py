@@ -7,11 +7,12 @@ User entity used for authentication and account management.
 
 
 class User(BaseModel):
+    """Represents a system user for authentication and account management."""
+
     id: str
     email: str
     password: Optional[str] = None
     institution: str
-    rol: str
-    token: Optional[str] = None
+    role: str
     is_active: bool = True
     apikey: Optional[dict] = None

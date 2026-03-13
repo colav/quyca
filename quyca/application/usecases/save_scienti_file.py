@@ -15,17 +15,16 @@ class SaveScientiFileUseCase:
     def __init__(self, file_repo: FileRepository):
         self.file_repo = file_repo
 
-    """
-    Saves the SCIENTI file in the corresponding storage.
-    """
-
     def execute(
         self,
         file: FileStorage,
         ror_id: str,
         institution: str,
     ) -> dict[str, Any]:
+        """
+        Saves the SCIENTI file in the corresponding storage.
+        """
         result: dict[str, Any] = self.file_repo.save_file(
-            file=file, ror_id=ror_id, institution=institution, file_type="Scienti"
+            file=file, ror_id=ror_id, institution=institution, file_type="scienti"
         )
         return result

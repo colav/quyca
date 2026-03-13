@@ -7,16 +7,11 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from google.auth.transport.requests import Request
 
-"""
-Google Drive API repository for folders resolution and file upload.
-"""
-
 
 class GoogleDriveRepository:
+    """Uploads files and manages folders using the Google Drive API."""
+
     SCOPES = ["https://www.googleapis.com/auth/drive"]
-    """
-    Loads credentials from config, validates Drive scope, builds v3 client.
-    """
 
     def __init__(self) -> None:
         credentials_path = current_app.config.get("GOOGLE_CREDENTIALS")
@@ -36,11 +31,8 @@ class GoogleDriveRepository:
 
         self.service = build("drive", "v3", credentials=creds)
 
-    """
-    Resolves shortcut folders to target IDs when necessary.
-    """
-
     def resolve_folder_id(self, folder_id: str) -> str:
+        """Resolves shortcuts and returns the real Drive folder id."""
         try:
             folder: dict[str, Any] = (
                 self.service.files()
@@ -57,11 +49,8 @@ class GoogleDriveRepository:
         except HttpError as e:
             raise ValueError(f"No se pudo acceder al folder_id {folder_id}: {e}")
 
-    """
-    Finds or creates a Drive folder under an optional parent.
-    """
-
     def get_or_create_folder(self, folder_name: str, parent_id: Optional[str] = None) -> str:
+        """Finds or creates a folder and returns its id."""
         if parent_id is None:
             parent_id = current_app.config["GOOGLE_PARENT_ID"]
         if parent_id:
@@ -98,11 +87,8 @@ class GoogleDriveRepository:
             raise ValueError("No se pudo obtener el ID del folder creado.")
         return folder_id
 
-    """
-    Uploads a file into a target folder and returns its web view link.
-    """
-
     def upload_file(self, filepath: str, filename: str, folder_id: str) -> str:
+        """Uploads a file to Drive and returns its web view link."""
         folder_id = self.resolve_folder_id(folder_id)
         file_metadata = {"name": filename, "parents": [folder_id]}
         media = MediaFileUpload(filepath, resumable=True)

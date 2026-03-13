@@ -26,7 +26,7 @@ class DocumentValidator:
                         "fila": index,
                         "columna": "tipo_documento",
                         "detalle": f"El tipo de documento {tnorm} no es válido",
-                        "valor": tipo_documento,
+                        "value": tipo_documento,
                     }
                 )
 

@@ -12,9 +12,6 @@ from googleapiclient.errors import HttpError
 from google.auth.transport.requests import Request
 from flask import current_app
 
-"""
-Gmail API repository to send HTML emails with attachments.
-"""
 LABEL_COLOR_PAIRS = [
     {"backgroundColor": "#fce8b3", "textColor": "#7a4706"},
     {"backgroundColor": "#ffd6a2", "textColor": "#8a1c0a"},
@@ -70,18 +67,14 @@ LABEL_COLOR_PAIRS = [
 
 
 class GmailRepository:
+    """Sends HTML emails with attachments using the Gmail API."""
+
     SCOPES: list[str] = [
         "https://www.googleapis.com/auth/gmail.send",
         "https://www.googleapis.com/auth/gmail.modify",
     ]
-    """
-    Loads pickled credentials from config, validates scopes and builds service client.
-    """
 
     def __init__(self) -> None:
-        """
-        Initializes Gmail service using credentials from app configuration.
-        """
         credentials_path = current_app.config.get("GOOGLE_CREDENTIALS")
         if not credentials_path:
             raise ValueError("GOOGLE_CREDENTIALS no está configurado")
@@ -101,17 +94,13 @@ class GmailRepository:
         self.service = build("gmail", "v1", credentials=creds)
 
     def get_color_from_ror(self, ror_id: str) -> dict[str, str]:
-        """
-        Always returns the same color for the same institution based on hash.
-        """
+        """Selects a deterministic label color based on ror_id."""
         num = int(hashlib.md5(ror_id.encode("utf-8")).hexdigest(), 16)
         index = num % len(LABEL_COLOR_PAIRS)
         return LABEL_COLOR_PAIRS[index]
 
     def _ensure_label(self, name: str, ror_id: str) -> str:
-        """
-        Ensures that a hierarchical Gmail label exists and creates it if missing.
-        """
+        """Ensures a hierarchical Gmail label exists and returns its id."""
         labels_service = self.service.users().labels()
         existing = {lbl["name"]: lbl["id"] for lbl in labels_service.list(userId="me").execute().get("labels", [])}
 
@@ -144,9 +133,7 @@ class GmailRepository:
         return label_id
 
     def _add_label_to_message(self, message_id: str, label_name: str, ror_id: str) -> None:
-        """
-        Adds a Gmail label to a specific message.
-        """
+        """Adds a label to an already sent Gmail message."""
         label_id = self._ensure_label(label_name, ror_id)
 
         self.service.users().messages().modify(
@@ -156,9 +143,7 @@ class GmailRepository:
         ).execute()
 
     def send_email(self, to_email: str, subject: str, body_html: str, attachments: list[dict]) -> dict[str, Any]:
-        """
-        Sends an HTML email with optional attachments using Gmail API.
-        """
+        """Sends an HTML email with optional attachments."""
         message = MIMEMultipart()
         message["to"] = to_email
         message["subject"] = subject
@@ -189,9 +174,7 @@ class GmailRepository:
         tipo: str,
         ror_id: str,
     ) -> dict[str, Any]:
-        """
-        Sends an email and assigns a hierarchical label based on institution and type.
-        """
+        """Sends an email and applies an institution/type Gmail label."""
         result = self.send_email(to_email, subject, body_html, attachments)
 
         if not result.get("success"):

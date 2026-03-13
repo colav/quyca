@@ -1,19 +1,14 @@
 from typing import Dict, Any
-from quyca.infrastructure.repositories.file_repository import FileRepository
+from quyca.domain.repositories.file_repository_interface import IFileRepository
 
 
 class SaveCiarpFileUseCase:
-    """
-    Use case: persist validated CIARP file in Drive (or local fallback).
-    """
+    """Persists validated CIARP files in the configured storage."""
 
-    def __init__(self, file_repo: FileRepository):
+    def __init__(self, file_repo: IFileRepository):
         self.file_repo = file_repo
 
-    """
-    Saves file and returns repository result payload.
-    """
-
     def execute(self, file: Any, ror_id: str, institution: str, file_type: str = "ciarp") -> Dict[str, str]:
+        """Saves the file and returns the repository response."""
         result: Dict[str, Any] = self.file_repo.save_file(file, ror_id, institution, file_type)
         return result

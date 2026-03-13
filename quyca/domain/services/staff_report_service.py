@@ -1,33 +1,39 @@
 import io
 import pandas as pd
 from quyca.domain.models.staff_report_model import StaffReport
-from quyca.domain.validators.staff_validator import StaffValidator
+from quyca.domain.repositories.dataframe_annotator_interface import IDataFrameAnnotator
 from quyca.domain.repositories.pdf_repository_interface import IPDFRepository
-from quyca.infrastructure.repositories.gmail_repository import GmailRepository
-from quyca.infrastructure.annotators.annotator import Annotator
-from quyca.infrastructure.exporters.xlsx_writer_exporter import XlsxWriteExporter
+from quyca.domain.repositories.xlsx_exporter_interface import IXlsxExporter
+from quyca.domain.validators.staff_validator import StaffValidator
 
 
 class StaffReportService:
-    def __init__(self, pdf_repo: IPDFRepository, gmail_repo: GmailRepository | None = None):
-        self.pdf_repo = pdf_repo
-        self.gmail_repo = gmail_repo
+    """Generates validation reports for Staff data."""
 
-    """Generates report files (PDF + Excel) from validation results."""
+    def __init__(
+        self,
+        pdf_repo: IPDFRepository,
+        annotator: IDataFrameAnnotator,
+        xlsx_exporter: IXlsxExporter,
+    ):
+        self.pdf_repo = pdf_repo
+        self.annotator = annotator
+        self.xlsx_exporter = xlsx_exporter
 
     def generate_report(
         self, df: pd.DataFrame, institution: str, filename: str, upload_date: str, user: str
     ) -> tuple[StaffReport, list[dict]]:
+        """Validates the dataframe and generates Staff report attachments."""
         staff_report: StaffReport = StaffValidator.validate_dataframe(df)
 
-        attachments = []
+        attachments: list[dict] = []
         pdf_bytes: io.BytesIO | None = None
 
-        if staff_report.total_errores > 0 or len(staff_report.advertencias) > 0 or staff_report.total_duplicados > 0:
+        if staff_report.total_errors > 0 or len(staff_report.warnings) > 0 or staff_report.total_duplicates > 0:
             pdf_bytes = self.pdf_repo.generate_quality_report(
-                staff_report.errores_agrupados,
-                staff_report.advertencias_agrupadas,
-                staff_report.duplicados,
+                staff_report.grouped_errors,
+                staff_report.grouped_warnings,
+                staff_report.duplicates,
                 institution,
                 filename,
                 upload_date,
@@ -36,8 +42,8 @@ class StaffReportService:
 
             attachments = [{"bytes": pdf_bytes, "filename": "reporte_staff.pdf", "mime": "application/pdf"}]
 
-            annotated_df = Annotator.annotate(df, staff_report)
-            excel_bytes = XlsxWriteExporter.to_excel_bytes(annotated_df)
+            annotated_df = self.annotator.annotate(df, staff_report)
+            excel_bytes = self.xlsx_exporter.to_excel_bytes(annotated_df)
 
             attachments.append(
                 {

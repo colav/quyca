@@ -12,26 +12,25 @@ Application service for admin user management (create, list, toggle, reset, edit
 
 
 class UserCrudService:
-    """Wires repository and notifier for admin operations."""
+    """Application service for administrative user management."""
 
     def __init__(self, user_repo: IUserCrudRepository, notifier: StaffNotification) -> None:
         self.user_repo = user_repo
         self.notifier = notifier
 
-    """Creates a random alphanumeric password."""
-
     def _generate_password(self, length: int = 10) -> str:
+        """Generates a random alphanumeric password."""
         characters = string.ascii_letters + string.digits
         return "".join(random.choice(characters) for _ in range(length))
 
     def _generate_apikey_id(self, length: int = 10) -> str:
+        """Generates a random API key identifier."""
         chars = string.ascii_letters + string.digits
         return "".join(random.choice(chars) for _ in range(length))
 
-    """Validates that only required fields are present and none are missing."""
-
     def _validate_create_user_payload(self, payload: dict[str, Any]) -> None:
-        required = {"institution", "ror_id", "rol"}
+        """Validates required fields for user creation."""
+        required = {"institution", "ror_id", "role"}
         received = set(payload.keys())
 
         missing = required - received
@@ -45,23 +44,21 @@ class UserCrudService:
                 msg_parts.append("Sobran: " + ", ".join(sorted(extra)))
             raise NotEntityException(" | ".join(msg_parts))
 
-    """Validates that only email and rol are present."""
-
     def _validate_edit_user_payload(self, payload: dict[str, Any]) -> None:
-        allowed = {"email", "rol"}
+        """Validates fields allowed for user editing."""
+        allowed = {"email", "role"}
         received = set(payload.keys())
 
         if not received:
-            raise NotEntityException("Debes enviar al menos email o rol.")
+            raise NotEntityException("Debes enviar al menos email o role.")
 
         extra = received - allowed
 
         if extra:
             raise NotEntityException("Sobran: " + ", ".join(sorted(extra)))
 
-    """Validates that the API key expiration is a future timestamp and at least 1 day ahead."""
-
     def _validate_apikey_expiration(self, expires: int | None) -> None:
+        """Validates API key expiration timestamp."""
         if expires is None:
             return
 
@@ -76,21 +73,17 @@ class UserCrudService:
         if expires - current < 86400:
             raise NotEntityException("La expiración mínima del API key es de 1 día")
 
-    """
-    Creates a user, validates payload strictly, enforces ROR uniqueness,
-    and emails credentials.
-    """
-
     def create_user(
-        self, email: str, institution: str, ror_id: str, rol: str, raw_payload: dict[str, Any] | None = None
+        self, email: str, institution: str, ror_id: str, role: str, raw_payload: dict[str, Any] | None = None
     ) -> dict[str, Any]:
+        """Creates a new user and sends credentials via email."""
         if raw_payload is None:
-            raise NotEntityException("Payload requerido: institution, ror_id y rol.")
+            raise NotEntityException("Payload requerido: institution, ror_id y role.")
 
         self._validate_create_user_payload(raw_payload)
 
-        if rol.lower() == "admin":
-            raise NotEntityException("No se pueden crear usuarios con el rol 'admin'.")
+        if role.lower() == "admin":
+            raise NotEntityException("No se pueden crear usuarios con el role 'admin'.")
 
         existing_by_ror = self.user_repo.find_by_ror_id(ror_id)
         if existing_by_ror:
@@ -110,8 +103,7 @@ class UserCrudService:
             email=email.strip().lower(),
             password=hashe_password,
             institution=institution.strip(),
-            rol=rol.strip(),
-            token="",
+            role=role.strip(),
             is_active=True,
             apikey=None,
         )
@@ -120,7 +112,7 @@ class UserCrudService:
 
         subject = "Tu cuenta en la plataforma ImpactU ha sido creada exitosamente."
 
-        self.notifier.send_custom_email(subject, rol, institution, email, raw_password, ror_id=ror_id)
+        self.notifier.send_custom_email(subject, role, institution, email, raw_password, ror_id=ror_id)
 
         return {
             "success": True,
@@ -130,9 +122,9 @@ class UserCrudService:
     def get_all_users(self) -> List[dict[str, Any]]:
         """Lists users excluding admins and sensitive fields."""
         users = self.user_repo.get_all()
-        filtered_users = [u for u in users if u.rol.lower() != "admin"]
+        filtered_users = [u for u in users if u.role.lower() != "admin"]
         return [
-            {"email": u.email, "institucion": u.institution, "id": u.id, "rol": u.rol, "is_active": u.is_active}
+            {"email": u.email, "institution": u.institution, "id": u.id, "role": u.role, "is_active": u.is_active}
             for u in filtered_users
         ]
 
@@ -171,12 +163,12 @@ class UserCrudService:
         return {"success": True, "msg": f"La contraseña de {email} se actualizó correctamente."}
 
     def update_user_info(
-        self, old_email: str, new_email: str, new_rol: str, raw_payload: dict[str, Any]
+        self, old_email: str, new_email: str, new_role: str, raw_payload: dict[str, Any]
     ) -> dict[str, Any]:
         """Edits email and/or role, blocks admin role and admin account edits, and reissues credentials on email change."""
         self._validate_edit_user_payload(raw_payload)
 
-        if new_rol and new_rol.strip().lower() == "admin":
+        if new_role and new_role.strip().lower() == "admin":
             return {"success": False, "msg": "No se puede asignar el rol 'admin' a un usuario."}
         current_user = self.user_repo.get_all()
         current = next((u for u in current_user if u.email == old_email), None)
@@ -186,29 +178,32 @@ class UserCrudService:
         if not current.is_active:
             raise NotEntityException(f"Cuenta desactivada para el usuario {old_email}")
 
-        if current.rol.strip().lower() == "admin":
+        if current.role.strip().lower() == "admin":
             return {"success": False, "msg": "No se pueden editar los datos de este usuario"}
 
         correo_cambiado = old_email.strip().lower() != new_email.strip().lower()
-        rol_cambiado = bool(new_rol) and new_rol.strip().lower() != current.rol.strip().lower()
+        role_cambiado = bool(new_role) and new_role.strip().lower() != current.role.strip().lower()
 
-        if not correo_cambiado and not rol_cambiado:
+        if not correo_cambiado and not role_cambiado:
             return {"success": False, "msg": "No se detectaron cambios para actualizar."}
 
-        updated_user = self.user_repo.update_user_info(old_email, new_email, new_rol)
+        updated_user = self.user_repo.update_user_info(old_email, new_email, new_role)
         if not updated_user:
             raise NotEntityException(f"Usuario con correo {old_email} no encontrado.")
 
-        if rol_cambiado and not correo_cambiado:
+        if role_cambiado and not correo_cambiado:
             return {"success": True, "msg": f"Rol del usuario {old_email} actualizado correctamente."}
 
         if correo_cambiado:
             new_password = self._generate_password()
+            hashed = hash_password(new_password)
+
+            self.user_repo.update_password(updated_user.email, hashed)
 
             subject = "Tu cuenta en la plataforma ImpactU ha sido creada exitosamente."
             self.notifier.send_custom_email(
                 subject=subject,
-                rol=updated_user.rol,
+                role=updated_user.role,
                 institution=updated_user.institution,
                 email=updated_user.email,
                 password=new_password,
@@ -217,7 +212,7 @@ class UserCrudService:
 
             msg = (
                 f"Correo del usuario actualizado correctamente y notificación enviada a {new_email}."
-                if not rol_cambiado
+                if not role_cambiado
                 else f"Correo y rol del usuario actualizados correctamente. Notificación enviada a {new_email}."
             )
 

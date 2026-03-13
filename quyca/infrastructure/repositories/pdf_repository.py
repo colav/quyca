@@ -6,15 +6,8 @@ from zoneinfo import ZoneInfo
 from quyca.domain.repositories.pdf_repository_interface import IPDFRepository
 
 
-"""
-Infrastructure adapter to render HTML validation summaries into PDF.
-"""
-
-
 class PDFRepository(IPDFRepository):
-    """
-    Renders Staff report PDF (errors, warnings, duplicates) with metadata header.
-    """
+    """Renders validation reports (HTML) into PDF files."""
 
     def generate_quality_report(
         self,
@@ -26,6 +19,7 @@ class PDFRepository(IPDFRepository):
         upload_date: str,
         user: str,
     ) -> io.BytesIO:
+        """Generates the Staff PDF report with errors/warnings/duplicates."""
         report_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
 
         if errors:
@@ -229,7 +223,6 @@ class PDFRepository(IPDFRepository):
             eje = duplicados[:2]
             html += "<p><b>Ejemplo de duplicados:</b></p><ul>"
             for dup in eje:
-                dup.get("index") or "?"
                 row = dup.get("row") or {}
                 preview = {
                     "identificación": row.get("identificación"),
@@ -301,10 +294,6 @@ class PDFRepository(IPDFRepository):
         pdf_bytes.seek(0)
         return pdf_bytes
 
-    """
-    Renders CIARP report PDF (errors + warnings summary + duplicates) with metadata header.
-    """
-
     def generate_quality_report_ciarp(
         self,
         errors: List[Dict[str, Any]],
@@ -315,6 +304,7 @@ class PDFRepository(IPDFRepository):
         upload_date: str,
         user: str,
     ) -> io.BytesIO:
+        """Generates the CIARP PDF report (with warnings summary)."""
         report_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
 
         if errors:
@@ -504,7 +494,6 @@ class PDFRepository(IPDFRepository):
             eje = duplicados[:2]
             html += "<p><b>Ejemplo de duplicados:</b></p><ul>"
             for dup in eje:
-                dup.get("index") or "?"
                 row = dup.get("row") or {}
                 preview = {
                     "identificación": row.get("identificación"),

@@ -1,73 +1,69 @@
 import io
+from typing import Any, cast
 from unittest.mock import patch
 
-"""
-Helper function to authenticate a test user and return a valid JWT token.
-"""
+from flask.testing import FlaskClient
 
 
-def get_auth_token(client):
-    response = client.post("/app/login", json={"email": "test@test.com", "password": "123456"})
-    assert response.status_code == 200, f"Login failed: {response.json}"
-    return response.json["access_token"]
+def auth_cookie(client: FlaskClient) -> None:
+    """
+    Crea un JWT real y lo deja en la cookie HttpOnly.
+    (No usamos /app/login porque ya no retorna access_token en JSON)
+    """
+    from flask_jwt_extended import create_access_token
+
+    with client.application.app_context():
+        token = create_access_token(
+            identity="test@test.com",
+            additional_claims={"_id": "u1", "institution": "TestInstitution", "role": "admin"},
+        )
+
+    client.set_cookie("access_token_cookie", token)
 
 
-"""
-Test: Upload with an invalid or expired token should return 401.
-"""
-
-
-def test_ciarp_upload_invalid_token(client):
-    headers = {"Authorization": "Bearer invalid_token"}
+def test_ciarp_upload_invalid_token(client: FlaskClient) -> None:
+    client.set_cookie("access_token_cookie", "invalid_token")
 
     response = client.post(
         "/app/submit/ciarp",
-        headers=headers,
         data={"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")},
         content_type="multipart/form-data",
     )
 
     assert response.status_code == 401
-    assert response.json["msg"] in ["Token inválido o expirado", "Token no encontrado en headers"]
+    json_data = cast(dict[str, Any], response.json)
+    assert json_data["msg"] == "Token inválido o expirado"
 
 
-"""
-Test: Upload with invalid or missing columns should return 422.
-"""
-
-
-def test_ciarp_upload_with_invalid_columns(client):
-    token = get_auth_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
+def test_ciarp_upload_with_invalid_columns(client: FlaskClient) -> None:
+    auth_cookie(client)
 
     with patch("quyca.application.routes.app.ciarp_app_router.CiarpService.handle_ciarp_upload") as mock_service:
         mock_service.return_value = (
             {
                 "success": False,
-                "errores": 1,
-                "duplicados": 0,
+                "errors": 1,
+                "duplicates": 0,
                 "msg": "El archivo enviado no cumple con el formato requerido de columnas",
-                "detalles": ["Columna sin nombre en posición 20"],
+                "details": ["Columna sin nombre en posición 20"],
             },
             422,
         )
 
-        data = {"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")}
-        response = client.post("/app/submit/ciarp", headers=headers, data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/app/submit/ciarp",
+            data={"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")},
+            content_type="multipart/form-data",
+        )
 
-        assert response.status_code == 422
-        assert response.json["success"] is False
-        assert response.json["msg"].startswith("El archivo enviado no cumple con el formato requerido")
+    assert response.status_code == 422
+    json_data = cast(dict[str, Any], response.json)
+    assert json_data["success"] is False
+    assert json_data["msg"].startswith("El archivo enviado no cumple con el formato requerido")
 
 
-"""
-Test: Upload an empty file should return a 400 error message.
-"""
-
-
-def test_ciarp_upload_empty_file(client):
-    token = get_auth_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
+def test_ciarp_upload_empty_file(client: FlaskClient) -> None:
+    auth_cookie(client)
 
     with patch("quyca.application.routes.app.ciarp_app_router.CiarpService.handle_ciarp_upload") as mock_service:
         mock_service.return_value = (
@@ -75,110 +71,101 @@ def test_ciarp_upload_empty_file(client):
             400,
         )
 
-        data = {"file": (io.BytesIO(b""), "ciarp.xlsx")}
-        response = client.post("/app/submit/ciarp", headers=headers, data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/app/submit/ciarp",
+            data={"file": (io.BytesIO(b""), "ciarp.xlsx")},
+            content_type="multipart/form-data",
+        )
 
-        assert response.status_code == 400
-        assert response.json["msg"] == "El archivo cargado está vacío. Verifique que contenga información."
+    assert response.status_code == 400
+    json_data = cast(dict[str, Any], response.json)
+    assert json_data["msg"] == "El archivo cargado está vacío. Verifique que contenga información."
 
 
-"""
-Test: Successful CIARP file upload should return 200 and success=True.
-"""
-
-
-def test_ciarp_upload_success(client):
-    token = get_auth_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
+def test_ciarp_upload_success(client: FlaskClient) -> None:
+    auth_cookie(client)
 
     with patch("quyca.application.routes.app.ciarp_app_router.CiarpService.handle_ciarp_upload") as mock_service:
         mock_service.return_value = (
-            {"success": True, "errores": 0, "duplicados": 1, "pdf_base64": "JVBERi0xLjQKJ..."},
+            {"success": True, "errors": 0, "duplicates": 1, "pdf_base64": "JVBERi0xLjQKJ..."},
             200,
         )
 
-        data = {"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")}
-        response = client.post("/app/submit/ciarp", headers=headers, data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/app/submit/ciarp",
+            data={"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")},
+            content_type="multipart/form-data",
+        )
 
-        assert response.status_code == 200
-        assert response.json["success"] is True
+    assert response.status_code == 200
+    json_data = cast(dict[str, Any], response.json)
+    assert json_data["success"] is True
 
 
-"""
-Test: Upload request without a file should return 400 with proper message.
-"""
+def test_ciarp_upload_no_file(client: FlaskClient) -> None:
+    auth_cookie(client)
 
-
-def test_ciarp_upload_no_file(client):
-    token = get_auth_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
-
-    response = client.post("/app/submit/ciarp", headers=headers, data={})
+    response = client.post("/app/submit/ciarp", data={})
 
     assert response.status_code == 400
-    assert response.json["success"] is False
-    assert response.json["msg"] == "Archivo requerido"
+    json_data = cast(dict[str, Any], response.json)
+    assert json_data["success"] is False
+    assert json_data["msg"] == "Archivo requerido"
 
 
-"""
-Test: Upload with validation errors should return 400 and include error count.
-"""
-
-
-def test_ciarp_upload_with_errors(client):
-    token = get_auth_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
+def test_ciarp_upload_with_errors(client: FlaskClient) -> None:
+    auth_cookie(client)
 
     with patch("quyca.application.routes.app.ciarp_app_router.CiarpService.handle_ciarp_upload") as mock_service:
         mock_service.return_value = (
-            {"success": False, "errores": 3, "duplicados": 0, "pdf_base64": "JVBERi0xLjQKJ..."},
+            {"success": False, "errors": 3, "duplicates": 0, "pdf_base64": "JVBERi0xLjQKJ..."},
             400,
         )
 
-        data = {"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")}
-        response = client.post("/app/submit/ciarp", headers=headers, data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/app/submit/ciarp",
+            data={"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")},
+            content_type="multipart/form-data",
+        )
 
-        assert response.status_code == 400
-        assert response.json["success"] is False
-        assert response.json["errores"] == 3
+    assert response.status_code == 400
+    json_data = cast(dict[str, Any], response.json)
+    assert json_data["success"] is False
+    assert json_data["errors"] == 3
 
 
-"""
-Test: Upload with duplicate records should return 200 and include duplicate count.
-"""
-
-
-def test_ciarp_upload_with_duplicates(client):
-    token = get_auth_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
+def test_ciarp_upload_with_duplicates(client: FlaskClient) -> None:
+    auth_cookie(client)
 
     with patch("quyca.application.routes.app.ciarp_app_router.CiarpService.handle_ciarp_upload") as mock_service:
         mock_service.return_value = (
-            {"success": True, "errores": 0, "duplicados": 2, "pdf_base64": "JVBERi0xLjQKJ..."},
+            {"success": True, "errors": 0, "duplicates": 2, "pdf_base64": "JVBERi0xLjQKJ..."},
             200,
         )
 
-        data = {"file": (io.BytesIO(b"excel-with-duplicates"), "ciarp.xlsx")}
-        response = client.post("/app/submit/ciarp", headers=headers, data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/app/submit/ciarp",
+            data={"file": (io.BytesIO(b"excel-with-duplicates"), "ciarp.xlsx")},
+            content_type="multipart/form-data",
+        )
 
-        assert response.status_code == 200
-        assert response.json["duplicados"] == 2
+    assert response.status_code == 200
+    json_data = cast(dict[str, Any], response.json)
+    assert json_data["duplicates"] == 2
 
 
-"""
-Test: Simulate email failure during report sending; should return 500.
-"""
-
-
-def test_ciarp_upload_email_failed(client):
-    token = get_auth_token(client)
-    headers = {"Authorization": f"Bearer {token}"}
+def test_ciarp_upload_email_failed(client: FlaskClient) -> None:
+    auth_cookie(client)
 
     with patch("quyca.application.routes.app.ciarp_app_router.CiarpService.handle_ciarp_upload") as mock_service:
         mock_service.return_value = ({"success": False, "msg": "Fallo al enviar correo"}, 500)
 
-        data = {"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")}
-        response = client.post("/app/submit/ciarp", headers=headers, data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/app/submit/ciarp",
+            data={"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")},
+            content_type="multipart/form-data",
+        )
 
-        assert response.status_code == 500
-        assert response.json["success"] is False
+    assert response.status_code == 500
+    json_data = cast(dict[str, Any], response.json)
+    assert json_data["success"] is False

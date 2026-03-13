@@ -10,6 +10,7 @@ from quyca.application.routes.api.search_api_router import search_api_router
 from quyca.application.routes.app.affiliation_app_router import affiliation_app_router
 from quyca.application.routes.api.affiliation_api_router import affiliation_api_router
 from quyca.application.routes.app.user_auth_app_router import user_auth_app_router
+from quyca.application.routes.app.me_app_router import me_app_router
 from quyca.application.routes.app.user_crud_app_router import user_crud_app_router
 from quyca.application.routes.app.staff_app_router import staff_app_router
 from quyca.application.routes.app.ciarp_app_router import ciarp_app_router
@@ -68,6 +69,8 @@ router.register_blueprint(apc_api_router, url_prefix=f"{settings.API_URL_PREFIX}
 router.register_blueprint(completer_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/completer")
 
 router.register_blueprint(user_auth_app_router, url_prefix=f"{settings.APP_URL_PREFIX}")
+
+router.register_blueprint(me_app_router, url_prefix=f"{settings.APP_URL_PREFIX}")
 
 router.register_blueprint(user_crud_app_router, url_prefix=f"{settings.APP_URL_PREFIX}")
 

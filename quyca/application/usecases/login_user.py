@@ -18,11 +18,14 @@ class LoginResult:
 
 
 class LoginUserUseCase:
+    """Use case responsible for authenticating users."""
+
     def __init__(self, user_repo: IUserRepository, token_service: ITokenService):
         self.user_repo = user_repo
         self.token_service = token_service
 
     def execute(self, email: str, password: str) -> dict:
+        """Validates credentials and returns an access token if successful."""
         email = (email or "").strip()
         password = password or ""
 
@@ -42,12 +45,10 @@ class LoginUserUseCase:
         claims: dict[str, Any] = {
             "_id": parse_user["_id"],
             "institution": parse_user["institution"],
-            "rol": parse_user["rol"],
+            "role": parse_user["role"],
         }
 
         token = self.token_service.create_access_token(subject=user.email, claims=claims)
-
-        self.user_repo.update_token(user.email, token)
 
         return {
             "success": True,
