@@ -20,7 +20,7 @@ def get_work_by_id(work_id: str) -> dict:
     set_external_ids(work)
     set_external_urls(work)
     limit_authors(work)
-    set_authors_external_ids(work)
+    set_authors_external_ids(work, filter_sensitive=True)
     set_title_and_language(work)
     set_product_types(work)
     data = work_parser.parse_work(work)
@@ -40,7 +40,7 @@ def set_abstract(work: Work) -> None:
 
 def get_work_authors(work_id: str) -> dict:
     work = work_repository.get_work_by_id(work_id)
-    set_authors_external_ids(work)
+    set_authors_external_ids(work, filter_sensitive=True)
     return {"data": work.model_dump()["authors"]}
 
 

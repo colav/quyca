@@ -7,6 +7,7 @@ from quyca.domain.models.patent_model import Patent
 from quyca.domain.models.project_model import Project
 from quyca.domain.models.work_model import Work
 from quyca.infrastructure.repositories import person_repository
+from quyca.domain.constants.sensitive_data import SENSITIVE_ID_SOURCES
 
 
 def set_title_and_language(workable: Union[Work, Patent, Project]) -> None:
@@ -47,7 +48,7 @@ def set_product_types(workable: Union[Work, Patent, Project]) -> None:
     workable.product_types = sorted(product_types, key=order)
 
 
-def set_authors_external_ids(workable: Union[Work, Patent, Project]) -> None:
+def set_authors_external_ids(workable: Union[Work, Patent, Project], filter_sensitive: bool = False) -> None:
     if not workable.authors:
         return
 
@@ -56,7 +57,10 @@ def set_authors_external_ids(workable: Union[Work, Patent, Project]) -> None:
 
     for author in workable.authors:
         if author.id:
-            author.external_ids = person_repository.get_person_external_ids(str(author.id))
+            external_ids = person_repository.get_person_external_ids(str(author.id))
+            if filter_sensitive:
+                external_ids = [eid for eid in external_ids if eid.source not in SENSITIVE_ID_SOURCES]
+            author.external_ids = external_ids
 
 
 def limit_authors(workable: Union[Work, Patent, Project], limit: int = 10) -> None:
@@ -66,7 +70,7 @@ def limit_authors(workable: Union[Work, Patent, Project], limit: int = 10) -> No
         workable.authors = workable.authors[:limit]
 
 
-def set_external_ids(workable: Union[Work, Patent, Project]) -> None:
+def set_external_ids(workable: Union[Work, Patent, Project], filter_sensitive: bool = False) -> None:
     if not workable.external_ids:
         return
 
