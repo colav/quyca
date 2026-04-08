@@ -74,7 +74,7 @@ class Abstract(BaseModel):
     source: str | None = None
 
 
-class AutorWork(Author):
+class AuthorWork(Author):
     """
     The difference with Author is that in the work the author is marked with a type of author (ex: advisor, co-advisor, author etc..)
     this value is only assigned in the work.
@@ -88,7 +88,7 @@ class Work(BaseModel):
     abstracts: list[Abstract] | None = None
     apc: APC | None = Field(default_factory=APC)
     authors_count: int | None = Field(default_factory=int, alias="author_count")
-    authors: list[Author] = Field(default_factory=list)
+    authors: list[AuthorWork] = Field(default_factory=list)
     authors_csv: str | None = None
     bibliographic_info: BiblioGraphicInfo | None = None
     citations_by_year: list[CitationByYear] | None = None
