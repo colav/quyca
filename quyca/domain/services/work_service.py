@@ -117,6 +117,7 @@ def get_works_by_entity_pipeline_params() -> dict:
             "open_access",
             "authors.full_name",
             "authors.id",
+            "authors.type",
             "authors.affiliations.id",
             "authors.affiliations.name",
             "authors.affiliations.types",

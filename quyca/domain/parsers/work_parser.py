@@ -58,6 +58,7 @@ def parse_search_results(works: list) -> list:
             "__all__": {
                 "id": ...,
                 "full_name": ...,
+                "type": ...,
                 "affiliations": {
                     "__all__": {
                         "id": ...,
