@@ -208,6 +208,7 @@ class Affiliation(BaseModel):
     types: list[Type] | None = None
     start_date: int | str | None = None
     end_date: int | str | None = None
+    years: list[int] | None = None
 
     ror: str | None = None
     addresses: list[Address] | None = None
