@@ -1,34 +1,46 @@
+import os
 import io
 import base64
 import pandas as pd
-from domain.validators.staff_validator import StaffValidator
-from domain.services.staff_report_service import StaffReportService
-from infrastructure.notifications.staff_notification import StaffNotification
+from quyca.domain.validators.staff_validator import StaffValidator
+from quyca.domain.services.staff_report_service import StaffReportService
+from quyca.infrastructure.notifications.notification import StaffNotification
 
 
 class ProcessStaffFileUseCase:
+    """
+    Use case: validate, report and notify for Staff Excel uploads.
+    """
+
     def __init__(self, report_service: StaffReportService, notification_service: StaffNotification):
         self.report_service = report_service
         self.notification_service = notification_service
 
-    """
-    Use case: process a staff Excel file.
-    """
-
     def execute(
-        self, file: io.BytesIO, institution: str, filename: str, upload_date: str, user: str, email: str
+        self, file: io.BytesIO, institution: str, filename: str, upload_date: str, user: str, email: str, ror_id: str
     ) -> dict:
-        df = pd.read_excel(file)
-
+        """Validates the file, generates reports, sends notifications and returns the result."""
+        extension = os.path.splitext(filename)[1].lower()
+        if extension != ".xlsx":
+            return {
+                "success": False,
+                "msg": f"Formato de archivo no permitido ({extension}). Solo se admiten archivos .xlsx.",
+            }
+        try:
+            df = pd.read_excel(file, engine="openpyxl")
+        except Exception as e:
+            return {
+                "success": False,
+                "msg": f"Error al leer el archivo Excel: {str(e)}",
+            }
         valid, errores_columnas, _ = StaffValidator.validate_columns(df)
-
         if not valid:
             return {
                 "success": False,
-                "errores": len(errores_columnas),
-                "duplicados": 0,
+                "errors": len(errores_columnas),
+                "duplicates": 0,
                 "msg": "El archivo enviado no cumple con el formato requerido de columnas",
-                "detalles": errores_columnas,
+                "details": errores_columnas,
             }
 
         if df.empty or df.dropna(how="all").empty:
@@ -37,7 +49,7 @@ class ProcessStaffFileUseCase:
         staff_report, attachments = self.report_service.generate_report(df, institution, filename, upload_date, user)
 
         self.notification_service.send_report(
-            staff_report, institution, filename, upload_date, user, email, attachments
+            staff_report, institution, filename, upload_date, user, email, "Staff", attachments, ror_id
         )
 
         pdf_base64 = None
@@ -47,8 +59,9 @@ class ProcessStaffFileUseCase:
                 break
 
         return {
-            "success": staff_report.total_errores == 0,
-            "errores": staff_report.total_errores,
-            "duplicados": staff_report.total_duplicados,
+            "success": staff_report.total_errors == 0,
+            "errors": staff_report.total_errors,
+            "warnings": len(staff_report.warnings),
+            "duplicates": staff_report.total_duplicates,
             "pdf_base64": pdf_base64,
         }

@@ -1,49 +1,44 @@
-from domain.models.user_model import User
-from infrastructure.mongo import impactu_database
-from domain.exceptions.not_entity_exception import NotEntityException
-from domain.repositories.user_repository_interface import IUserRepository
+from quyca.domain.models.user_model import User
+from quyca.infrastructure.mongo import impactu_database
+from quyca.infrastructure.security.password_hasher import verify_password
+from quyca.domain.exceptions.not_entity_exception import NotEntityException
+from quyca.domain.repositories.user_repository_interface import IUserRepository
+
+"""
+MongoDB repository for login + token management.
+"""
 
 
 class UserRepositoryMongo(IUserRepository):
-    def __init__(self):
+    """MongoDB repository for authenticating users by email/password."""
+
+    def __init__(self) -> None:
         self.collection = impactu_database["users"]
 
-    """
-    The get_by_email_and_pass method retrieves a user by email and password,
-    returning a User object or raising NotEntityException if not found.
-    """
-
     def get_by_email_and_pass(self, email: str, password: str) -> User:
-        user_data = self.collection.find_one({"email": email.strip().lower(), "password": password})
-        if not user_data:
-            raise NotEntityException(f"Usuario con correo {email} no encontrado o contraseño no conciden")
-        return User(
-            email=user_data["email"],
-            password=user_data["password"],
-            institution=user_data["institution"],
-            ror_id=user_data["ror_id"],
-            rol=user_data["rol"],
-            token=user_data["token"],
+        """Validates credentials and returns the user data."""
+        email = email.strip().lower()
+
+        user_data = self.collection.find_one(
+            {"email": email.strip().lower()},
+            {"password": 1, "email": 1, "institution": 1, "role": 1, "is_active": 1, "apikey": 1},
         )
 
-    """
-    updates to the latest valid token
-    """
+        if not user_data:
+            raise NotEntityException(f"Usuario con correo {email} no encontrado o contraseña no conciden")
 
-    def update_token(self, email: str, token: str):
-        self.collection.update_one({"email": email.strip().lower()}, {"$set": {"token": token}})
+        stored_hash = user_data.get("password")
+        try:
+            if not stored_hash or not verify_password(password, stored_hash):
+                raise NotEntityException(f"Usuario con correo {email} no encontrado o contraseña no conciden")
+        except Exception:
+            raise NotEntityException(f"Usuario con correo {email} no encontrado o contraseña no conciden")
 
-    """Delete token"""
-
-    def remove_token(self, email: str, token: str) -> bool:
-        user = self.collection.find_one({"email": email.strip().lower()})
-        if user and user.get("token") == token:
-            self.collection.update_one({"email": email.strip().lower()}, {"$set": {"token": ""}})
-            return True
-        return False
-
-    """valid token"""
-
-    def is_token_valid(self, email: str, token: str) -> bool:
-        user = self.collection.find_one({"email": email.strip().lower()})
-        return user is not None and user.get("token") == token
+        return User(
+            id=str(user_data["_id"]),
+            email=user_data["email"],
+            institution=user_data["institution"],
+            role=user_data["role"],
+            is_active=user_data.get("is_active", True),
+            apikey=user_data.get("apikey"),
+        )

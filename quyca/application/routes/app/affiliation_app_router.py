@@ -4,8 +4,8 @@ from typing import Tuple
 from flask import Blueprint, request, Response, jsonify
 from sentry_sdk import capture_exception
 
-from domain.models.base_model import QueryParams
-from domain.services import (
+from quyca.domain.models.base_model import QueryParams
+from quyca.domain.services import (
     work_service,
     affiliation_service,
     project_service,

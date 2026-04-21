@@ -1,3 +1,4 @@
+from typing import Any, Optional
 from bson import ObjectId
 from pydantic import BaseModel, Field, field_validator, model_validator
 from quyca.domain.models.base_model import (
@@ -21,6 +22,7 @@ class Affiliation(BaseModel):
     position: str | None = None
     start_date: int | str | None = None
     end_date: int | str | None = None
+    years: list[int] | None = None
     types: list[Type] | None = Field(default_factory=list)
     external_urls: list[ExternalUrl] | None = Field(default_factory=list)
 
@@ -53,13 +55,13 @@ class Degree(BaseModel):
 
 
 class Institution(BaseModel):
-    id: str | None
-    country_code: str | None
-    country_id: str | None
-    display_name: str | None
-    lineage: list[str] | None = Field(default_factory=list)
-    ror: str | None
-    type: str | None
+    id: Optional[str] = None
+    country_code: Optional[str] = None
+    country_id: Optional[str] = None
+    display_name: Optional[str] = None
+    lineage: list[str] = Field(default_factory=list)
+    ror: Optional[str] = None
+    type: Optional[str] = None
 
 
 class RelatedWork(BaseModel):
@@ -68,6 +70,23 @@ class RelatedWork(BaseModel):
     provenance: str | None
     source: str | None
     year: int | None = None
+
+    @field_validator("institutions", mode="before")
+    @classmethod
+    def clean_institutions(cls, value: Any) -> list:
+        if not value:
+            return []
+
+        cleaned = []
+        for inst in value:
+            if not isinstance(inst, dict):
+                continue
+            if inst.get("type") is None:
+                continue
+
+            cleaned.append(inst)
+
+        return cleaned
 
 
 class Person(BaseModel):
@@ -81,7 +100,7 @@ class Person(BaseModel):
     external_ids: list[ExternalId] | None = Field(default_factory=list)
     first_names: list[str] | None = Field(default_factory=list)
     full_name: str | None = Field(serialization_alias="name")
-    initials: str | None = None
+    initials: str | list[str] | None = None
     keywords: list | None = Field(default_factory=list)
     last_names: list[str] | None = Field(default_factory=list)
     marital_status: str | None = None

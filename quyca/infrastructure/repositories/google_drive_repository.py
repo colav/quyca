@@ -1,6 +1,6 @@
 import os
 import pickle
-from typing import Optional
+from typing import Any, Optional
 from flask import current_app
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -9,9 +9,11 @@ from google.auth.transport.requests import Request
 
 
 class GoogleDriveRepository:
+    """Uploads files and manages folders using the Google Drive API."""
+
     SCOPES = ["https://www.googleapis.com/auth/drive"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         credentials_path = current_app.config.get("GOOGLE_CREDENTIALS")
         if not credentials_path:
             raise ValueError("GOOGLE_CREDENTIALS no está configurado")
@@ -29,25 +31,26 @@ class GoogleDriveRepository:
 
         self.service = build("drive", "v3", credentials=creds)
 
-    "Resolves the Drive folder ID (handles shortcuts)"
-
     def resolve_folder_id(self, folder_id: str) -> str:
+        """Resolves shortcuts and returns the real Drive folder id."""
         try:
-            folder = (
+            folder: dict[str, Any] = (
                 self.service.files()
                 .get(fileId=folder_id, fields="id, name, mimeType, shortcutDetails", supportsAllDrives=True)
                 .execute()
             )
 
             if folder.get("mimeType") == "application/vnd.google-apps.shortcut":
-                return folder["shortcutDetails"]["targetId"]
+                target_id = folder.get("shortcutDetails", {}).get("targetId")
+                if isinstance(target_id, str):
+                    return target_id
+                raise ValueError(f"El shortcutDetails.targetId no es válido para {folder_id}")
             return folder_id
         except HttpError as e:
-            raise ValueError(f"No se pudo acceder al folder_id { folder_id }: {e}")
-
-    "Gets or creates a folder in Drive by name and parent"
+            raise ValueError(f"No se pudo acceder al folder_id {folder_id}: {e}")
 
     def get_or_create_folder(self, folder_name: str, parent_id: Optional[str] = None) -> str:
+        """Finds or creates a folder and returns its id."""
         if parent_id is None:
             parent_id = current_app.config["GOOGLE_PARENT_ID"]
         if parent_id:
@@ -56,7 +59,7 @@ class GoogleDriveRepository:
         else:
             query = f"name = '{folder_name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
 
-        results = (
+        results: dict[str, Any] = (
             self.service.files()
             .list(
                 q=query,
@@ -69,9 +72,9 @@ class GoogleDriveRepository:
             .execute()
         )
 
-        folders = results.get("files", [])
-        if folders:
-            return folders[0]["id"]
+        folders: list[dict[str, Any]] = results.get("files", [])
+        if folders and isinstance(folders[0].get("id"), str):
+            return str(folders[0]["id"])
 
         folder_metadata = {
             "name": folder_name,
@@ -79,11 +82,13 @@ class GoogleDriveRepository:
             "parents": [parent_id] if parent_id else [],
         }
         folder = self.service.files().create(body=folder_metadata, fields="id", supportsAllDrives=True).execute()
-        return folder["id"]
-
-    "Uploads a file to Google Drive inside a specific folder"
+        folder_id = folder.get("id")
+        if not isinstance(folder_id, str):
+            raise ValueError("No se pudo obtener el ID del folder creado.")
+        return folder_id
 
     def upload_file(self, filepath: str, filename: str, folder_id: str) -> str:
+        """Uploads a file to Drive and returns its web view link."""
         folder_id = self.resolve_folder_id(folder_id)
         file_metadata = {"name": filename, "parents": [folder_id]}
         media = MediaFileUpload(filepath, resumable=True)
@@ -93,4 +98,7 @@ class GoogleDriveRepository:
             .execute()
         )
 
-        return file.get("webViewLink")
+        link = file.get("webViewLink")
+        if not isinstance(link, str):
+            raise ValueError("No se pudo obtener el enlace del archivo subido.")
+        return link

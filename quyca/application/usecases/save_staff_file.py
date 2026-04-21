@@ -1,14 +1,20 @@
-from typing import Dict
-from infrastructure.repositories.file_repository import FileRepository
+from typing import Any, Dict
+from quyca.infrastructure.repositories.file_repository import FileRepository
+from werkzeug.datastructures import FileStorage
 
 
 class SaveStaffFileUseCase:
+    """
+    Use case: persist validated Staff file in Drive (or local fallback).
+    """
+
     def __init__(self, file_repo: FileRepository):
         self.file_repo = file_repo
 
-    """Saves the uploaded file into Google Drive for the corresponding institution"""
-
-    def execute(self, file, ror_id: str, institution: str, file_type: str = "staff") -> Dict[str, str]:
+    def execute(self, file: FileStorage, ror_id: str, institution: str, file_type: str = "staff") -> dict[str, Any]:
+        """
+        Saves file and returns repository result payload.
+        """
         if not hasattr(file, "save"):
             raise TypeError("El objeto 'file' debe ser un FileStorage compatible.")
         if not ror_id:
@@ -24,4 +30,5 @@ class SaveStaffFileUseCase:
         except Exception:
             pass
 
-        return self.file_repo.save_file(file, ror_id, institution, file_type)
+        result: Dict[str, Any] = self.file_repo.save_file(file, ror_id, institution, file_type)
+        return result

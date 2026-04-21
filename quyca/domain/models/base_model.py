@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Any, Generator
 from datetime import datetime, timezone
 from pydantic import BaseModel, field_validator, Field, conint, model_validator
 from bson import ObjectId
@@ -92,8 +92,8 @@ class Ranking(BaseModel):
 
     @field_validator("rank", mode="before")
     @classmethod
-    def replace_nan_in_rank(cls, v):
-        return clean_nan(v)
+    def replace_nan_in_rank(cls, value: Any) -> Any:
+        return clean_nan(value)
 
 
 class Status(BaseModel):
@@ -134,8 +134,8 @@ class Publisher(BaseModel):
 
     @field_validator("name", mode="before")
     @classmethod
-    def replace_nan_in_name(cls, v):
-        return clean_nan(v)
+    def replace_nan_in_name(cls, value: Any) -> Any:
+        return clean_nan(value)
 
 
 class Paid(BaseModel):
@@ -144,6 +144,18 @@ class Paid(BaseModel):
     source: str | None = None
     value: int | None = None
     value_usd: int | None = None
+
+    @field_validator("value_usd", mode="before")
+    @classmethod
+    def normalize_value_usd(cls, value: Any) -> int | None:
+        if value is None:
+            return None
+        if isinstance(value, list):
+            # If comes as a list, take the first element
+            return int(value[0]) if value else None
+        if isinstance(value, (int, float)):
+            return int(value)
+        return None
 
 
 class APC(BaseModel):
@@ -155,18 +167,22 @@ class APC(BaseModel):
 class QueryParams(BaseModel):
     limit: conint(ge=1, le=250) | None = Field(default=None, alias="max")  # type: ignore
     page: conint(ge=1) | None = None  # type: ignore
-    keywords: str | None = None
-    plot: str | None = None
-    sort: str | None = None
-    product_types: str | None = None
-    years: str | None = None
-    status: str | None = None
-    subjects: str | None = None
-    topics: str | None = None
+    apc_range: str | None = None
+    authors_ranking: str | None = None
     countries: str | None = None
     groups_ranking: str | None = None
-    authors_ranking: str | None = None
+    keywords: str | None = None
+    license_type: str | None = None
+    plot: str | None = None
+    product_types: str | None = None
+    publication_time: str | None = None
+    sort: str | None = None
+    status: str | None = None
+    scimago_quartiles: str | None = None
     source_types: str | None = None
+    subjects: str | None = None
+    topics: str | None = None
+    years: str | None = None
 
     @model_validator(mode="after")
     def validate_pagination_and_sort(self) -> "QueryParams":
@@ -192,6 +208,7 @@ class Affiliation(BaseModel):
     types: list[Type] | None = None
     start_date: int | str | None = None
     end_date: int | str | None = None
+    years: list[int] | None = None
 
     ror: str | None = None
     addresses: list[Address] | None = None
@@ -240,7 +257,7 @@ class Author(BaseModel):
 
     @field_validator("affiliations", mode="before")
     @classmethod
-    def ensure_list_affiliations(cls, value):
+    def ensure_list_affiliations(cls, value: list | dict | None) -> list:
         if value is None:
             return []
         if isinstance(value, dict):
@@ -250,7 +267,7 @@ class Author(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def compute_age_and_remove_birthdate(self):
+    def compute_age_and_remove_birthdate(self) -> "Author":
         if self.birthdate:
             try:
                 birth_ts = int(self.birthdate)
@@ -301,7 +318,7 @@ class Topic(TopicBase):
     score: float | None = None
 
     @field_validator("subfield", "field", "domain", mode="before")
-    def normalize_subobjects(cls, value):
+    def normalize_subobjects(cls, value: Any) -> Any:
         # Sometimes these fields come as unknown strings
         if isinstance(value, str):
             return None

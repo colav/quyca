@@ -103,3 +103,17 @@ def parse_annual_apc_expenses(works: Generator) -> dict:
         "total_apc": int(total_apc),
         "total_results": total_results,
     }
+
+
+def parse_annual_scimago_quartile(source: CommandCursor) -> dict:
+    plot = []
+    for record in source:
+        year = record.get("year")
+        quartile = record.get("quartile")
+
+        if year and quartile and quartile in ["-", "NaN", None]:
+            plot.append({"x": year, "y": "Sin cuartil"})
+        else:
+            plot.append({"x": year, "y": quartile})
+
+    return {"plot": sorted(plot, key=lambda x: x.get("x", 0))}

@@ -1,6 +1,6 @@
 from elasticsearch import Elasticsearch, __version__ as es_version
 
-from config import settings
+from quyca.config import settings
 
 es_database: Elasticsearch | None = None
 if es_version[0] < 8:

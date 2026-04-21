@@ -1,3 +1,4 @@
+from typing import Any
 from quyca.domain.constants.articles_types import articles_types_list
 from quyca.domain.models.base_model import QueryParams
 from quyca.infrastructure.repositories import (
@@ -16,8 +17,21 @@ from quyca.domain.parsers import (
 )
 
 
-def get_person_plot(person_id: str, query_params: QueryParams) -> dict:
-    return globals()["plot_" + query_params.plot](person_id, query_params)
+def get_person_plot(person_id: str, query_params: QueryParams) -> dict[str, Any]:
+    plot_name = query_params.plot
+    if plot_name is None:
+        raise ValueError("El parámetro 'plot' no puede ser None.")
+
+    func_name = f"plot_{plot_name}"
+    func = globals().get(func_name)
+
+    if not callable(func):
+        raise ValueError(f"No se encontró la función '{func_name}'.")
+
+    result = func(person_id, query_params)
+    if not isinstance(result, dict):
+        raise TypeError(f"La función '{func_name}' debe retornar un dict, no {type(result)}.")
+    return result
 
 
 def plot_annual_evolution_by_scienti_classification(person_id: str, query_params: QueryParams) -> dict:
@@ -97,7 +111,7 @@ def plot_products_by_subject(person_id: str, query_params: QueryParams) -> dict:
 
 
 def plot_products_by_database(person_id: str, query_params: QueryParams) -> dict:
-    data = plot_repository.get_products_by_database_by_person(person_id)
+    data = plot_repository.get_products_by_database_by_person(person_id, query_params)
     return venn_parser.parse_products_by_database(data)
 
 
@@ -136,12 +150,15 @@ def plot_articles_by_scimago_quartile(person_id: str, query_params: QueryParams)
 def plot_articles_by_publishing_institution(person_id: str, query_params: QueryParams) -> dict:
     person = person_repository.get_person_by_id(person_id)
     institution = None
-    for affiliation in person.affiliations:
-        if any(
-            affiliation_type.type not in ["faculty", "department", "group"] for affiliation_type in affiliation.types
-        ):
-            institution = affiliation_repository.get_affiliation_by_id(str(affiliation.id))
-            break
+
+    if person.affiliations:
+        for affiliation in person.affiliations:
+            if affiliation.types and any(
+                affiliation_type.type not in ["faculty", "department", "group"]
+                for affiliation_type in affiliation.types
+            ):
+                institution = affiliation_repository.get_affiliation_by_id(str(affiliation.id))
+                break
     pipeline_params = {
         "work_project": ["source.id", "source.name", "source.publisher.name"],
         "match": {"types.type": {"$in": articles_types_list}},

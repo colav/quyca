@@ -1,84 +1,78 @@
 from datetime import datetime
+from typing import Tuple, Any
 from zoneinfo import ZoneInfo
+
+from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import verify_jwt_in_request, get_jwt
-from flask import Blueprint, request, jsonify
-from infrastructure.container import build_staff_service
-from domain.services.staff_service import StaffService
+from sentry_sdk import capture_exception
+from werkzeug.datastructures import FileStorage
+
+from quyca.application.services.staff_service import StaffService, StaffUploadError
+from quyca.infrastructure.container import build_staff_service
 
 staff_app_router = Blueprint("staff_app_router", __name__)
+
 """
-@api {post} /app/staff
-@apiName PostStaffFile
+@api {post} /app/submit/staff Subir archivo Staff (.xlsx)
+@apiName SubmitStaff
 @apiGroup Staff
 @apiVersion 1.0.0
-@apiDescription Permite subir un archivo Excel con la información de personal (staff).  
-El sistema valida el archivo, genera un reporte PDF (en base64) y, si no hay errores, lo guarda en Google Drive.
 
-@apiHeader {String} Authorization Token JWT en el header con el formato: "Bearer <token>".
+@apiDescription
+Sube un Excel de Staff para validación, genera reporte (PDF + Excel anotado) y envía notificación.
+Auth por cookie HttpOnly `access_token_cookie`.
 
-@apiBody {File} file Archivo Excel (.xlsx) con la información del staff.  
-Debe incluir las columnas requeridas: tipo_documento, identificación, primer_apellido, nombres, tipo_contrato, jornada_laboral, fecha_nacimiento, fecha_inicial_vinculación, código_unidad_académica, unidad_académica.
+@apiHeader (Auth Cookie) {String} access_token_cookie Cookie JWT HttpOnly.
 
-@apiSuccess {Boolean} success Indica si la validación fue exitosa (no hay errores).
-@apiSuccess {Number} errores Número de errores encontrados en el archivo.
-@apiSuccess {Number} duplicados Número de registros duplicados detectados.
-@apiSuccess {String} pdf_base64 Reporte en formato PDF codificado en Base64.
+@apiBody {File} file Archivo Excel `.xlsx`.
 
-@apiSuccessExample {json} Respuesta exitosa:
-HTTP/1.1 200 OK
-{
-    "success": true,
-    "errores": 0,
-    "duplicados": 2,
-    "pdf_base64": "JVBERi0xLjQKJ..."
-}
+@apiSuccess (200) {Boolean} success
+@apiSuccess (200) {Number} errors
+@apiSuccess (200) {Number} duplicates
+@apiSuccess (200) {String} pdf_base64
+@apiSuccess (200) {String} msg
 
-@apiError {Boolean} success Indica si la validación falló.
-@apiError {String} msg Mensaje de error.
-
-@apiErrorExample {json} Respuesta error por token inválido:
-HTTP/1.1 401 Unauthorized
-{
-    "success": false,
-    "msg": "Token inválido o expirado"
-}
-
-@apiErrorExample {json} Respuesta error por archivo faltante:
-HTTP/1.1 400 Bad Request
-{
-    "success": false,
-    "msg": "Archivo requerido"
-}
-
-@apiErrorExample {json} Respuesta error por errores en el archivo:
-HTTP/1.1 400 Bad Request
-{
-    "success": false,
-    "errores": 3,
-    "duplicados": 1,
-    "pdf_base64": "JVBERi0xLjQKJ..."
-}
+@apiError (400) {Boolean} success false
+@apiError (400) {String} msg "Archivo requerido" | "El archivo cargado está vacío. Verifique que contenga información."
+@apiError (401) {Boolean} success false
+@apiError (401) {String} msg "Token inválido o expirado"
+@apiError (422) {Boolean} success false
+@apiError (422) {String} msg "El archivo enviado no cumple con el formato requerido de columnas"
+@apiError (500) {String} msg "Error interno del servidor"
 """
 
 
 @staff_app_router.route("/staff", methods=["POST"])
-def submit_staff():
+def submit_staff() -> Tuple[Response, int]:
     try:
-        verify_jwt_in_request()
-        claims = get_jwt()
-    except Exception:
-        return jsonify({"success": False, "msg": "Token inválido o expirado"}), 401
+        try:
+            verify_jwt_in_request()
+            claims: dict[str, Any] = get_jwt()
+        except Exception:
+            return jsonify({"success": False, "msg": "Token inválido o expirado"}), 401
 
-    auth_header = request.headers.get("Authorization", None)
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"success": False, "msg": "Token no encontrado en headers"}), 401
+        file: FileStorage | None = request.files.get("file")
+        if file is None:
+            return jsonify({"success": False, "msg": "Archivo requerido"}), 400
 
-    token_from_header = auth_header.split(" ")[1]
-    file = request.files.get("file")
-    upload_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
+        upload_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
 
-    process_usecase, save_usecase, user_repo = build_staff_service()
-    service = StaffService(process_usecase, save_usecase, user_repo)
+        process_usecase, save_usecase = build_staff_service()
+        service = StaffService(process_usecase, save_usecase)
 
-    result, status = service.handle_staff_upload(file, claims, token_from_header, upload_date)
-    return jsonify(result), status
+        outcome = service.handle_staff_upload(file, claims, upload_date)
+
+        if outcome.error == StaffUploadError.UNAUTHORIZED:
+            return jsonify(outcome.payload), 401
+
+        if outcome.error == StaffUploadError.UNPROCESSABLE_ENTITY:
+            return jsonify(outcome.payload), 422
+
+        if outcome.error == StaffUploadError.BAD_REQUEST:
+            return jsonify(outcome.payload), 400
+
+        return jsonify(outcome.payload), 200
+
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500

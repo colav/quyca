@@ -48,7 +48,8 @@ def parse_apc_expenses_by_affiliations(data: CommandCursor) -> list:
         if apc_currency not in available_currencies:
             continue
         usd_charges = currency_converter.convert(apc_charges, apc_currency, "USD")
-        result[item.get("names", [{"name": "No name"}])[0].get("name")] += int(usd_charges)
+        name = item.get("name", "No name")
+        result[name] += int(usd_charges)
 
     return sorted([{"name": n, "value": v} for n, v in result.items()], key=lambda x: x["value"], reverse=True)
 
@@ -185,8 +186,8 @@ def parse_articles_by_scimago_quartile(works: Generator) -> list:
 def parse_articles_by_publishing_institution(works: Generator, institution: Affiliation) -> list:
     result = {"Misma": 0, "Diferente": 0, "Sin información": 0}
     names = []
-    if institution:
-        names = list(set([name.name.lower() for name in institution.names]))
+    if institution and institution.names:
+        names = list(set([name.name.lower() for name in institution.names if name.name is not None]))
     for work in works:
         if (
             not work.source.publisher

@@ -1,8 +1,7 @@
-from domain.models.user_model import User
-
-""" This function extracts the rolID attribute from a User object and returns it inside a dictionary. """
+from quyca.domain.models.user_model import User
 
 
 def user_ror_id_and_institution(user: User) -> dict:
-    info_user = {"ror_id": user.ror_id, "institution": user.institution, "rol": user.rol}
+    """Extracts user id, institution and role from a User object."""
+    info_user = {"_id": user.id, "institution": user.institution, "role": user.role}
     return info_user

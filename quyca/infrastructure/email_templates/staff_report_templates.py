@@ -1,8 +1,16 @@
-def build_email_template(tipo: str, rol: str, institution: str, filename: str, upload_date: str):
-    subject = f"Reporte de Validación de Datos {tipo.upper()} - {institution} - {upload_date}"
+"""
+Email templates for validation outcomes (rejected / warnings / accepted).
+"""
 
-    if tipo == "rechazado":
-        body_html = f"""<p>Estimado(a) <b>{rol}</b> - {institution},</p>
+
+def build_email_template(
+    status_type: str, role: str, institution: str, filename: str, upload_date: str
+) -> tuple[str, str]:
+    """Builds the validation result email template based on status."""
+    subject = f"Reporte de Validación de Datos {status_type.upper()} - {institution} - {upload_date}"
+
+    if status_type == "rechazado":
+        body_html = f"""<p>Estimado(a) <b>{role}</b> - {institution},</p>
         <p>Hemos recibido el archivo <b>{filename}</b> cargado en la plataforma el día <b>{upload_date}</b>.</p>
         <p>Durante la validación, se identificaron <b>errores</b> que impiden continuar con el proceso de integración a la plataforma.</b>
         <p><u>Adjunto encontrarás:</u></p>
@@ -28,8 +36,8 @@ def build_email_template(tipo: str, rol: str, institution: str, filename: str, u
         <p>Atentamente,</p>
         <p><b>Equipo <span style="color:#39658c;">Impact</span><span style="color:#f6a611;">U</span></b></p>
         """
-    elif tipo == "advertencias":
-        body_html = f"""<p>Estimado(a) <b>{rol}</b> - {institution},</p>
+    elif status_type == "advertencias":
+        body_html = f"""<p>Estimado(a) <b>{role}</b> - {institution},</p>
         <p>Hemos recibido el archivo <b>{filename}</b> cargado en la plataforma el día <b>{upload_date}</b>.</p>
         <p>El archivo ha sido <b>aceptado</b> y continuará con el proceso de integración de datos a la plataforma.</p>
         <p>Adjunto encontrarás el <b>Reporte de Calidad de Datos (PDF)</b>, donde se detallan las advertencias identificadas durante la validación.</p>
@@ -46,7 +54,7 @@ def build_email_template(tipo: str, rol: str, institution: str, filename: str, u
         <p><b>Equipo <span style="color:#39658c;">Impact</span><span style="color:#f6a611;">U</span></b></p>
         """
     else:
-        body_html = f"""<p>Estimado(a) <b>{rol}</b> – {institution},</p>
+        body_html = f"""<p>Estimado(a) <b>{role}</b> – {institution},</p>
         <p>Hemos recibido el archivo <b>{filename}</b> cargado en la plataforma el día <b>{upload_date}</b>.</p>
         <p>Nos complace informarte que el archivo <b>superó exitosamente todas las validaciones</b> y no se encontraron errores ni advertencias.</p>
         <p>Tus datos ingresarán al proceso de integración en la plataforma y se verán reflejados en la próxima actualización semestral.</p>

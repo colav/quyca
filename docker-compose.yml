@@ -9,13 +9,10 @@ services:
       dockerfile: Dockerfile
       target: development
     image: colav/quyca-dev:dev
-    volumes:
-      - .:/app
     working_dir: /app
     environment:
       PYTHONPATH: /quyca
-    entrypoint: [ "poetry", "run", "python", "./quyca/app.py" ]
-
+    entrypoint: ["poetry", "run", "python", "./quyca/app.py"]
 
   prod:
     container_name: quyca-prod
@@ -63,4 +60,4 @@ services:
     working_dir: /app
     environment:
       PYTHONPATH: /quyca
-    entrypoint: [ "poetry", "run", "python", "./quyca/app.py" ]
+    entrypoint: ["poetry", "run", "python", "./quyca/app.py"]

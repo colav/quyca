@@ -1,17 +1,17 @@
 import io
+from typing import Tuple, Union
 import pandas as pd
 
 
 class XlsxWriteExporter:
-    """
-    Infrastructure service: exports annotated DataFrame to Excel using xlsxwriter.
-    """
+    """Exports a dataframe to XLSX with basic formatting."""
 
-    @staticmethod
-    def to_excel_bytes(df: pd.DataFrame) -> io.BytesIO:
+    def to_excel_bytes(self, df: pd.DataFrame) -> io.BytesIO:
+        """Writes the dataframe to an in-memory XLSX file."""
         output = io.BytesIO()
 
-        def sort_identification(val):
+        def sort_identification(val: int) -> Tuple[int, Union[int, str]]:
+            """Sort key that prioritizes numeric identification values."""
             try:
                 return (0, int(val))
             except:

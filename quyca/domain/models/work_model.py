@@ -1,7 +1,7 @@
 from typing import Any
 
 from bson import ObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from quyca.domain.models.base_model import (
     PyObjectId,
@@ -50,6 +50,7 @@ class Source(BaseModel):
     name: str | Any | None = None
 
     issn_l: str | None = None
+    issn: list[dict[str, str]] | None = None
     is_in_doaj: bool | None = None
     types: list[Type] | None = None
     names: list[Name] | None = None
@@ -73,7 +74,7 @@ class Abstract(BaseModel):
     source: str | None = None
 
 
-class AutorWork(Author):
+class AuthorWork(Author):
     """
     The difference with Author is that in the work the author is marked with a type of author (ex: advisor, co-advisor, author etc..)
     this value is only assigned in the work.
@@ -87,7 +88,7 @@ class Work(BaseModel):
     abstracts: list[Abstract] | None = None
     apc: APC | None = Field(default_factory=APC)
     authors_count: int | None = Field(default_factory=int, alias="author_count")
-    authors: list[Author] = Field(default_factory=list)
+    authors: list[AuthorWork] = Field(default_factory=list)
     authors_csv: str | None = None
     bibliographic_info: BiblioGraphicInfo | None = None
     citations_by_year: list[CitationByYear] | None = None
@@ -145,3 +146,10 @@ class Work(BaseModel):
 
     class Config:
         json_encoders = {ObjectId: str}
+
+    @field_validator("date_published", mode="before")
+    @classmethod
+    def empty_string_to_none(cls: type, value: str) -> Any:
+        if value in ("", None):
+            return None
+        return value

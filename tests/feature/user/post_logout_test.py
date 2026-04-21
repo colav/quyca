@@ -1,39 +1,40 @@
-from unittest.mock import patch, ANY
+from flask.testing import FlaskClient
+from typing import Any, cast
 
 
-def test_logout_success(client):
-    """Should return 200 and success=True when the token is valid"""
-    token = "fake-jwt-token"
+def auth_cookie(client: FlaskClient) -> None:
+    from flask_jwt_extended import create_access_token
 
-    with patch("quyca.application.routes.app.user_auth_app_router.auth_service.logout_user") as mock_logout_user:
-        mock_logout_user.return_value = {"success": True, "msg": "Logged out"}
+    with client.application.app_context():
+        token = create_access_token(identity="test@test.com", additional_claims={"role": "admin"})
 
-        response = client.post("/app/logout", json={"token": token})
-
-        assert response.status_code == 200
-        assert response.json["success"] is True
-        mock_logout_user.assert_called_once_with(token, ANY)
+    client.set_cookie("access_token_cookie", token)
 
 
-def test_logout_invalid_token(client):
-    """Should return 401 and success=False when the token is invalid"""
-    token = "fake-jwt-token"
+def test_logout_success(client: FlaskClient) -> None:
+    auth_cookie(client)
 
-    with patch("quyca.application.routes.app.user_auth_app_router.auth_service.logout_user") as mock_logout_user:
-        mock_logout_user.return_value = {"success": False, "msg": "Token inválido"}
+    response = client.post("/app/logout")
 
-        response = client.post("/app/logout", json={"token": token})
+    assert response.status_code == 200
+    json_data = cast(dict[str, Any], response.get_json())
+    assert json_data["success"] is True
 
-        assert response.status_code == 401
-        assert response.json["success"] is False
-        assert "msg" in response.json
-        mock_logout_user.assert_called_once_with(token, ANY)
+    set_cookie = response.headers.get("Set-Cookie", "")
+    assert "access_token_cookie=;" in set_cookie or "access_token_cookie=" in set_cookie
 
 
-def test_logout_no_token(client):
-    """Should return 400 when no token is sent in the request"""
-    response = client.post("/app/logout", json={})
+def test_logout_invalid_token(client: FlaskClient) -> None:
+    client.set_cookie("access_token_cookie", "invalid_token")
 
-    assert response.status_code == 400
-    assert response.json["success"] is False
-    assert response.json["msg"] == "Token requerido"
+    response = client.post("/app/logout")
+
+    assert response.status_code == 200
+
+    json_data = cast(dict[str, Any], response.get_json())
+    assert "success" in json_data
+
+
+def test_logout_no_token(client: FlaskClient) -> None:
+    response = client.post("/app/logout")
+    assert response.status_code == 200

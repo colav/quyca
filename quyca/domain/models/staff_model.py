@@ -1,22 +1,26 @@
 from dataclasses import dataclass
 
+"""Domain entity representing a staff member with identity and HR attributes."""
+
 
 @dataclass
 class Staff:
-    tipo_documento: str
-    identificacion: str
-    primer_apellido: str
-    segundo_apellido: str | None = None
-    nombres: str = ""
-    nivel_academico: str | None = None
-    tipo_contrato: str | None = None
-    jornada_laboral: str | None = None
-    categoria_laboral: str | None = None
-    sexo: str | None = None
-    fecha_nacimiento: str | None = None
-    fecha_inicial_vinculacion: str | None = None
-    fecha_final_vinculacion: str | None = None
-    codigo_unidad_academica: str | None = None
-    unidad_academica: str | None = None
-    codigo_subunidad_academica: str | None = None
-    subunidad_academica: str | None = None
+    """Represents a staff member with identification and employment data."""
+
+    document_type: str
+    identification: str
+    last_name_1: str
+    last_name_2: str | None = None
+    first_names: str = ""
+    academic_level: str | None = None
+    contract_type: str | None = None
+    work_schedule: str | None = None
+    job_category: str | None = None
+    gender: str | None = None
+    birth_date: str | None = None
+    start_link_date: str | None = None
+    end_link_date: str | None = None
+    academic_unit_code: str | None = None
+    academic_unit: str | None = None
+    academic_subunit_code: str | None = None
+    academic_subunit: str | None = None

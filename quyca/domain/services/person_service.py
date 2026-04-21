@@ -19,6 +19,7 @@ def search_persons(query_params: QueryParams) -> dict:
             "citations_count",
             "products_count",
             "affiliations_data",
+            "logo",
         ]
     }
     persons, total_results = person_repository.search_persons(query_params, pipeline_params)

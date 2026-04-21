@@ -1,8 +1,8 @@
-from infrastructure.mongo import database as db
-from infrastructure.generators import news_generator
-from infrastructure.repositories import base_repository
-from typing import Generator, Optional, Set, Iterable, Any
-from domain.models.base_model import QueryParams
+from quyca.infrastructure.mongo import database as db
+from quyca.infrastructure.generators import news_generator
+from quyca.infrastructure.repositories import base_repository
+from typing import Generator, Mapping, Optional, Set, Iterable, Any
+from quyca.domain.models.base_model import QueryParams
 
 
 def cc_from_person(person_id: str) -> Optional[str]:
@@ -29,7 +29,7 @@ def cc_from_person(person_id: str) -> Optional[str]:
         {"external_ids.$": 1},
     )
     if doc and doc.get("external_ids"):
-        return doc["external_ids"][0]["id"]
+        return str(doc["external_ids"][0]["id"])
     return None
 
 
@@ -92,7 +92,7 @@ def get_news_by_person(person_id: str, query_params: QueryParams) -> Generator:
     if not cc:
         yield []
 
-    pipeline = [
+    pipeline: list[Mapping[str, Any]] = [
         {"$match": {"professor_id": cc}},
         {"$unwind": "$classified_urls_ids"},
         {
@@ -148,7 +148,7 @@ def news_count_by_person(person_id: str) -> int:
     if not cc:
         return 0
 
-    pipeline = [
+    pipeline: list[Mapping[str, Any]] = [
         {"$match": {"professor_id": cc}},
         {"$unwind": "$classified_urls_ids"},
         {
@@ -172,7 +172,7 @@ def news_count_by_person(person_id: str) -> int:
         {"$count": "total"},
     ]
     result = list(db.news_professors_collection.aggregate(pipeline))
-    return result[0]["total"] if result else 0
+    return int(result[0]["total"]) if result else 0
 
 
 def get_news_by_affiliation(affiliation_id: str, affiliation_type: str, query_params: QueryParams) -> Generator:
@@ -209,7 +209,7 @@ def get_news_by_affiliation(affiliation_id: str, affiliation_type: str, query_pa
     if not authors_ccs:
         yield []
 
-    pipeline = [
+    pipeline: list[Mapping[str, Any]] = [
         {"$match": {"professor_id": {"$in": list(authors_ccs)}}},
         {"$project": {"classified_urls_ids": 1}},
         {"$unwind": "$classified_urls_ids"},
@@ -276,7 +276,7 @@ def news_count_by_affiliation(affiliation_id: str, affiliation_type: str) -> int
     if not authors_ccs:
         return 0
 
-    pipeline = [
+    pipeline: list[Mapping[str, Any]] = [
         {"$match": {"professor_id": {"$in": list(authors_ccs)}}},
         {"$project": {"classified_urls_ids": 1}},
         {"$unwind": "$classified_urls_ids"},
@@ -301,4 +301,4 @@ def news_count_by_affiliation(affiliation_id: str, affiliation_type: str) -> int
         {"$count": "total"},
     ]
     result = list(db.news_professors_collection.aggregate(pipeline))
-    return result[0]["total"] if result else 0
+    return int(result[0]["total"]) if result else 0

@@ -12,7 +12,14 @@ from quyca.domain.exceptions.not_entity_exception import NotEntityException
 
 
 def get_work_by_id(work_id: str) -> Work:
-    work = database["works"].find_one(ObjectId(work_id))
+    pipeline = [
+        {"$match": {"_id": ObjectId(work_id)}},
+    ]
+
+    set_issn_to_pipeline(pipeline)
+
+    cursor = database["works"].aggregate(pipeline)
+    work = next(cursor, None)
     if not work:
         raise NotEntityException(f"The work with id {work_id} does not exist.")
     return Work(**work)
@@ -34,6 +41,7 @@ def get_works_by_affiliation(
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
+    set_issn_to_pipeline(pipeline)
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
     base_repository.set_pagination(pipeline, query_params)
@@ -52,13 +60,14 @@ def get_works_with_source_by_affiliation(
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
+    set_issn_to_pipeline(pipeline)
     base_repository.set_project(pipeline, pipeline_params.get("work_project"))
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
 
 def get_works_count_by_affiliation(affiliation_id: str, query_params: QueryParams) -> int:
-    pipeline = [
+    pipeline: list[dict[str, Any]] = [
         {
             "$match": {
                 "authors.affiliations.id": affiliation_id,
@@ -78,6 +87,7 @@ def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_para
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
+    set_issn_to_pipeline(pipeline)
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
     base_repository.set_pagination(pipeline, query_params)
@@ -96,13 +106,37 @@ def get_works_with_source_by_person(
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
+    set_issn_to_pipeline(pipeline)
     base_repository.set_project(pipeline, pipeline_params.get("work_project"))
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
 
 def get_works_count_by_person(person_id: str, query_params: QueryParams) -> int:
-    pipeline = [{"$match": {"authors.id": person_id}}]
+    pipeline: list[dict[str, Any]] = [{"$match": {"authors.id": person_id}}]
+    set_product_filters(pipeline, query_params)
+    pipeline += [{"$count": "total"}]
+    return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)
+
+
+def get_works_by_source(source_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:
+    if pipeline_params is None:
+        pipeline_params = {}
+
+    pipeline = [{"$match": {"source.id": ObjectId(source_id)}}]
+    set_product_filters(pipeline, query_params)
+    base_repository.set_match(pipeline, pipeline_params.get("match"))
+    set_issn_to_pipeline(pipeline)
+    if sort := query_params.sort:
+        base_repository.set_sort(sort, pipeline)
+    base_repository.set_pagination(pipeline, query_params)
+    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    cursor = database["works"].aggregate(pipeline)
+    return work_generator.get(cursor)
+
+
+def get_works_count_by_source(source_id: str, query_params: QueryParams) -> int:
+    pipeline: list[dict[str, Any]] = [{"$match": {"source.id": ObjectId(source_id)}}]
     set_product_filters(pipeline, query_params)
     pipeline += [{"$count": "total"}]
     return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)
@@ -113,6 +147,7 @@ def search_works(query_params: QueryParams, pipeline_params: dict | None = None)
     if query_params.keywords:
         pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
     set_product_filters(pipeline, query_params)
+    set_issn_to_pipeline(pipeline)
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     works = database["works"].aggregate(pipeline)
 
@@ -145,6 +180,11 @@ def get_works_available_filters_by_affiliation(affiliation_id: str, query_params
     return get_works_available_filters(pipeline, query_params)
 
 
+def get_works_available_filters_by_source(source_id: str, query_params: QueryParams) -> dict:
+    pipeline = [{"$match": {"source.id": ObjectId(source_id)}}]
+    return get_works_available_filters(pipeline, query_params)
+
+
 def get_search_works_available_filters(query_params: QueryParams, pipeline_params: dict | None = None) -> dict:
     pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
     set_product_filters(pipeline, query_params)
@@ -162,7 +202,30 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
             {"$project": {"types": 1}},
             {"$project": {"types.provenance": 0}},
             {"$unwind": "$types"},
-            {"$group": {"_id": "$types.source", "types": {"$addToSet": "$types"}}},
+            {
+                "$group": {
+                    "_id": {
+                        "source": "$types.source",
+                        "type": "$types.type",
+                        "code": "$types.code",
+                        "level": "$types.level",
+                    },
+                    "count": {"$sum": 1},
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$_id.source",
+                    "types": {
+                        "$addToSet": {
+                            "type": "$_id.type",
+                            "code": "$_id.code",
+                            "level": "$_id.level",
+                            "count": "$count",
+                        }
+                    },
+                }
+            },
         ],
         "years": pipeline.copy()
         + [
@@ -173,7 +236,9 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
         ],
         "status": pipeline.copy()
         + [
-            {"$group": {"_id": "$open_access.open_access_status"}},
+            {"$project": {"open_access": 1}},
+            {"$group": {"_id": "$open_access.open_access_status", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
         ],
         "subjects": pipeline.copy()
         + [
@@ -189,12 +254,24 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
             {"$unwind": "$subjects.subjects"},
             {
                 "$group": {
-                    "_id": "$subjects.source",
+                    "_id": {
+                        "source": "$subjects.source",
+                        "subject_id": "$subjects.subjects.id",
+                        "subject_name": "$subjects.subjects.name",
+                        "subject_level": "$subjects.subjects.level",
+                    },
+                    "count": {"$sum": 1},
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$_id.source",
                     "subjects": {
                         "$addToSet": {
-                            "id": "$subjects.subjects.id",
-                            "name": "$subjects.subjects.name",
-                            "level": "$subjects.subjects.level",
+                            "id": "$_id.subject_id",
+                            "name": "$_id.subject_name",
+                            "level": "$_id.subject_level",
+                            "count": "$count",
                         }
                     },
                 }
@@ -203,11 +280,13 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
         "countries": pipeline.copy()
         + [
             {"$match": {"authors.affiliations.addresses.country_code": {"$ne": None}}},
-            {"$project": {"authors.affiliations.addresses.country_code": 1}},
+            {"$project": {"_id": 1, "authors.affiliations.addresses.country_code": 1}},
             {"$unwind": "$authors"},
             {"$unwind": "$authors.affiliations"},
             {"$unwind": "$authors.affiliations.addresses"},
-            {"$group": {"_id": "$authors.affiliations.addresses.country_code"}},
+            {"$group": {"_id": {"work_id": "$_id", "country_code": "$authors.affiliations.addresses.country_code"}}},
+            {"$group": {"_id": "$_id.country_code", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
         ],
         "authors_ranking": pipeline.copy()
         + [
@@ -251,7 +330,7 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
         ],
     }
 
-    def run_pipeline(key: str, pipe: list):
+    def run_pipeline(key: str, pipe: list) -> Tuple[str, list | dict]:
         if key == "years":
             cursor = collection.aggregate(pipe)
             return key, next(cursor, {"min_year": None, "max_year": None})
@@ -281,7 +360,7 @@ def set_product_filters(pipeline: list, query_params: QueryParams) -> None:
 def set_product_type_filters(pipeline: list, type_filters: str | None) -> None:
     if not type_filters:
         return
-    match_filters = []
+    match_filters: list[dict[str, Any]] = []
     for type_filter in type_filters.split(","):
         params = type_filter.split("_")
         if len(params) == 1:
@@ -307,7 +386,7 @@ def set_year_filters(pipeline: list, years: str | None) -> None:
 def set_status_filters(pipeline: list, status: str | None) -> None:
     if not status:
         return
-    match_filters = []
+    match_filters: list[dict[str, Any]] = []
     for single_status in status.split(","):
         if single_status == "unknown":
             match_filters.append({"open_access.open_access_status": None})
@@ -321,7 +400,7 @@ def set_status_filters(pipeline: list, status: str | None) -> None:
 def set_subject_filters(pipeline: list, subjects: str | None) -> None:
     if not subjects:
         return
-    match_filters = []
+    match_filters: list[dict[str, Any]] = []
     for subject in subjects.split(","):
         params = subject.split("_")
         if len(params) == 1:
@@ -333,7 +412,7 @@ def set_subject_filters(pipeline: list, subjects: str | None) -> None:
 def set_topic_filters(pipeline: list, topics: str | None) -> None:
     if not topics:
         return
-    match_filters = []
+    match_filters: list[str] = []
     for topic in topics.split(","):
         match_filters.append(topic.strip())
     pipeline += [{"$match": {"primary_topic.id": {"$in": match_filters}}}]
@@ -342,7 +421,7 @@ def set_topic_filters(pipeline: list, topics: str | None) -> None:
 def set_country_filters(pipeline: list, countries: str | None) -> None:
     if not countries:
         return
-    match_filters = []
+    match_filters: list[dict[str, Any]] = []
     for country in countries.split(","):
         match_filters.append({"authors.affiliations.addresses": {"$elemMatch": {"country_code": country}}})
     pipeline += [{"$match": {"$or": match_filters}}]
@@ -351,7 +430,7 @@ def set_country_filters(pipeline: list, countries: str | None) -> None:
 def set_groups_ranking_filters(pipeline: list, groups_ranking: str | None) -> None:
     if not groups_ranking:
         return
-    match_filters = []
+    match_filters: list[dict[str, Any]] = []
     for ranking in groups_ranking.split(","):
         match_filters.append({"groups": {"$elemMatch": {"ranking.rank": ranking}}})
     pipeline += [{"$match": {"$or": match_filters}}]
@@ -365,3 +444,138 @@ def set_authors_ranking_filters(pipeline: list, authors_ranking: str | None) -> 
 
     rankings = [r.strip() for r in authors_ranking.split(",") if r.strip()]
     pipeline.append({"$match": {"authors": {"$elemMatch": {"ranking": {"$elemMatch": {"rank": {"$in": rankings}}}}}}})
+
+
+def set_authors_filter_if_large(pipeline: list) -> None:
+    """
+    Filter authors ONLY when author_count > 50.
+    Keep only authors whose id has exactly 10 numeric digits (Colombian)
+    """
+    pipeline.append(
+        {
+            "$addFields": {
+                "authors": {
+                    "$cond": [
+                        {"$gt": ["$author_count", 50]},
+                        {
+                            "$filter": {
+                                "input": "$authors",
+                                "as": "a",
+                                "cond": {"$regexMatch": {"input": {"$toString": "$$a.id"}, "regex": "^[0-9]{10}$"}},
+                            }
+                        },
+                        "$authors",
+                    ]
+                }
+            }
+        }
+    )
+
+
+def set_issn_to_pipeline(pipeline: list) -> None:
+    """
+    Adds derived ISSN fields to the aggregation pipeline.
+
+    Extracts `issn_l` as a single string and builds the `issn` list
+    (pISSN/eISSN/issn_l) from `source.external_ids`. If no ISSN data exists,
+    it safely returns null and an empty list.
+    """
+    pipeline.append(
+        {
+            "$set": {
+                "_issn_data": {
+                    "$filter": {
+                        "input": {"$ifNull": ["$source.external_ids", []]},
+                        "as": "e",
+                        "cond": {"$in": ["$$e.source", ["issn", "issn_l", "eissn", "pissn"]]},
+                    }
+                }
+            }
+        }
+    )
+
+    pipeline.append(
+        {
+            "$set": {
+                "source.issn_l": {
+                    "$let": {
+                        "vars": {
+                            "issn_l_entry": {
+                                "$first": {
+                                    "$filter": {
+                                        "input": "$_issn_data",
+                                        "as": "e",
+                                        "cond": {"$eq": ["$$e.source", "issn_l"]},
+                                    }
+                                }
+                            }
+                        },
+                        "in": "$$issn_l_entry.id",
+                    }
+                },
+                "source.issn": {
+                    "$reduce": {
+                        "input": "$_issn_data",
+                        "initialValue": [],
+                        "in": {
+                            "$concatArrays": [
+                                "$$value",
+                                {
+                                    "$cond": [
+                                        {"$eq": ["$$this.source", "issn"]},
+                                        {
+                                            "$map": {
+                                                "input": {
+                                                    "$cond": [{"$isArray": "$$this.id"}, "$$this.id", ["$$this.id"]]
+                                                },
+                                                "as": "issn_val",
+                                                "in": {
+                                                    "$cond": [
+                                                        {
+                                                            "$let": {
+                                                                "vars": {
+                                                                    "issn_l_entry": {
+                                                                        "$first": {
+                                                                            "$filter": {
+                                                                                "input": "$_issn_data",
+                                                                                "as": "e",
+                                                                                "cond": {
+                                                                                    "$eq": ["$$e.source", "issn_l"]
+                                                                                },
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                "in": {"$eq": ["$$issn_val", "$$issn_l_entry.id"]},
+                                                            }
+                                                        },
+                                                        {"issn_l": "$$issn_val"},
+                                                        {"issn": "$$issn_val"},
+                                                    ]
+                                                },
+                                            }
+                                        },
+                                        {
+                                            "$cond": [
+                                                {"$eq": ["$$this.source", "eissn"]},
+                                                [{"eissn": "$$this.id"}],
+                                                {
+                                                    "$cond": [
+                                                        {"$eq": ["$$this.source", "pissn"]},
+                                                        [{"pissn": "$$this.id"}],
+                                                        [],
+                                                    ]
+                                                },
+                                            ]
+                                        },
+                                    ]
+                                },
+                            ]
+                        },
+                    }
+                },
+            }
+        }
+    )
+
+    pipeline.append({"$unset": "_issn_data"})

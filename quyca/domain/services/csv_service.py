@@ -6,8 +6,7 @@ from quyca.domain.models.work_model import BiblioGraphicInfo, Work
 from quyca.infrastructure.repositories import csv_repository
 from quyca.domain.constants.institutions import institutions_list
 from quyca.domain.constants.openalex_types import openalex_types_dict
-from quyca.domain.services import source_service
-from quyca.domain.services import work_service
+from quyca.domain.services import source_service, work_service
 from quyca.domain.parsers import work_parser
 
 
@@ -35,11 +34,13 @@ def get_works_csv_by_source(source_id: str, query_params: QueryParams) -> str:
     3. Process and transform raw data for CSV format
     4. Generate final CSV string
 
-    Args:
-        source_id: Unique identifier of the source (institution, journal, etc.)
-        query_params: Query parameters for filtering and pagination
+    Parameters
+    ----------
+    - source_id: Unique identifier of the source (institution, journal, etc.)
+    - query_params: Query parameters for filtering and pagination
 
-    Returns:
+    Returns
+    -------
         str: Complete CSV file content as string, ready for HTTP response
     """
     pipeline_params = get_works_project_pipeline_params()
@@ -192,7 +193,13 @@ def set_csv_citations_count(work: Work) -> None:
 def set_csv_bibliographic_info(work: Work) -> None:
     biblio_info: BiblioGraphicInfo | dict[str, Any] = work.bibliographic_info or {}
 
-    work.bibtex = getattr(biblio_info, "bibtex", None)
+    raw_bibtex = getattr(biblio_info, "bibtex", None)
+
+    if isinstance(raw_bibtex, str):
+        work.bibtex = raw_bibtex.replace("\n", " ")
+    else:
+        work.bibtex = ""
+
     work.pages = getattr(biblio_info, "pages", None)
     work.issue = getattr(biblio_info, "issue", "") or ""
     work.start_page = getattr(biblio_info, "start_page", None)

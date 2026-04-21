@@ -3,7 +3,7 @@ from typing import Tuple
 from flask import Blueprint, jsonify, Response
 from sentry_sdk import capture_exception
 
-from domain.services import project_service
+from quyca.domain.services import project_service
 
 project_app_router = Blueprint("project_app_router", __name__)
 

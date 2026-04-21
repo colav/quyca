@@ -1,6 +1,6 @@
-from domain.models.base_model import QueryParams
-from infrastructure.repositories import news_repository
-from domain.parsers import news_parser
+from quyca.domain.models.base_model import QueryParams
+from quyca.infrastructure.repositories import news_repository
+from quyca.domain.parsers import news_parser
 
 
 def get_news_by_person(person_id: str, query_params: QueryParams) -> dict:

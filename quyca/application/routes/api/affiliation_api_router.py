@@ -3,8 +3,8 @@ from typing import Tuple
 from flask import Blueprint, jsonify, request, Response
 from sentry_sdk import capture_exception
 
-from domain.models.base_model import QueryParams
-from domain.services import api_expert_service
+from quyca.domain.models.base_model import QueryParams
+from quyca.domain.services import api_expert_service
 
 affiliation_api_router = Blueprint("affiliation_api_router", __name__)
 

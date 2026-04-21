@@ -19,8 +19,7 @@ REQUIRED_FIELDS = [
 
 class RequiredFieldsValidator:
     """
-    Validator to check that all mandatory fields are present in a staff data row.
-    Ensures that none of the required fields are empty or missing.
+    Ensures all mandatory Staff fields are present.
     """
 
     @staticmethod

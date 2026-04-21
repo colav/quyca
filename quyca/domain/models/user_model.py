@@ -1,10 +1,18 @@
 from pydantic import BaseModel
+from typing import Optional
+
+"""
+User entity used for authentication and account management.
+"""
 
 
 class User(BaseModel):
+    """Represents a system user for authentication and account management."""
+
+    id: str
     email: str
-    password: str
+    password: Optional[str] = None
     institution: str
-    ror_id: str | None = None
-    rol: str
-    token: str
+    role: str
+    is_active: bool = True
+    apikey: Optional[dict] = None

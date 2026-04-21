@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 
 
 class IPDFRepository(ABC):
-    """Generates a PDF with errors, warnings, and duplicates found in the uploaded file"""
+    """Defines PDF report generation operations."""
 
     @abstractmethod
     def generate_quality_report(
@@ -17,4 +17,17 @@ class IPDFRepository(ABC):
         upload_date: str,
         user: str,
     ) -> io.BytesIO:
-        pass
+        """Generates a Staff quality validation PDF report."""
+
+    @abstractmethod
+    def generate_quality_report_ciarp(
+        self,
+        errors: List[Dict[str, Any]],
+        warnings: Dict[str, Any],
+        duplicados: List[Dict[str, Any]] | None,
+        institution: str,
+        filename: str,
+        upload_date: str,
+        user: str,
+    ) -> io.BytesIO:
+        """Generates a CIARP quality validation PDF report."""
