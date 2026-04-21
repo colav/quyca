@@ -22,6 +22,7 @@ class Affiliation(BaseModel):
     position: str | None = None
     start_date: int | str | None = None
     end_date: int | str | None = None
+    years: list[int] | None = None
     types: list[Type] | None = Field(default_factory=list)
     external_urls: list[ExternalUrl] | None = Field(default_factory=list)
 
