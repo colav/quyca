@@ -207,6 +207,10 @@ def set_sort(sort: str | None, pipeline: list, collection: str | None = None) ->
             sort_field = "title"
     elif sort_field == "products":
         sort_field = "products_count"
+    elif sort_field == "h":
+        sort_field = "h_index"
+    elif sort_field == "h5":
+        sort_field = "h5_index"
     elif sort_field == "year":
         pipeline += [
             {

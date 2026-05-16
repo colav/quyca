@@ -41,7 +41,6 @@ def get_works_by_affiliation(
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
-    set_issn_to_pipeline(pipeline)
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
     base_repository.set_pagination(pipeline, query_params)
@@ -60,7 +59,6 @@ def get_works_with_source_by_affiliation(
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
-    set_issn_to_pipeline(pipeline)
     base_repository.set_project(pipeline, pipeline_params.get("work_project"))
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
@@ -87,7 +85,6 @@ def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_para
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
-    set_issn_to_pipeline(pipeline)
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
     base_repository.set_pagination(pipeline, query_params)
@@ -106,7 +103,6 @@ def get_works_with_source_by_person(
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
-    set_issn_to_pipeline(pipeline)
     base_repository.set_project(pipeline, pipeline_params.get("work_project"))
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
@@ -126,7 +122,6 @@ def get_works_by_source(source_id: str, query_params: QueryParams, pipeline_para
     pipeline = [{"$match": {"source.id": ObjectId(source_id)}}]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
-    set_issn_to_pipeline(pipeline)
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
     base_repository.set_pagination(pipeline, query_params)
@@ -147,7 +142,6 @@ def search_works(query_params: QueryParams, pipeline_params: dict | None = None)
     if query_params.keywords:
         pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
     set_product_filters(pipeline, query_params)
-    set_issn_to_pipeline(pipeline)
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     works = database["works"].aggregate(pipeline)
 

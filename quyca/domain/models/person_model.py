@@ -109,6 +109,8 @@ class Person(BaseModel):
     sex: str | None = None
     subjects: list[Subject] | None = Field(default_factory=list)
     updated: list[Updated] | None = Field(default_factory=list)
+    h_index: int | None = None
+    h5_index: int | None = None
 
     affiliations_data: list[Affiliation] | None = None
     logo: str | None = None

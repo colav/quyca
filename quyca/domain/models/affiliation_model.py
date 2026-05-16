@@ -78,11 +78,12 @@ class Affiliation(BaseModel):
     types: list[Type] | None = None
     updated: list[Updated] | None = None
     year_established: int | None = None
-
     name: str | None = None
     logo: str | None = None
     affiliations: list[dict | Relation] | None = None
     relations_data: list[Relation] | None = None
+    h_index: int | None = None
+    h5_index: int | None = None
 
     @field_validator("names", mode="before")
     @classmethod
