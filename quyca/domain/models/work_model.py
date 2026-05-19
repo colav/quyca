@@ -109,7 +109,7 @@ class Work(BaseModel):
     titles: list[Title] | None = None
     types: list[Type] | None = None
     updated: list[Updated] | None = None
-    year_published: int | str | None = None
+    year_published: int | None = None
     abstract: dict | None = None
     authors_data: list[Author] | None = None
     affiliations_data: list[Affiliation] | None = None
