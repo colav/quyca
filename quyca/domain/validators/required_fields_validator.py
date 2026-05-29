@@ -6,14 +6,8 @@ REQUIRED_FIELDS = [
     "identificación",
     "primer_apellido",
     "nombres",
-    "tipo_contrato",
-    "jornada_laboral",
-    "fecha_nacimiento",
-    "fecha_inicial_vinculación",
     "código_unidad_académica",
     "unidad_académica",
-    "nivel_académico",
-    "categoría_laboral",
 ]
 
 

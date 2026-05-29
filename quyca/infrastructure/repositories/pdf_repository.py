@@ -1,4 +1,5 @@
 import io
+import html as html_lib
 from xhtml2pdf import pisa
 from datetime import datetime
 from typing import List, Dict, Any
@@ -18,6 +19,7 @@ class PDFRepository(IPDFRepository):
         filename: str,
         upload_date: str,
         user: str,
+        normalized_changes: List[Dict[str, Any]] | None = None,
     ) -> io.BytesIO:
         """Generates the Staff PDF report with errors/warnings/duplicates."""
         report_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
@@ -88,8 +90,8 @@ class PDFRepository(IPDFRepository):
                             -pdf-frame-content: header_content;
                             top: 0px;
                             left: 0px;
-                            width: 100%;
-                            heigth: 100px;
+                            width: 18cm;
+                            height: 100px;
                         }}
                         @frame content_frame {{
                             top: 120px;
@@ -116,7 +118,7 @@ class PDFRepository(IPDFRepository):
                         margin: 10px 0;
                     }}
                     table {{
-                        width: 100%;
+                        width: 18cm;
                         border: 1px solid #000;
                         margin-top: 20px;
                         border-collapse: collapse;
@@ -134,7 +136,7 @@ class PDFRepository(IPDFRepository):
                         padding: 5px;
                     }}
                     .header-img {{
-                        width: 100%;
+                        width: 18cm;
                         height: auto;
                         display: block;
                         margin: 0;
@@ -155,10 +157,10 @@ class PDFRepository(IPDFRepository):
                 </style>
             </head>
             <body>
-                <div id="header_content" style="width:100%">
+                <div id="header_content" style="width:18cm">
                     <img src="https://raw.githubusercontent.com/jhonbg/fotos/main/Membrete_Header.png" class="header-img"/>
                 </div>
-                <h1>{title}</h1>
+                    <h1>{title}</h1>
                 
                 <p><b>Institución:</b> {institution}<br>
                 <b>Archivo validado:</b> {filename}<br>
@@ -234,6 +236,56 @@ class PDFRepository(IPDFRepository):
                 }
                 html += f"<li>{preview}</li>"
             html += "</ul>"
+
+        if normalized_changes:
+            grouped_changes: dict[str, dict[str, Any]] = {}
+            for change in normalized_changes:
+                column = str(change.get("columna", ""))
+                original_value = str(change.get("valor_original", ""))
+                normalized_value = str(change.get("valor_normalizado", ""))
+                key = f"{column}::{normalized_value}"
+
+                if key not in grouped_changes:
+                    grouped_changes[key] = {
+                        "column": column,
+                        "normalized_value": normalized_value,
+                        "original_values": [],
+                        "row_count": 0,
+                    }
+
+                if original_value and original_value not in grouped_changes[key]["original_values"]:
+                    grouped_changes[key]["original_values"].append(original_value)
+                grouped_changes[key]["row_count"] += 1
+
+            html += """
+                <h2><li>Normalizaciones aplicadas</li></h2>
+                <p>
+                    El sistema normalizó algunos valores para alinearlos con los catálogos oficiales.
+                    Si consideras que alguno de estos cambios no es correcto, por favor contacta al equipo de desarrollo.
+                </p>
+                <table>
+                    <tr>
+                        <th>Columna</th>
+                        <th>Valores originales observados</th>
+                        <th>Valor normalizado</th>
+                        <th>Número de filas afectadas</th>
+                    </tr>
+            """
+
+            for item in grouped_changes.values():
+                originals = "<br>".join(html_lib.escape(value) for value in item["original_values"][:3])
+                normalized_value = html_lib.escape(item["normalized_value"])
+                column = html_lib.escape(item["column"])
+                html += f"""
+                    <tr>
+                        <td>{column}</td>
+                        <td>{originals}</td>
+                        <td>{normalized_value}</td>
+                        <td>{item['row_count']}</td>
+                    </tr>
+                """
+
+            html += "</table>"
 
         html += """
         <h2><li>Uso de los filtros en la columna <i>estado_de_validación</i></li></h2>
@@ -379,7 +431,7 @@ class PDFRepository(IPDFRepository):
                             -pdf-frame-content: header_content;
                             top: 0px;
                             left: 0px;
-                            width: 100%;
+                            width: 18cm;
                             heigth: 100px;
                         }}
                         @frame content_frame {{
@@ -407,7 +459,7 @@ class PDFRepository(IPDFRepository):
                         margin: 10px 0;
                     }}
                     table {{
-                        width: 100%;
+                        width: 18cm;
                         border: 1px solid #000;
                         margin-top: 20px;
                         border-collapse: collapse;
@@ -425,7 +477,7 @@ class PDFRepository(IPDFRepository):
                         padding: 5px;
                     }}
                     .header-img {{
-                        width: 100%;
+                        width: 18cm;
                         height: auto;
                         display: block;
                         margin: 0;
@@ -446,7 +498,7 @@ class PDFRepository(IPDFRepository):
                 </style>
             </head>
             <body>
-                <div id="header_content" style="width:100%">
+                <div id="header_content" style="width:18cm">
                     <img src="https://raw.githubusercontent.com/jhonbg/fotos/main/Membrete_Header.png" class="header-img"/>
                 </div>
                 <h1>{title}</h1>

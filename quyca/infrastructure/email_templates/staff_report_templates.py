@@ -31,7 +31,7 @@ def build_email_template(
         </ul>
         <p>Te invitamos a realizar las correcciones dentro del plazo establecido para la entrega de datos. En caso de no hacerlo dentro del tiempo definido, los datos deberán esperar hasta la siguiente actualización semestral.</p>
         <p>Si tienes dudas sobre cómo corregir los errores reportados, puedes consultar la guía: <i><a href=https://data.colav.co/Formato_datos_impactu.pdf>
-        Formato talento humano, CIARP y Dump Minciencias CoLaV</a></i> o escribirnos a <a href="mailto:grupocolav@udea.edu.co">grupocolav@udea.edu.co</a>.</p>
+        Formato talento humano, CIARP y Dump Minciencias CoLaV</a></i> o escribirnos a <a href="mailto:grupo.colav@udea.edu.co">grupo.colav@udea.edu.co</a>.</p>
         <p>Gracias por tu colaboración en garantizar la calidad de la información.</p>
         <p>Atentamente,</p>
         <p><b>Equipo <span style="color:#39658c;">Impact</span><span style="color:#f6a611;">U</span></b></p>
@@ -48,7 +48,7 @@ def build_email_template(
         </ul>
         <p>Si deseas, puedes realizar los ajustes correspondientes para mejorar la calidad de tu información, aunque no es obligatorio en esta etapa.</p>
         <p>Si tienes dudas sobre el reporte, puedes consultar la guía: <i><a href=https://tinyurl.com/289py4re>
-        Formato talento humano, CIARP y Dump Minciencias CoLaV</a></i> o escribirnos a <a href="mailto:grupocolav@udea.edu.co">grupocolav@udea.edu.co</a>.</p>
+        Formato talento humano, CIARP y Dump Minciencias CoLaV</a></i> o escribirnos a <a href="mailto:grupo.colav@udea.edu.co">grupo.colav@udea.edu.co</a>.</p>
         <p>Gracias por tu colaboración en garantizar la calidad de la información.</p>
         <p>Atentamente,</p>
         <p><b>Equipo <span style="color:#39658c;">Impact</span><span style="color:#f6a611;">U</span></b></p>
@@ -57,9 +57,10 @@ def build_email_template(
         body_html = f"""<p>Estimado(a) <b>{role}</b> – {institution},</p>
         <p>Hemos recibido el archivo <b>{filename}</b> cargado en la plataforma el día <b>{upload_date}</b>.</p>
         <p>Nos complace informarte que el archivo <b>superó exitosamente todas las validaciones</b> y no se encontraron errores ni advertencias.</p>
+        <p>Adjunto encontrarás el <b>archivo Excel normalizado</b> con las columnas de validación y observación para trazabilidad. Si hubo normalizaciones, también encontrarás un <b>PDF</b> con ejemplos de los valores ajustados.</p>
         <p>Tus datos ingresarán al proceso de integración en la plataforma y se verán reflejados en la próxima actualización semestral.</p>
         <p><b>Felicitaciones</b> por el excelente trabajo en la preparación y calidad de la información.</p>
-        <p>Si tienes preguntas o requieres soporte adicional, puedes escribirnos a <a href="mailto:grupocolav@udea.edu.co">grupocolav@udea.edu.co</a>.</p>
+        <p>Si tienes preguntas o requieres soporte adicional, puedes escribirnos a <a href="mailto:grupo.colav@udea.edu.co">grupo.colav@udea.edu.co</a>.</p>
         <p>Gracias por tu compromiso con la calidad de los datos y por contribuir al fortalecimiento de la plataforma.</p>
         <p><b>Equipo <span style="color:#39658c;">Impact</span><span style="color:#f6a611;">U</span></b></p>
         """

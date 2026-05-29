@@ -42,10 +42,12 @@ class Annotator:
 
         df_copy["estado_de_validación"] = df_copy["estado_de_validación"].apply(clean_state)
 
-        if "Unnamed: 0" in df_copy.columns:
-            df_copy = df_copy.drop(columns=["Unnamed: 0"])
-
-        if "index" in df_copy.columns:
-            df_copy = df_copy.drop(columns=["index"])
+        artifact_cols = [
+            col
+            for col in df_copy.columns
+            if str(col).strip().lower().startswith("unnamed") or str(col).strip().lower() == "index"
+        ]
+        if artifact_cols:
+            df_copy = df_copy.drop(columns=artifact_cols)
 
         return df_copy

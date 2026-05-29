@@ -69,7 +69,7 @@ class StaffNotification(INotificationService):
                     <p>Este documento detalla los formatos requeridos y las especificaciones necesarias para\n
                     garantizar la correcta integración de los datos en la plataforma.</p>
                     <p>Si tienes preguntas o necesitas soporte técnico, puedes escribirnos a\n
-                    <strong>grupocolav@udea.edu.co</strong></p>
+                    <strong>grupo.colav@udea.edu.co</strong></p>
                     <p>Gracias por tu compromiso con la calidad de los datos y por contribuir al fortalecimiento del\n
                     ecosistema de información científica de <b><span style="color:#39658c;">Impact</span><span style="color:#f6a611;">U</span></b></p>
                     <p>Atentamente,</p>
@@ -102,7 +102,7 @@ class StaffNotification(INotificationService):
                 <p><b><span style="color:#39658c;">Impact</span><span style="color:#f6a611;">U</span></b> te informa que tu contraseña ha sido restablecida por el administrador.</p>
                 <p>Nueva contraseña: {password}</P>
                 <p>Si tienes preguntas o necesitas soporte técnico, puedes escribirnos a\n
-                <strong>grupocolav@udea.edu.co</strong></p>
+                <strong>grupo.colav@udea.edu.co</strong></p>
                 <p>Atentamente,</p>
                 <p><b>Equipo <span style="color:#39658c;">Impact</span><span style="color:#f6a611;">U</span></b></p>
                 <br><br>

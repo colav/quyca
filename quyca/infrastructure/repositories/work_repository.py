@@ -192,17 +192,19 @@ def get_search_works_available_filters(query_params: QueryParams, pipeline_param
 def get_works_available_filters(pipeline: list, query_params: QueryParams) -> dict:
     # Cache only when there is no entity filter and no query params filters applied.
     # Covers the global search at /app/search/works/filters with no active filters.
-    is_global = len(pipeline) == 0 and not any([
-        query_params.product_types,
-        query_params.years,
-        query_params.status,
-        query_params.subjects,
-        query_params.topics,
-        query_params.countries,
-        query_params.groups_ranking,
-        query_params.authors_ranking,
-        query_params.keywords,
-    ])
+    is_global = len(pipeline) == 0 and not any(
+        [
+            query_params.product_types,
+            query_params.years,
+            query_params.status,
+            query_params.subjects,
+            query_params.topics,
+            query_params.countries,
+            query_params.groups_ranking,
+            query_params.authors_ranking,
+            query_params.keywords,
+        ]
+    )
 
     if is_global and _GLOBAL_FILTERS_CACHE:
         return _GLOBAL_FILTERS_CACHE
