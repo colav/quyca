@@ -71,6 +71,9 @@ def submit_staff() -> Tuple[Response, int]:
         if outcome.error == StaffUploadError.BAD_REQUEST:
             return jsonify(outcome.payload), 400
 
+        if outcome.error == StaffUploadError.INTERNAL_ERROR:
+            return jsonify(outcome.payload), 500
+
         return jsonify(outcome.payload), 200
 
     except Exception as e:

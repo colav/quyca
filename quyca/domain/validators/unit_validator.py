@@ -2,8 +2,8 @@ import re
 from typing import List, Dict, Any
 from .base_validator import BaseValidator
 
-CODE_RE = re.compile(r"^[0-9_]+$")
-UNIT_RE = re.compile(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9, \-]+$")
+CODE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+UNIT_RE = re.compile(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9, \-:]+$")
 
 
 class UnitValidator:
@@ -21,7 +21,7 @@ class UnitValidator:
                     {
                         "fila": index,
                         "columna": field,
-                        "detalle": f"No se permite {value}, solo números y _",
+                        "detalle": f"No se permite {value}, solo letras, números, _ y -",
                         "valor": value,
                     }
                 )
@@ -33,7 +33,7 @@ class UnitValidator:
                     {
                         "fila": index,
                         "columna": field,
-                        "detalle": f"Solo letras, números y espacios permitidos ya que {value} no es permitido",
+                        "detalle": f"Solo letras, números, espacios, comas, guiones y dos puntos permitidos ya que {value} no es permitido",
                         "valor": value,
                     }
                 )

@@ -21,12 +21,19 @@ class FileRepository(IFileRepository):
         self.drive_repo = drive_repo
         self.excel_cleaner = excel_cleaner
 
-    def save_file(self, file: FileStorage, ror_id: str, institution: str, file_type: str) -> dict[str, Any]:
+    def save_file(
+        self,
+        file: FileStorage,
+        ror_id: str,
+        institution: str,
+        file_type: str,
+        filename_prefix: str = "",
+    ) -> dict[str, Any]:
         """Saves the file temporarily, uploads it to Drive, and falls back to local storage."""
         timestamp = datetime.now(ZoneInfo("America/Bogota")).strftime("%Y-%m-%d_%H:%M")
         filename = file.filename or ""
         original_ext = os.path.splitext(filename)[1].lower()
-        filename = f"{file_type}_{ror_id}_{timestamp}{original_ext}"
+        filename = f"{filename_prefix}{file_type}_{ror_id}_{timestamp}{original_ext}"
 
         temp_path = os.path.join("/tmp", filename)
         file.save(temp_path)
