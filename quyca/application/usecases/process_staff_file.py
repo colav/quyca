@@ -1,6 +1,7 @@
 import io
 import os
 import base64
+from typing import Optional
 
 import pandas as pd
 
@@ -153,11 +154,15 @@ class ProcessStaffFileUseCase:
             staff_report, institution, filename, upload_date, user, email, "Staff", attachments, ror_id
         )
 
-        pdf_base64 = None
+        pdf_base64: Optional[str] = None
         for att in attachments:
-            if att["filename"].endswith(".pdf"):
-                pdf_base64 = base64.b64encode(att["bytes"].read()).decode()
-                break
+            att_filename = att.get("filename")
+            if isinstance(att_filename, str) and att_filename.endswith(".pdf"):
+                bytes_obj = att.get("bytes")
+                if isinstance(bytes_obj, io.BytesIO):
+                    bytes_obj.seek(0)
+                    pdf_base64 = base64.b64encode(bytes_obj.read()).decode()
+                    break
 
         result = {
             "success": staff_report.total_errors == 0,

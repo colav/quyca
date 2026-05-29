@@ -47,6 +47,8 @@ class ProcessCiarpFileUseCase:
                 "msg": f"Error al leer el archivo Excel: {str(e)}",
             }
 
+        pdf_base64: Optional[str] = None
+
         valid, errors_columns, _ = self.validator.validate_columns(df)
         if not valid:
             column_errors = [
@@ -91,11 +93,14 @@ class ProcessCiarpFileUseCase:
             report, institution, filename, upload_date, user, email, "Ciarp", attachments, ror_id
         )
 
-        pdf_base64: Optional[str] = None
         for att in attachments:
-            if att["filename"].endswith(".pdf"):
-                pdf_base64 = base64.b64encode(att["bytes"].read()).decode()
-                break
+            att_filename = att.get("filename")
+            if isinstance(att_filename, str) and att_filename.endswith(".pdf"):
+                bytes_obj = att.get("bytes")
+                if isinstance(bytes_obj, io.BytesIO):
+                    bytes_obj.seek(0)
+                    pdf_base64 = base64.b64encode(bytes_obj.read()).decode()
+                    break
 
         return {
             "success": report.total_errors == 0,
