@@ -13,6 +13,7 @@ from quyca.application.usecases.process_staff_file import ProcessStaffFileUseCas
 from quyca.application.usecases.save_staff_file import SaveStaffFileUseCase
 from quyca.domain.models.staff_report_model import StaffReport
 from quyca.domain.normalizers.staff_normalizer_service import StaffNormalizerService
+from quyca.domain.validators.name_validator import NameValidator
 from quyca.domain.validators.staff_validator import StaffValidator
 from quyca.domain.validators.unit_validator import UnitValidator
 from quyca.domain.services.staff_report_service import StaffReportService
@@ -397,6 +398,26 @@ def test_staff_validate_columns_allows_space_variants_and_ignores_extras() -> No
     assert "tipo_documento" in usecols
     assert "identificación" in usecols
     assert "UNIDAD" not in usecols
+
+
+def test_name_validator_allows_unicode_letters() -> None:
+    errors = NameValidator.validate(
+        {"primer_apellido": "gömez", "segundo_apellido": "d'croz", "nombres": "Renée"},
+        0,
+    )
+
+    assert errors == []
+
+
+def test_name_validator_rejects_symbols_and_digits() -> None:
+    errors = NameValidator.validate(
+        {"primer_apellido": "gömez!", "segundo_apellido": "d'croz", "nombres": "Renée2"},
+        0,
+    )
+
+    assert len(errors) == 2
+    assert errors[0]["columna"] == "primer_apellido"
+    assert errors[1]["columna"] == "nombres"
 
 
 def test_unit_validator_accepts_alphanumeric_hyphen_codes() -> None:
