@@ -110,6 +110,7 @@ ACADEMIC_LEVEL_MAP: dict[str, str] = {
     "post-doc": "doctorado",
     "post-doctorado": "doctorado",
     "post doctorado": "doctorado",
+    "posdoctorado": "doctorado",
 }
 
 # ---------------------------------------------------------------------------
@@ -140,6 +141,7 @@ CONTRACT_TYPE_MAP: dict[str, str] = {
     "término indefinido": "término indefinido",
     "indefinido": "término indefinido",
     "contrato a término indefinido": "término indefinido",
+    "docente universitario": "término indefinido",
     # vinculado
     "vinculado": "vinculado",
     "planta": "vinculado",
@@ -154,6 +156,8 @@ CONTRACT_TYPE_MAP: dict[str, str] = {
     "docente cátedra": "cátedra",
     "docente de catedra": "cátedra",
     "docente de cátedra": "cátedra",
+    "catedrático": "cátedra",
+    "horas (profesores de catedra)": "cátedra",
     # prestación de servicios
     "prestacion de servicios": "prestación de servicios",
     "prestación de servicios": "prestación de servicios",
@@ -202,6 +206,7 @@ WORK_SCHEDULE_MAP: dict[str, str] = {
     "horas": "hora cátedra",
     "hora catedra": "hora cátedra",
     "hora cátedra": "hora cátedra",
+    "cátedra": "hora cátedra",
 }
 
 # ---------------------------------------------------------------------------
