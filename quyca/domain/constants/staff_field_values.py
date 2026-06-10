@@ -274,6 +274,7 @@ SEX = {
     "hombre",
     "mujer",
     "intersexual",
+    "no binario",
 }
 
 SEX_MAP: dict[str, str] = {
@@ -287,4 +288,10 @@ SEX_MAP: dict[str, str] = {
     "f": "mujer",
     # intersexual
     "intersexual": "intersexual",
+    # no binario
+    "no binario": "no binario",
+    "nobinario": "no binario",
+    "no-binario": "no binario",
+    "non binary": "no binario",
+    "non-binary": "no binario",
 }

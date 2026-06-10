@@ -12,6 +12,7 @@ Two-phase normalization:
 from __future__ import annotations
 
 import unicodedata
+import re
 from datetime import date, datetime, timezone
 from typing import Any
 
@@ -40,6 +41,8 @@ _FIELD_MAPS: dict[str, dict[str, str]] = {
 }
 
 _DATE_FIELDS = ["fecha_nacimiento", "fecha_inicial_vinculación", "fecha_final_vinculación"]
+_NUMERIC_TEXT_FIELDS = {"identificación"}
+_INTEGER_TEXT_RE = re.compile(r"^[0-9]+(?:\.0+)?$")
 
 _UNKNOWN_VALUE = "desconocido"
 _UNKNOWN_ALIASES = {
@@ -121,6 +124,11 @@ class StaffNormalizerService:
             if field in df.columns:
                 df[field] = df[field].apply(self._parse_date)
 
+        # Convert numeric-looking identifiers/codes to real numeric values when safe.
+        for field in _NUMERIC_TEXT_FIELDS:
+            if field in df.columns:
+                df[field] = df[field].apply(self._coerce_numeric_scalar)
+
         return df
 
     @staticmethod
@@ -138,6 +146,30 @@ class StaffNormalizerService:
                 return parsed_date.strftime("%d/%m/%Y")
             except Exception:
                 return value
+        return value
+
+    @staticmethod
+    def _coerce_numeric_scalar(value: Any) -> Any:
+        """Convert safe numeric-looking values to ints so Excel writes them as numeric cells."""
+        if pd.isna(value):
+            return value
+
+        if isinstance(value, bool):
+            return value
+
+        if isinstance(value, (int, float)):
+            if isinstance(value, float) and not value.is_integer():
+                return value
+            return int(value)
+
+        if isinstance(value, str):
+            stripped = value.strip()
+            if _INTEGER_TEXT_RE.match(stripped):
+                integer_part = stripped.split(".", 1)[0]
+                if len(integer_part) > 1 and integer_part.startswith("0"):
+                    return value
+                return int(float(stripped))
+
         return value
 
     # ------------------------------------------------------------------
