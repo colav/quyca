@@ -135,7 +135,9 @@ def _compute_works_quality_metrics() -> dict:
         "without_impactu_normalization_skipped",
         "without_impactu_by_source",
     )
-    metrics: dict[str, Any] = {key: (result[key][0]["n"] if result.get(key) else 0) for key in result if key not in non_scalar}
+    metrics: dict[str, Any] = {
+        key: (result[key][0]["n"] if result.get(key) else 0) for key in result if key not in non_scalar
+    }
 
     totals_provenance: dict[str, int] = {}
     for item in result.get("provenance_breakdown", []):
@@ -243,7 +245,9 @@ def _compute_person_quality_metrics() -> dict:
     result: dict[str, Any] = next(database["person"].aggregate(pipeline, allowDiskUse=True), {})
 
     non_scalar = ("provenance_breakdown", "external_ids_breakdown", "with_cedula_scienti", "with_cedula_staff")
-    metrics: dict[str, Any] = {key: (result[key][0]["n"] if result.get(key) else 0) for key in result if key not in non_scalar}
+    metrics: dict[str, Any] = {
+        key: (result[key][0]["n"] if result.get(key) else 0) for key in result if key not in non_scalar
+    }
 
     totals_provenance: dict[str, int] = {}
     for item in result.get("provenance_breakdown", []):
@@ -353,7 +357,9 @@ def _compute_affiliations_quality_metrics() -> dict:
     result: dict[str, Any] = next(database["affiliations"].aggregate(pipeline, allowDiskUse=True), {})
 
     non_scalar = ("provenance_breakdown", "types_breakdown", "external_ids_breakdown")
-    metrics: dict[str, Any] = {key: (result[key][0]["n"] if result.get(key) else 0) for key in result if key not in non_scalar}
+    metrics: dict[str, Any] = {
+        key: (result[key][0]["n"] if result.get(key) else 0) for key in result if key not in non_scalar
+    }
 
     totals_provenance: dict[str, int] = {}
     for item in result.get("provenance_breakdown", []):
@@ -462,7 +468,9 @@ def _compute_sources_quality_metrics() -> dict:
         "provenance_breakdown",
         "external_ids_breakdown",
     )
-    metrics: dict[str, Any] = {key: (result[key][0]["n"] if result.get(key) else 0) for key in result if key not in non_scalar}
+    metrics: dict[str, Any] = {
+        key: (result[key][0]["n"] if result.get(key) else 0) for key in result if key not in non_scalar
+    }
 
     totals_provenance: dict[str, int] = {}
     for item in result.get("provenance_breakdown", []):
