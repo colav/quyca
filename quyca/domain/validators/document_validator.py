@@ -1,4 +1,5 @@
 import re
+import unicodedata
 from typing import List, Dict, Any
 from .base_validator import BaseValidator
 from quyca.domain.constants.staff_field_values import DOCUMENT_TYPES
@@ -6,6 +7,17 @@ from quyca.domain.constants.staff_field_values import DOCUMENT_TYPES
 PASSPORT_RE = re.compile(r"^[A-Za-z0-9]+$")
 
 _NUMERIC_ID_TYPES = {"cédula de ciudadanía", "cédula de extranjería"}
+
+_INTEGER_TEXT_RE = re.compile(r"^[0-9]+(?:\.0+)?$")
+
+
+def _is_numeric_identification(value: Any) -> bool:
+    """Accept integer-like values even when Excel stored them as text or float strings."""
+    if BaseValidator.is_empty(value):
+        return False
+
+    normalized = unicodedata.normalize("NFKC", str(value)).strip()
+    return bool(_INTEGER_TEXT_RE.match(normalized))
 
 
 class DocumentValidator:
@@ -35,7 +47,7 @@ class DocumentValidator:
             if not BaseValidator.is_empty(identificacion):
                 id_str = str(identificacion).strip()
 
-                if tnorm in _NUMERIC_ID_TYPES and not id_str.isdigit():
+                if tnorm in _NUMERIC_ID_TYPES and not _is_numeric_identification(identificacion):
                     errors.append(
                         {
                             "fila": index,

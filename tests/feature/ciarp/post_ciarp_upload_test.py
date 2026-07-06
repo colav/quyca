@@ -2,7 +2,10 @@ import io
 from typing import Any, cast
 from unittest.mock import patch
 
+import pandas as pd
 from flask.testing import FlaskClient
+
+from quyca.domain.validators.ciarp_validator import CiarpValidator
 
 
 def auth_cookie(client: FlaskClient) -> None:
@@ -169,3 +172,100 @@ def test_ciarp_upload_email_failed(client: FlaskClient) -> None:
     assert response.status_code == 500
     json_data = cast(dict[str, Any], response.json)
     assert json_data["success"] is False
+
+
+def test_ciarp_validate_columns_rejects_ligature_headers() -> None:
+    df = pd.DataFrame(
+        columns=[
+            "código_unidad_académica",
+            "código_subunidad_académica",
+            "tipo_documento",
+            "identiﬁcación",
+            "año",
+            "título",
+            "idioma",
+            "revista",
+            "editorial",
+            "doi",
+            "issn",
+            "isbn",
+            "volumen",
+            "issue",
+            "primera_página",
+            "última_página",
+            "pais_producto",
+            "entidad_premiadora",
+            "ranking",
+        ]
+    )
+
+    valid, errors, usecols = CiarpValidator.validate_columns(df)
+
+    assert valid is False
+    assert any("Columnas faltantes" in error for error in errors)
+    assert "identificación" not in usecols
+
+
+def test_ciarp_validate_columns_ignores_extra_columns() -> None:
+    df = pd.DataFrame(
+        columns=[
+            "código_unidad_académica",
+            "código_subunidad_académica",
+            "tipo_documento",
+            "identificación",
+            "año",
+            "título",
+            "idioma",
+            "revista",
+            "editorial",
+            "doi",
+            "issn",
+            "isbn",
+            "volumen",
+            "issue",
+            "primera_página",
+            "última_página",
+            "pais_producto",
+            "entidad_premiadora",
+            "ranking",
+            "grupo_de_investigación",
+            "cod_grupo_minciencias",
+            "orcid",
+        ]
+    )
+
+    valid, errors, usecols = CiarpValidator.validate_columns(df)
+
+    assert valid is True
+    assert errors == []
+    assert "grupo_de_investigación" not in usecols
+    assert "orcid" not in usecols
+
+
+def test_ciarp_validate_row_accepts_numeric_text_identification_and_year() -> None:
+    result = CiarpValidator.validate_row(
+        {
+            "código_unidad_académica": "FAC-UNAULA-001",
+            "código_subunidad_académica": "12201",
+            "tipo_documento": "cédula de ciudadanía",
+            "identificación": "168.0",
+            "año": "2024.0",
+            "título": "Un artículo",
+            "idioma": "es",
+            "revista": "Revista X",
+            "editorial": "Editorial X",
+            "doi": "10.1234/test",
+            "issn": "0123-4567",
+            "isbn": "",
+            "volumen": "1",
+            "issue": "1",
+            "primera_página": "1",
+            "última_página": "10",
+            "pais_producto": "CO",
+            "entidad_premiadora": "",
+            "ranking": "1",
+        },
+        0,
+    )
+
+    assert result["errors"] == []

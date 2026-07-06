@@ -484,6 +484,61 @@ def test_staff_normalizer_formats_datetime_values() -> None:
     assert cleaned.loc[0, "fecha_final_vinculación"] == "10/12/2025"
 
 
+def test_staff_normalizer_coerces_safe_numeric_text_fields() -> None:
+    normalizer = StaffNormalizerService()
+    df = pd.DataFrame(
+        {
+            "identificación": ["168"],
+            "código_unidad_académica": ["12100"],
+            "código_subunidad_académica": ["12201"],
+        }
+    )
+
+    cleaned = normalizer.clean(df)
+
+    assert cleaned.loc[0, "identificación"] == 168
+    assert cleaned.loc[0, "código_unidad_académica"] == "12100"
+    assert cleaned.loc[0, "código_subunidad_académica"] == "12201"
+    assert cleaned["identificación"].dtype.kind in {"i", "u"}
+
+
+def test_staff_normalizer_coerces_float_like_identification_text() -> None:
+    normalizer = StaffNormalizerService()
+    df = pd.DataFrame({"identificación": ["168.0"]})
+
+    cleaned = normalizer.clean(df)
+
+    assert cleaned.loc[0, "identificación"] == 168
+    assert cleaned["identificación"].dtype.kind in {"i", "u"}
+
+
+def test_document_validator_accepts_float_like_numeric_identification() -> None:
+    errors = StaffValidator.validate_row(
+        {
+            "tipo_documento": "cédula de ciudadanía",
+            "identificación": "168.0",
+            "primer_apellido": "Pérez",
+            "segundo_apellido": "García",
+            "nombres": "Ana",
+            "nivel_académico": "doctorado",
+            "tipo_contrato": "término fijo",
+            "jornada_laboral": "tiempo completo",
+            "categoría_laboral": "profesor titular",
+            "sexo": "mujer",
+            "fecha_nacimiento": "01/01/1980",
+            "fecha_inicial_vinculación": "01/01/2020",
+            "fecha_final_vinculación": "",
+            "código_unidad_académica": "FAC-UNAULA-001",
+            "unidad_académica": "Facultad de Derecho",
+            "código_subunidad_académica": "12201",
+            "subunidad_académica": "Departamento X",
+        },
+        0,
+    )
+
+    assert errors["errors"] == []
+
+
 def test_pdf_report_includes_normalization_section() -> None:
     pdf_repo = PDFRepository()
     captured: dict[str, str] = {}

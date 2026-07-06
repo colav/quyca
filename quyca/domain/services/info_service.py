@@ -18,3 +18,12 @@ def get_info() -> dict:
         "total_open_access": info_repository.get_open_access_count(),
         "total_sources": info_repository.get_entity_count("sources"),
     }
+
+
+def get_works_quality_metrics() -> dict:
+    return {
+        "works_collection": info_repository.get_works_quality_metrics(),
+        "person_collection": info_repository.get_person_quality_metrics(),
+        "affiliations_collection": info_repository.get_affiliations_quality_metrics(),
+        "sources_collection": info_repository.get_sources_quality_metrics(),
+    }

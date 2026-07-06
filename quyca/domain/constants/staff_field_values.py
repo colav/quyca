@@ -66,7 +66,6 @@ ACADEMIC_LEVEL_MAP: dict[str, str] = {
     # técnico
     "tecnico": "técnico",
     "técnico": "técnico",
-    "tec": "técnico",
     # tecnológico
     "tecnologico": "tecnológico",
     "tecnológico": "tecnológico",
@@ -274,6 +273,7 @@ SEX = {
     "hombre",
     "mujer",
     "intersexual",
+    "no binario",
 }
 
 SEX_MAP: dict[str, str] = {
@@ -287,4 +287,12 @@ SEX_MAP: dict[str, str] = {
     "f": "mujer",
     # intersexual
     "intersexual": "intersexual",
+    "i": "intersexual",
+    # no binario
+    "no binario": "no binario",
+    "nobinario": "no binario",
+    "no-binario": "no binario",
+    "non binary": "no binario",
+    "non-binary": "no binario",
+    "nb": "no binario",
 }
