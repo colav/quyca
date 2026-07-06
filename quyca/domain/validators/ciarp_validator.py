@@ -1,3 +1,4 @@
+import re
 import unicodedata
 from typing import List, Dict, Any, Tuple
 import pandas as pd
@@ -43,6 +44,33 @@ def _normalize(s: str) -> str:
     return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("ascii").strip().lower()
 
 
+_INTEGER_TEXT_RE = re.compile(r"^[0-9]+(?:\.0+)?$")
+
+
+def _coerce_integer_like(value: Any) -> Any:
+    """Convert safe integer-like values stored as text or floats to ints."""
+    if pd.isna(value):
+        return value
+
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, (int, float)):
+        if isinstance(value, float) and not value.is_integer():
+            return value
+        return int(value)
+
+    if isinstance(value, str):
+        stripped = value.strip()
+        if _INTEGER_TEXT_RE.match(stripped):
+            integer_part = stripped.split(".", 1)[0]
+            if len(integer_part) > 1 and integer_part.startswith("0"):
+                return value
+            return int(float(stripped))
+
+    return value
+
+
 _NORMALIZED_REQUIRED = {_normalize(c): c for c in REQUIRED_COLUMNS}
 _NORMALIZED_EXTRA_ALLOWED = {_normalize(c) for c in EXTRA_ALLOWED}
 
@@ -79,16 +107,9 @@ class CiarpValidator:
         normalized_usecols = {_normalize(c): c for c in usecols}
 
         missing = [c for c in REQUIRED_COLUMNS if _normalize(c) not in normalized_usecols]
-        extra = [
-            original
-            for norm, original in normalized_usecols.items()
-            if norm not in _NORMALIZED_REQUIRED and norm not in _NORMALIZED_EXTRA_ALLOWED
-        ]
 
         if missing:
             errors.append(f"Columnas faltantes: {', '.join(missing)}")
-        if extra:
-            errors.append(f"Columnas no permitidas: {', '.join(extra)}")
 
         # Return usecols using canonical names from REQUIRED_COLUMNS where possible
         usecols = [
@@ -144,6 +165,10 @@ class CiarpValidator:
         df = df.dropna(how="all").reset_index(drop=True)
         df = df.map(lambda v: v.strip() if isinstance(v, str) else v)
         df = df.apply(lambda x: str(int(x)) if isinstance(x, float) and x.is_integer() else x)
+
+        for field in ["identificación", "año"]:
+            if field in df.columns:
+                df[field] = df[field].apply(_coerce_integer_like)
 
         for idx, row in df.iterrows():
             result = CiarpValidator.validate_row(row.to_dict(), idx)
