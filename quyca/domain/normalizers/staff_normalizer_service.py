@@ -66,6 +66,35 @@ _MAP_TO_UNKNOWN_FIELDS = {
 }
 _DATE_MAP_TO_UNKNOWN_FIELDS = set(_DATE_FIELDS)
 
+_ORCID_URL_RE = re.compile(
+    r"(?:https?://)?orcid\.org/([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X])"
+)
+_CVLAC_URL_RE = re.compile(
+    r"cod_rh=([0-9]+)"
+)
+_SCHOLAR_URL_RE = re.compile(
+    r"(?:https?://)?scholar\.google\.com/citations\?(?:.*&)?user=([A-Za-z0-9_-]+)"
+)
+
+def _extract_orcid(value: str) -> str:
+    m = _ORCID_URL_RE.search(value)
+    return m.group(1) if m else value
+
+def _extract_cvlac(value: str) -> str:
+    # Strip leading apostrophe added by Excel to preserve leading zeros
+    value = value.lstrip("'")
+    m = _CVLAC_URL_RE.search(value)
+    return m.group(1) if m else value
+
+def _extract_scholar(value: str) -> str:
+    m = _SCHOLAR_URL_RE.search(value)
+    return m.group(1) if m else value
+
+_IDENTIFIER_EXTRACTORS: dict[str, callable] = {
+    "orcid": _extract_orcid,
+    "cvlac": _extract_cvlac,
+    "scholar": _extract_scholar,
+}
 
 def _normalize_key(s: str) -> str:
     """Strips accents and lowercases for map lookups."""
@@ -128,6 +157,13 @@ class StaffNormalizerService:
         for field in _NUMERIC_TEXT_FIELDS:
             if field in df.columns:
                 df[field] = df[field].apply(self._coerce_numeric_scalar)
+
+        # Extract IDs from URLs for identifier fields
+        for field, extractor in _IDENTIFIER_EXTRACTORS.items():
+            if field in df.columns:
+                df[field] = df[field].apply(
+                    lambda v: extractor(str(v).strip()) if isinstance(v, str) and str(v).strip() else v
+                )
 
         return df
 
