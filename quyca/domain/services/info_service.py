@@ -1,6 +1,4 @@
-from quyca.infrastructure.repositories import (
-    info_repository,
-)
+from quyca.infrastructure.repositories import info_repository
 
 
 def get_info() -> dict:
@@ -20,10 +18,5 @@ def get_info() -> dict:
     }
 
 
-def get_works_quality_metrics() -> dict:
-    return {
-        "works_collection": info_repository.get_works_quality_metrics(),
-        "person_collection": info_repository.get_person_quality_metrics(),
-        "affiliations_collection": info_repository.get_affiliations_quality_metrics(),
-        "sources_collection": info_repository.get_sources_quality_metrics(),
-    }
+def get_quality_metrics() -> list:
+    return info_repository.get_quality_metrics_history()
