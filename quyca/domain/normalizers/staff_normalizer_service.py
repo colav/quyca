@@ -66,19 +66,15 @@ _MAP_TO_UNKNOWN_FIELDS = {
 }
 _DATE_MAP_TO_UNKNOWN_FIELDS = set(_DATE_FIELDS)
 
-_ORCID_URL_RE = re.compile(
-    r"(?:https?://)?orcid\.org/([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X])"
-)
-_CVLAC_URL_RE = re.compile(
-    r"cod_rh=([0-9]+)"
-)
-_SCHOLAR_URL_RE = re.compile(
-    r"(?:https?://)?scholar\.google\.com/citations\?(?:.*&)?user=([A-Za-z0-9_-]+)"
-)
+_ORCID_URL_RE = re.compile(r"(?:https?://)?orcid\.org/([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X])")
+_CVLAC_URL_RE = re.compile(r"cod_rh=([0-9]+)")
+_SCHOLAR_URL_RE = re.compile(r"(?:https?://)?scholar\.google\.com/citations\?(?:.*&)?user=([A-Za-z0-9_-]+)")
+
 
 def _extract_orcid(value: str) -> str:
     m = _ORCID_URL_RE.search(value)
     return m.group(1) if m else value
+
 
 def _extract_cvlac(value: str) -> str:
     # Strip leading apostrophe added by Excel to preserve leading zeros
@@ -86,15 +82,18 @@ def _extract_cvlac(value: str) -> str:
     m = _CVLAC_URL_RE.search(value)
     return m.group(1) if m else value
 
+
 def _extract_scholar(value: str) -> str:
     m = _SCHOLAR_URL_RE.search(value)
     return m.group(1) if m else value
+
 
 _IDENTIFIER_EXTRACTORS: dict[str, callable] = {
     "orcid": _extract_orcid,
     "cvlac": _extract_cvlac,
     "scholar": _extract_scholar,
 }
+
 
 def _normalize_key(s: str) -> str:
     """Strips accents and lowercases for map lookups."""

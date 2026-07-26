@@ -27,8 +27,4 @@ def get_news_count() -> int:
 
 
 def get_quality_metrics_history() -> list[dict[str, Any]]:
-    return list(
-        impactu_database["quality_metrics"].find(
-            {}, {"_id": 0}
-        ).sort("computed_at", -1)
-    )
+    return list(impactu_database["quality_metrics"].find({}, {"_id": 0}).sort("computed_at", -1))
