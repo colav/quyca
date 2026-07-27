@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
+from quyca.domain.models.staff_report_model import StaffReport
 from quyca.domain.services.ciarp_report_service import CiarpReportService
 from quyca.domain.repositories.notification_service_interface import INotificationService
 from quyca.domain.validators.ciarp_validator_interface import ICiarpValidator
@@ -45,12 +46,45 @@ class ProcessCiarpFileUseCase:
                 "success": False,
                 "msg": f"Error al leer el archivo Excel: {str(e)}",
             }
+
+        pdf_base64: Optional[str] = None
+
         valid, errors_columns, _ = self.validator.validate_columns(df)
         if not valid:
+            column_errors = [
+                {"field": "columnas", "msg": err, "index": None, "index_excel": None} for err in errors_columns
+            ]
+            grouped_errors = [{"field": "columnas", "errors": column_errors}]
+
+            report = StaffReport(
+                total_errors=len(errors_columns),
+                total_duplicates=0,
+                errors=column_errors,
+                grouped_errors=grouped_errors,
+                warnings=[],
+                grouped_warnings=[],
+                duplicates=[],
+            )
+
+            pdf_bytes = self.report_service.pdf_repo.generate_quality_report(
+                grouped_errors, [], [], institution, filename, upload_date, user
+            )
+            attachments = [{"bytes": pdf_bytes, "filename": "reporte_ciarp.pdf", "mime": "application/pdf"}]
+
+            self.notification_service.send_report(
+                report, institution, filename, upload_date, user, email, "Ciarp", attachments, ror_id
+            )
+
+            pdf_bytes.seek(0)
+            pdf_base64 = base64.b64encode(pdf_bytes.read()).decode()
+
             return {
                 "success": False,
+                "errors": report.total_errors,
+                "duplicates": 0,
                 "msg": "El archivo enviado no cumple con el formato requerido de columnas",
                 "details": errors_columns,
+                "pdf_base64": pdf_base64,
             }
 
         report, attachments = self.report_service.generate_report(df, institution, filename, upload_date, user)
@@ -59,11 +93,14 @@ class ProcessCiarpFileUseCase:
             report, institution, filename, upload_date, user, email, "Ciarp", attachments, ror_id
         )
 
-        pdf_base64: Optional[str] = None
         for att in attachments:
-            if att["filename"].endswith(".pdf"):
-                pdf_base64 = base64.b64encode(att["bytes"].read()).decode()
-                break
+            att_filename = att.get("filename")
+            if isinstance(att_filename, str) and att_filename.endswith(".pdf"):
+                bytes_obj = att.get("bytes")
+                if isinstance(bytes_obj, io.BytesIO):
+                    bytes_obj.seek(0)
+                    pdf_base64 = base64.b64encode(bytes_obj.read()).decode()
+                    break
 
         return {
             "success": report.total_errors == 0,

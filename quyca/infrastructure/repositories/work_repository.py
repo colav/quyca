@@ -11,6 +11,11 @@ from quyca.infrastructure.mongo import database
 from quyca.domain.exceptions.not_entity_exception import NotEntityException
 
 
+# Cache for global filters (no entity filter, no query params applied).
+# Populated on first request, cleared on container restart.
+_GLOBAL_FILTERS_CACHE: dict = {}
+
+
 def get_work_by_id(work_id: str) -> Work:
     pipeline = [
         {"$match": {"_id": ObjectId(work_id)}},
@@ -41,7 +46,6 @@ def get_works_by_affiliation(
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
-    set_issn_to_pipeline(pipeline)
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
     base_repository.set_pagination(pipeline, query_params)
@@ -60,7 +64,6 @@ def get_works_with_source_by_affiliation(
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
-    set_issn_to_pipeline(pipeline)
     base_repository.set_project(pipeline, pipeline_params.get("work_project"))
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
@@ -87,7 +90,6 @@ def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_para
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
-    set_issn_to_pipeline(pipeline)
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
     base_repository.set_pagination(pipeline, query_params)
@@ -106,7 +108,6 @@ def get_works_with_source_by_person(
     ]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
-    set_issn_to_pipeline(pipeline)
     base_repository.set_project(pipeline, pipeline_params.get("work_project"))
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
@@ -126,7 +127,6 @@ def get_works_by_source(source_id: str, query_params: QueryParams, pipeline_para
     pipeline = [{"$match": {"source.id": ObjectId(source_id)}}]
     set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
-    set_issn_to_pipeline(pipeline)
     if sort := query_params.sort:
         base_repository.set_sort(sort, pipeline)
     base_repository.set_pagination(pipeline, query_params)
@@ -147,7 +147,6 @@ def search_works(query_params: QueryParams, pipeline_params: dict | None = None)
     if query_params.keywords:
         pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
     set_product_filters(pipeline, query_params)
-    set_issn_to_pipeline(pipeline)
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     works = database["works"].aggregate(pipeline)
 
@@ -187,11 +186,29 @@ def get_works_available_filters_by_source(source_id: str, query_params: QueryPar
 
 def get_search_works_available_filters(query_params: QueryParams, pipeline_params: dict | None = None) -> dict:
     pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
-    set_product_filters(pipeline, query_params)
     return get_works_available_filters(pipeline, query_params)
 
 
 def get_works_available_filters(pipeline: list, query_params: QueryParams) -> dict:
+    # Cache only when there is no entity filter and no query params filters applied.
+    # Covers the global search at /app/search/works/filters with no active filters.
+    is_global = len(pipeline) == 0 and not any(
+        [
+            query_params.product_types,
+            query_params.years,
+            query_params.status,
+            query_params.subjects,
+            query_params.topics,
+            query_params.countries,
+            query_params.groups_ranking,
+            query_params.authors_ranking,
+            query_params.keywords,
+        ]
+    )
+
+    if is_global and _GLOBAL_FILTERS_CACHE:
+        return _GLOBAL_FILTERS_CACHE
+
     set_product_filters(pipeline, query_params)
     available_filters = {}
     collection = database["works"]
@@ -236,7 +253,7 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
         ],
         "status": pipeline.copy()
         + [
-            {"$project": {"open_access": 1}},
+            {"$match": {"open_access.open_access_status": {"$ne": None}}},
             {"$group": {"_id": "$open_access.open_access_status", "count": {"$sum": 1}}},
             {"$sort": {"count": -1}},
         ],
@@ -317,7 +334,7 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
         ],
         "topics": pipeline.copy()
         + [
-            {"$match": {"primary_topic": {"$ne": {}}}},
+            {"$match": {"primary_topic.id": {"$ne": None}}},
             {"$project": {"primary_topic.id": 1, "primary_topic.display_name": 1}},
             {
                 "$group": {
@@ -342,6 +359,9 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
         for future in as_completed(futures):
             key, result = future.result()
             available_filters[key] = result
+
+    if is_global:
+        _GLOBAL_FILTERS_CACHE.update(available_filters)
 
     return available_filters
 

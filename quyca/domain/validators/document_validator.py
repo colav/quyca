@@ -1,17 +1,30 @@
 import re
+import unicodedata
 from typing import List, Dict, Any
 from .base_validator import BaseValidator
+from quyca.domain.constants.staff_field_values import DOCUMENT_TYPES
 
 PASSPORT_RE = re.compile(r"^[A-Za-z0-9]+$")
-ALLOWED_DOCUMENT_TYPES = {"cédula de ciudadanía", "cédula de extranjería", "pasaporte"}
+
+_NUMERIC_ID_TYPES = {"cédula de ciudadanía", "cédula de extranjería"}
+
+_INTEGER_TEXT_RE = re.compile(r"^[0-9]+(?:\.0+)?$")
+
+
+def _is_numeric_identification(value: Any) -> bool:
+    """Accept integer-like values even when Excel stored them as text or float strings."""
+    if BaseValidator.is_empty(value):
+        return False
+
+    normalized = unicodedata.normalize("NFKC", str(value)).strip()
+    return bool(_INTEGER_TEXT_RE.match(normalized))
 
 
 class DocumentValidator:
     """
-    Validator for document type and identification fields.
-    Ensures that the provided document type is allowed and
-    that the identification value matches the expected format
-    (numeric for IDs, alphanumeric for passports).
+    Validates document type and identification fields.
+    At this point in the flow, values are already normalized by StaffNormalizerService,
+    so only canonical values are expected.
     """
 
     @staticmethod
@@ -20,21 +33,21 @@ class DocumentValidator:
 
         if not BaseValidator.is_empty(tipo_documento):
             tnorm = str(tipo_documento).strip().lower()
-            if tnorm not in ALLOWED_DOCUMENT_TYPES:
+
+            if tnorm not in DOCUMENT_TYPES:
                 errors.append(
                     {
                         "fila": index,
                         "columna": "tipo_documento",
-                        "detalle": f"El tipo de documento {tnorm} no es válido",
+                        "detalle": f"El tipo de documento '{tipo_documento}' no es válido",
                         "value": tipo_documento,
                     }
                 )
 
-            if not BaseValidator.is_empty(identificacion) and not BaseValidator.is_empty(tipo_documento):
+            if not BaseValidator.is_empty(identificacion):
                 id_str = str(identificacion).strip()
-                tnorm = str(tipo_documento).strip().lower()
 
-                if tnorm in {"cédula de ciudadanía", "cédula de extranjería"} and not id_str.isdigit():
+                if tnorm in _NUMERIC_ID_TYPES and not _is_numeric_identification(identificacion):
                     errors.append(
                         {
                             "fila": index,

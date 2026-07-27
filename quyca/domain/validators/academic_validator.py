@@ -1,11 +1,32 @@
-from .base_validator import BaseValidator
+import unicodedata
 from typing import List, Dict, Any, Tuple
 
-ALLOWED_ACADEMIC_LEVELS = {"técnico", "pregrado", "maestria", "doctorado", "especialización", "especialización médica"}
-ALLOWED_CONTRACT_TYPES = {"vinculado", "ocasional", "cátedra", "prestación de servicios", "postdoc"}
-ALLOWED_WORK_SCHEDULES = {"medio tiempo", "tiempo completo", "tiempo parcial"}
-ALLOWED_JOB_CATEGORIES = {"auxiliar", "asociado", "titular"}
-ALLOWED_GENDERS = {"hombre", "mujer", "intersexual", ""}
+from .base_validator import BaseValidator
+from quyca.domain.constants.staff_field_values import (
+    ACADEMIC_LEVELS,
+    ACADEMIC_LEVEL_MAP,
+    CONTRACT_TYPES,
+    CONTRACT_TYPE_MAP,
+    WORK_SCHEDULES,
+    WORK_SCHEDULE_MAP,
+    JOB_CATEGORIES,
+    JOB_CATEGORY_MAP,
+    SEX,
+    SEX_MAP,
+)
+
+_UNKNOWN_VALUE = "desconocido"
+
+
+def _normalize_key(value: Any) -> str:
+    return unicodedata.normalize("NFD", str(value)).encode("ascii", "ignore").decode("ascii").strip().lower()
+
+
+def _is_known_value(value: Any, canonicals: set[str], aliases: dict[str, str]) -> bool:
+    normalized = _normalize_key(value)
+    normalized_canonicals = {_normalize_key(item) for item in canonicals}
+    normalized_aliases = {_normalize_key(item) for item in aliases.keys()}
+    return normalized in normalized_canonicals or normalized in normalized_aliases or normalized == _UNKNOWN_VALUE
 
 
 class AcademicValidator:
@@ -13,23 +34,22 @@ class AcademicValidator:
 
     @staticmethod
     def validate(row: dict, index: int) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-        """Checks allowed values and returns detected errors and warnings."""
         errors: List[Dict[str, Any]] = []
         warnings: List[Dict[str, Any]] = []
 
         nivel = row.get("nivel_académico")
-        if not BaseValidator.is_empty(nivel) and str(nivel).strip().lower() not in ALLOWED_ACADEMIC_LEVELS:
-            errors.append(
+        if not BaseValidator.is_empty(nivel) and not _is_known_value(nivel, ACADEMIC_LEVELS, ACADEMIC_LEVEL_MAP):
+            warnings.append(
                 {
                     "fila": index,
                     "columna": "nivel_académico",
-                    "detalle": f"El nivel académico {nivel} no existe en el listado",
+                    "detalle": f"El nivel académico {nivel} no existe en el listado y se normalizó a desconocido",
                     "valor": nivel,
                 }
             )
 
         tc = row.get("tipo_contrato")
-        if not BaseValidator.is_empty(tc) and str(tc).strip().lower() not in ALLOWED_CONTRACT_TYPES:
+        if not BaseValidator.is_empty(tc) and not _is_known_value(tc, CONTRACT_TYPES, CONTRACT_TYPE_MAP):
             warnings.append(
                 {
                     "fila": index,
@@ -40,34 +60,34 @@ class AcademicValidator:
             )
 
         jr = row.get("jornada_laboral")
-        if not BaseValidator.is_empty(jr) and str(jr).strip().lower() not in ALLOWED_WORK_SCHEDULES:
-            errors.append(
+        if not BaseValidator.is_empty(jr) and not _is_known_value(jr, WORK_SCHEDULES, WORK_SCHEDULE_MAP):
+            warnings.append(
                 {
                     "fila": index,
                     "columna": "jornada_laboral",
-                    "detalle": f"La jornada laboral {jr} no se encontró en el listado",
+                    "detalle": f"La jornada laboral {jr} no se encontró en el listado y se normalizó a desconocido",
                     "valor": jr,
                 }
             )
 
         cat = row.get("categoría_laboral")
-        if not BaseValidator.is_empty(cat) and str(cat).strip().lower() not in ALLOWED_JOB_CATEGORIES:
+        if not BaseValidator.is_empty(cat) and not _is_known_value(cat, JOB_CATEGORIES, JOB_CATEGORY_MAP):
             warnings.append(
                 {
                     "fila": index,
                     "columna": "categoría_laboral",
-                    "detalle": f"{cat} no está en el listado de categoría laboral",
+                    "detalle": f"{cat} no está en el listado de categoría laboral y se normalizó a desconocido",
                     "valor": cat,
                 }
             )
 
         sexo = row.get("sexo")
-        if not BaseValidator.is_empty(sexo) and str(sexo).strip().lower() not in ALLOWED_GENDERS:
-            errors.append(
+        if not BaseValidator.is_empty(sexo) and not _is_known_value(sexo, SEX, SEX_MAP):
+            warnings.append(
                 {
                     "fila": index,
                     "columna": "sexo",
-                    "detalle": f"{sexo} no válido solo se permite (hombre, mujer, intersexual o ninguno)",
+                    "detalle": f"{sexo} no válido y se normalizó a desconocido",
                     "valor": sexo,
                 }
             )

@@ -22,17 +22,17 @@ class StaffUploadError(Enum):
     UNAUTHORIZED = "unauthorized"
     BAD_REQUEST = "bad_request"
     UNPROCESSABLE_ENTITY = "unprocessable_entity"
+    INTERNAL_ERROR = "internal_error"
 
 
 @dataclass(frozen=True)
 class StaffUploadResult:
-    """
-    Data structure representing the result of a Staff upload operation.
+    """Result object returned by `StaffService.handle_staff_upload`.
 
     Attributes:
-        payload (dict): Result payload returned to the client.
-        error (Optional[StaffUploadError]): Semantic error type if the
-        operation failed, otherwise None.
+        payload: A serializable dictionary with the API response payload.
+        error: Optional semantic error from `StaffUploadError` that the
+            router layer will map to an HTTP response code.
     """
 
     payload: dict
@@ -42,9 +42,6 @@ class StaffUploadResult:
 class StaffService:
     """
     Application service responsible for orchestrating the Staff upload flow.
-
-    This service coordinates authentication validation, file processing,
-    validation execution and final persistence of the uploaded Staff file.
     """
 
     def __init__(
@@ -56,12 +53,21 @@ class StaffService:
         self.save_usecase = save_usecase
 
     def handle_staff_upload(self, file: FileStorage, claims: dict[str, Any], upload_date: str) -> StaffUploadResult:
-        """
-        Handles the Staff file upload process.
+        """Handle a staff Excel upload end-to-end.
 
-        Validates the JWT claims, checks the uploaded file, executes the
-        processing use case, and if successful, persists the file using
-        the save use case.
+        Validates token claims, reads and processes the incoming Excel file
+        via the `ProcessStaffFileUseCase`, and persists original and
+        normalized files via the `SaveStaffFileUseCase` when processing
+        succeeds. Returns a `StaffUploadResult` containing the response
+        payload and an optional semantic error used by the router.
+
+        Args:
+            file: Incoming uploaded file (Werkzeug `FileStorage`).
+            claims: JWT claims extracted from the request token.
+            upload_date: ISO date string representing the upload time.
+
+        Returns:
+            StaffUploadResult: payload and optional `StaffUploadError`.
         """
         email = claims.get("sub")
         ror_id = claims.get("_id")
@@ -100,15 +106,7 @@ class StaffService:
         file_bytes = io.BytesIO(file.stream.read())
         file_bytes.seek(0)
 
-        result = self.process_usecase.execute(
-            file_bytes,
-            institution,
-            filename,
-            upload_date,
-            user,
-            email,
-            ror_id,
-        )
+        result = self.process_usecase.execute(file_bytes, institution, filename, upload_date, user, email, ror_id)
 
         if not result["success"]:
             msg = str(result.get("msg", ""))
@@ -116,9 +114,33 @@ class StaffService:
                 return StaffUploadResult(result, StaffUploadError.UNPROCESSABLE_ENTITY)
             return StaffUploadResult(result, StaffUploadError.BAD_REQUEST)
 
-        file.stream.seek(0)
-        save_result = self.save_usecase.execute(file, ror_id, institution)
+        # Only reached when success=True (no errors)
+        df_original = result.pop("df_original", None)
+        df_normalized = result.pop("df_normalized", None)
 
-        result.update({"file_msg": save_result.get("msg")})
+        if df_normalized is not None:
+            if df_original is None:
+                df_original = df_normalized
+
+            save_result = self.save_usecase.execute(
+                ror_id=ror_id,
+                institution=institution,
+                original_filename=filename,
+                df_original=df_original,
+                df_normalized=df_normalized,
+            )
+            result["file_msg"] = save_result.get("msg_normalized")
+
+            if not save_result.get("success", False):
+                result["success"] = False
+                result["msg"] = (
+                    save_result.get("msg_normalized")
+                    or save_result.get("msg_original")
+                    or ("Error al guardar el archivo")
+                )
+                return StaffUploadResult(result, StaffUploadError.INTERNAL_ERROR)
+
+            # Raw changelog is internal-only and should not be exposed by the API.
+            result.pop("changelog", None)
 
         return StaffUploadResult(result, None)

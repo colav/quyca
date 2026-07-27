@@ -2,7 +2,7 @@
 name = "quyca"
 version = "0.1.0"
 description = ""
-authors = ["colav <grupocolav@udea.edu.co>"]
+authors = ["colav <grupo.colav@udea.edu.co>"]
 
 
 [tool.poetry.dependencies]

@@ -12,6 +12,8 @@ def parse_search_result(affiliations: List) -> List[Affiliation]:
         "external_urls",
         "products_count",
         "citations_count",
+        "h_index",
+        "h5_index",
         "logo",
         "name",
         "types",

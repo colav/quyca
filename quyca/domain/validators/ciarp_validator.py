@@ -1,3 +1,5 @@
+import re
+import unicodedata
 from typing import List, Dict, Any, Tuple
 import pandas as pd
 from quyca.domain.models.staff_report_model import StaffReport
@@ -37,6 +39,42 @@ REQUIRED_COLUMNS = [
 ]
 
 
+def _normalize(s: str) -> str:
+    """Strips accents and lowercases a string for flexible column matching."""
+    return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("ascii").strip().lower()
+
+
+_INTEGER_TEXT_RE = re.compile(r"^[0-9]+(?:\.0+)?$")
+
+
+def _coerce_integer_like(value: Any) -> Any:
+    """Convert safe integer-like values stored as text or floats to ints."""
+    if pd.isna(value):
+        return value
+
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, (int, float)):
+        if isinstance(value, float) and not value.is_integer():
+            return value
+        return int(value)
+
+    if isinstance(value, str):
+        stripped = value.strip()
+        if _INTEGER_TEXT_RE.match(stripped):
+            integer_part = stripped.split(".", 1)[0]
+            if len(integer_part) > 1 and integer_part.startswith("0"):
+                return value
+            return int(float(stripped))
+
+    return value
+
+
+_NORMALIZED_REQUIRED = {_normalize(c): c for c in REQUIRED_COLUMNS}
+_NORMALIZED_EXTRA_ALLOWED = {_normalize(c) for c in EXTRA_ALLOWED}
+
+
 class CiarpValidator:
     """Validates CIARP dataframe schema and row-level rules."""
 
@@ -48,31 +86,37 @@ class CiarpValidator:
     @staticmethod
     def validate_columns(df: pd.DataFrame) -> Tuple[bool, List[str], List[str]]:
         """Validates required/extra columns and returns validation details."""
-        raw_cols = [str(c).lower().strip() for c in df.columns]
+        raw_cols = [str(c).strip() for c in df.columns]
         errors: List[str] = []
         usecols: List[str] = []
 
-        expected = list(REQUIRED_COLUMNS)
-
         for idx, c in enumerate(raw_cols):
-            col = str(c).strip()
+            col = c.strip()
+            col_norm = _normalize(col)
 
-            if idx == 0 and (col == "" or col.lower() == "index" or col.lower().startswith("unnamed")):
+            if idx == 0 and (col == "" or col_norm == "index" or col_norm.startswith("unnamed")):
                 continue
 
-            if col == "" or col.lower().startswith("unnamed"):
+            if col == "" or col_norm.startswith("unnamed"):
                 if not df.iloc[:, idx].dropna(how="all").empty:
                     errors.append(f"Columna sin nombre en posición {idx+1}")
                 continue
 
             usecols.append(col)
-        missing = [c for c in expected if c not in usecols]
-        extra = [c for c in usecols if c not in expected and c not in EXTRA_ALLOWED]
+
+        normalized_usecols = {_normalize(c): c for c in usecols}
+
+        missing = [c for c in REQUIRED_COLUMNS if _normalize(c) not in normalized_usecols]
 
         if missing:
             errors.append(f"Columnas faltantes: {', '.join(missing)}")
-        if extra:
-            errors.append(f"Columnas no permitidas: {', '.join(extra)}")
+
+        # Return usecols using canonical names from REQUIRED_COLUMNS where possible
+        usecols = [
+            _NORMALIZED_REQUIRED.get(_normalize(c), c)
+            for c in usecols
+            if _normalize(c) not in _NORMALIZED_EXTRA_ALLOWED
+        ]
 
         return (len(errors) == 0, errors, usecols)
 
@@ -119,10 +163,12 @@ class CiarpValidator:
         warnings: List[Dict[str, Any]] = []
 
         df = df.dropna(how="all").reset_index(drop=True)
-
         df = df.map(lambda v: v.strip() if isinstance(v, str) else v)
-
         df = df.apply(lambda x: str(int(x)) if isinstance(x, float) and x.is_integer() else x)
+
+        for field in ["identificación", "año"]:
+            if field in df.columns:
+                df[field] = df[field].apply(_coerce_integer_like)
 
         for idx, row in df.iterrows():
             result = CiarpValidator.validate_row(row.to_dict(), idx)

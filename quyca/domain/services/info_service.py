@@ -1,6 +1,4 @@
-from quyca.infrastructure.repositories import (
-    info_repository,
-)
+from quyca.infrastructure.repositories import info_repository
 
 
 def get_info() -> dict:
@@ -18,3 +16,7 @@ def get_info() -> dict:
         "total_open_access": info_repository.get_open_access_count(),
         "total_sources": info_repository.get_entity_count("sources"),
     }
+
+
+def get_quality_metrics() -> list:
+    return info_repository.get_quality_metrics_history()

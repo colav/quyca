@@ -104,7 +104,7 @@ class Status(BaseModel):
 class SubjectContent(BaseModel):
     id: PyObjectId | None = None
     external_ids: list[ExternalId] | None = None
-    level: int | None = None
+    level: int | str | None = None
     name: str | None
 
     class Config:
@@ -215,6 +215,8 @@ class Affiliation(BaseModel):
     position: str | None = None
     ranking: list[Ranking] | None = None
     external_ids: list[ExternalId] | None = None
+    h_index: int | None = None
+    h5_index: int | None = None
 
     class Config:
         json_encoders = {ObjectId: str}
@@ -241,6 +243,8 @@ class Author(BaseModel):
     sex: str | None = None
     external_ids: list[ExternalId] | None = None
     ranking: list[Ranking] | str | None = None
+    h_index: int | None = None
+    h5_index: int | None = None
 
     @field_validator("external_ids")
     @classmethod
@@ -289,6 +293,8 @@ class Group(BaseModel):
     name: str | None
     ranking: list[Ranking] | None = None
     citations_count: list[CitationsCount] | None = None
+    h_index: int | None = None
+    h5_index: int | None = None
 
     class Config:
         json_encoders = {ObjectId: str}

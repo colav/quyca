@@ -1,13 +1,12 @@
+from typing import Any
 from quyca.domain.constants.institutions import institutions_list
-from quyca.infrastructure.mongo import database
+from quyca.infrastructure.mongo import database, impactu_database
 
 
 def get_last_db_update() -> int:
     doc = database["log"].find_one(sort=[("time", -1)], projection={"time": 1})
-
     if doc:
         return int(doc["time"])
-
     return 0
 
 
@@ -25,3 +24,7 @@ def get_open_access_count() -> int:
 
 def get_news_count() -> int:
     return database["news_urls_collection"].estimated_document_count()
+
+
+def get_quality_metrics_history() -> list[dict[str, Any]]:
+    return list(impactu_database["quality_metrics"].find({}, {"_id": 0}).sort("computed_at", -1))

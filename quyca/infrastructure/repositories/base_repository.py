@@ -207,24 +207,10 @@ def set_sort(sort: str | None, pipeline: list, collection: str | None = None) ->
             sort_field = "title"
     elif sort_field == "products":
         sort_field = "products_count"
+    elif sort_field == "h":
+        sort_field = "h_index"
+    elif sort_field == "h5":
+        sort_field = "h5_index"
     elif sort_field == "year":
-        pipeline += [
-            {
-                "$addFields": {
-                    "sort_year": {
-                        "$cond": {
-                            "if": {
-                                "$or": [
-                                    {"$eq": ["$year_published", None]},
-                                    {"$eq": ["$year_published", ""]},
-                                ]
-                            },
-                            "then": -1,
-                            "else": "$year_published",
-                        }
-                    }
-                }
-            },
-        ]
-        sort_field = "sort_year"
+        sort_field = "year_published"
     pipeline += [{"$sort": {sort_field: direction, "_id": 1}}]

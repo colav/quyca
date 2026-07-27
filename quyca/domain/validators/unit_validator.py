@@ -2,8 +2,8 @@ import re
 from typing import List, Dict, Any
 from .base_validator import BaseValidator
 
-CODE_RE = re.compile(r"^[0-9_]+$")
-UNIT_RE = re.compile(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9, \-]+$")
+CODE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+UNIT_RE = re.compile(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9, \-:]+$")
 
 
 class UnitValidator:
@@ -12,16 +12,24 @@ class UnitValidator:
     """
 
     @staticmethod
+    def _normalize_code_value(value: Any) -> str:
+        """Normalize numeric-looking codes so Excel floats like 118.0 become 118."""
+        if isinstance(value, float) and value.is_integer():
+            return str(int(value))
+        return str(value).strip()
+
+    @staticmethod
     def validate(row: dict, index: int) -> List[Dict[str, Any]]:
         errors: List[Dict[str, Any]] = []
         for field in ["código_unidad_académica", "código_subunidad_académica"]:
             value = row.get(field)
-            if not BaseValidator.is_empty(value) and not CODE_RE.match(str(value).strip()):
+            normalized_value = UnitValidator._normalize_code_value(value)
+            if not BaseValidator.is_empty(value) and not CODE_RE.match(normalized_value):
                 errors.append(
                     {
                         "fila": index,
                         "columna": field,
-                        "detalle": f"No se permite {value}, solo números y _",
+                        "detalle": f"No se permite {normalized_value}, solo letras, números, _ y -",
                         "valor": value,
                     }
                 )
@@ -33,7 +41,7 @@ class UnitValidator:
                     {
                         "fila": index,
                         "columna": field,
-                        "detalle": f"Solo letras, números y espacios permitidos ya que {value} no es permitido",
+                        "detalle": f"Solo letras, números, espacios, comas, guiones y dos puntos permitidos ya que {value} no es permitido",
                         "valor": value,
                     }
                 )

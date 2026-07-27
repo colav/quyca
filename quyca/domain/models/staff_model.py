@@ -12,6 +12,9 @@ class Staff:
     last_name_1: str
     last_name_2: str | None = None
     first_names: str = ""
+    orcid: str | None = None
+    cvlac: str | None = None
+    scholar: str | None = None
     academic_level: str | None = None
     contract_type: str | None = None
     work_schedule: str | None = None

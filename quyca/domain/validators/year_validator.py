@@ -1,5 +1,9 @@
 from datetime import datetime
+import re
 from typing import Any, Dict, Optional
+
+
+_INTEGER_TEXT_RE = re.compile(r"^[0-9]+(?:\.0+)?$")
 
 
 class YearValidator:
@@ -12,7 +16,14 @@ class YearValidator:
         if value is None or str(value).strip() == "":
             return None
         try:
-            year = int(value)
+            if isinstance(value, str):
+                stripped = value.strip()
+                if _INTEGER_TEXT_RE.match(stripped):
+                    year = int(float(stripped))
+                else:
+                    year = int(stripped)
+            else:
+                year = int(value)
             current_year = datetime.now().year
             if year > current_year:
                 return {

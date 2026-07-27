@@ -177,3 +177,7 @@ BSD-3-Clause License
 # Links
 
 http://colav.udea.edu.co/
+
+## Business Rules
+
+- Staff validation and normalization: docs/business-rules/staff-validation-normalization.md
