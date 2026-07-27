@@ -14,7 +14,7 @@ from __future__ import annotations
 import unicodedata
 import re
 from datetime import date, datetime, timezone
-from typing import Any
+from typing import Any, Callable
 
 import pandas as pd
 
@@ -88,7 +88,7 @@ def _extract_scholar(value: str) -> str:
     return m.group(1) if m else value
 
 
-_IDENTIFIER_EXTRACTORS: dict[str, callable] = {
+_IDENTIFIER_EXTRACTORS: dict[str, Callable[..., Any]] = {
     "orcid": _extract_orcid,
     "cvlac": _extract_cvlac,
     "scholar": _extract_scholar,
