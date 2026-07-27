@@ -28,7 +28,7 @@ services:
       - .:/app
     working_dir: /app
     environment:
-      PYTHONPATH: /quyca
+      PYTHONPATH: /app/quyca
     entrypoint:
       - poetry
       - run

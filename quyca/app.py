@@ -44,7 +44,7 @@ def create_app() -> Flask:
     CORS(
         app_factory,
         supports_credentials=True,
-        origins=["http://localhost:3000", r"https?://.*\.impactu\.colav\.co$"],
+        origins=["http://localhost:3000", r"https?://(.*\.)?impactu\.colav\.co$"],
     )
     app_factory.register_blueprint(router)
     Compress(app_factory)
