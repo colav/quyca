@@ -66,32 +66,42 @@ _MAP_TO_UNKNOWN_FIELDS = {
 }
 _DATE_MAP_TO_UNKNOWN_FIELDS = set(_DATE_FIELDS)
 
-_ORCID_URL_RE = re.compile(r"(?:https?://)?orcid\.org/([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X])")
+_ORCID_CODE_RE = re.compile(r"([0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X])")
 _CVLAC_URL_RE = re.compile(r"cod_rh=([0-9]+)")
-_SCHOLAR_URL_RE = re.compile(r"(?:https?://)?scholar\.google\.com/citations\?(?:.*&)?user=([A-Za-z0-9_-]+)")
+_SCHOLAR_CODE_RE = re.compile(r"(?:https?://)?scholar\.google\.com/citations\?(?:.*&)?user=([A-Za-z0-9_-]+)")
+_RESEARCHGATE_CODE_RE = re.compile(r"(?:https?://)?(?:www\.)?researchgate\.net/profile/([A-Za-z0-9_-]+)")
 
 
-def _extract_orcid(value: str) -> str:
-    m = _ORCID_URL_RE.search(value)
-    return m.group(1) if m else value
+def _normalize_orcid(value: str) -> str:
+    """Extracts ORCID code and returns canonical URL."""
+    m = _ORCID_CODE_RE.search(value)
+    return f"https://orcid.org/{m.group(1)}" if m else value
 
 
-def _extract_cvlac(value: str) -> str:
-    # Strip leading apostrophe added by Excel to preserve leading zeros
+def _normalize_cvlac(value: str) -> str:
+    """Extracts cod_rh from URL or cleans apostrophe — always returns the code as string."""
     value = value.lstrip("'")
     m = _CVLAC_URL_RE.search(value)
     return m.group(1) if m else value
 
 
-def _extract_scholar(value: str) -> str:
-    m = _SCHOLAR_URL_RE.search(value)
-    return m.group(1) if m else value
+def _normalize_scholar(value: str) -> str:
+    """Extracts user ID and returns canonical URL."""
+    m = _SCHOLAR_CODE_RE.search(value)
+    return f"https://scholar.google.com/citations?user={m.group(1)}" if m else value
+
+
+def _normalize_researchgate(value: str) -> str:
+    """Extracts slug and returns canonical URL."""
+    m = _RESEARCHGATE_CODE_RE.search(value)
+    return f"https://www.researchgate.net/profile/{m.group(1)}" if m else value
 
 
 _IDENTIFIER_EXTRACTORS: dict[str, Callable[..., Any]] = {
-    "orcid": _extract_orcid,
-    "cvlac": _extract_cvlac,
-    "scholar": _extract_scholar,
+    "orcid": _normalize_orcid,
+    "cvlac": _normalize_cvlac,
+    "scholar": _normalize_scholar,
+    "researchgate": _normalize_researchgate,
 }
 
 
