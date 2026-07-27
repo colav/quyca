@@ -104,7 +104,7 @@ class Status(BaseModel):
 class SubjectContent(BaseModel):
     id: PyObjectId | None = None
     external_ids: list[ExternalId] | None = None
-    level: str | None = None
+    level: int | str | None = None
     name: str | None
 
     class Config:
