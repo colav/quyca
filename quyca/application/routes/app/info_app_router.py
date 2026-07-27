@@ -21,9 +21,9 @@ def get_info() -> Response | Tuple[Response, int]:
 
 
 @info_app_router.route("/info/quality", methods=["GET"])
-def get_info_quality() -> Response | Tuple[Response, int]:
+def get_quality_metrics() -> Response | Tuple[Response, int]:
     try:
-        data = info_service.get_works_quality_metrics()
+        data = info_service.get_quality_metrics()
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
