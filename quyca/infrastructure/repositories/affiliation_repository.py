@@ -121,8 +121,8 @@ def get_search_affiliations_available_filters(
     if query_params.keywords:
         pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
 
-    pipeline = [
-        {"$match": {"types.type": affiliation_type}},
+    pipeline += [
+        {"$match": {"types.type": {"$in": types}}},
         {
             "$facet": {
                 "states": [
