@@ -102,6 +102,37 @@ def search_affiliations(affiliation_type: str) -> Response | Tuple[Response, int
 
 
 """
+@api {get} /app/search/affiliations/:affiliation_type/filters Get affiliation filters
+@apiName GetSearchAffiliationsFilters
+@apiGroup Search
+@apiVersion 1.0.0
+
+@apiDescription Get available state and city filters for affiliations by affiliation type.
+@apiParam {String} affiliation_type Affiliation type (e.g. "institution", "group", "department").
+
+@apiSuccess {Object[]} states List of available state filters.
+@apiSuccess {Number} states.count Number of affiliations associated with the state.
+@apiSuccess {String} states.label Normalized state name displayed to the user.
+@apiSuccess {String} states.value State value used by the filter.
+@apiSuccess {Object[]} cities List of available city filters.
+@apiSuccess {Number} cities.count Number of affiliations associated with the city.
+@apiSuccess {String} cities.label Normalized city name displayed to the user.
+@apiSuccess {String} cities.value City value used by the filter.
+"""
+
+
+@search_app_router.route("/affiliations/<affiliation_type>/filters", methods=["GET"])
+def get_search_affiliations_filters(affiliation_type: str) -> Response | Tuple[Response, int]:
+    try:
+        query_params = QueryParams(**request.args)
+        data = affiliation_service.get_search_affiliations_available_filters(affiliation_type, query_params)
+        return jsonify(data), 200
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"error": str(e)}), 400
+
+
+"""
 @api {get} /app/search/patents Search patents
 @apiName SearchPatents
 @apiGroup Search
