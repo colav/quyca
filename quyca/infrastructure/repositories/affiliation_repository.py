@@ -110,3 +110,42 @@ def search_affiliations(
     ]
     total_results = next(database["affiliations"].aggregate(count_pipeline), {"total_results": 0})["total_results"]
     return affiliation_generator.get(affiliations), total_results
+
+
+def get_search_affiliations_available_filters(
+    affiliation_type: str,
+    query_params: QueryParams,
+) -> dict:
+    types = institutions_list if affiliation_type == "institution" else [affiliation_type]
+    pipeline: list[dict[str, Any]] = []
+    if query_params.keywords:
+        pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
+
+    pipeline = [
+        {"$match": {"types.type": affiliation_type}},
+        {
+            "$facet": {
+                "states": [
+                    {"$project": {"_id": 1, "addresses.state": 1}},
+                    {"$match": {"addresses.state": {"$exists": True, "$ne": ""}}},
+                    {"$unwind": "$addresses"},
+                    {"$match": {"addresses.state": {"$exists": True, "$ne": ""}}},
+                    {"$group": {"_id": {"affiliation_id": "$_id", "state": "$addresses.state"}}},
+                    {"$group": {"_id": "$_id.state", "count": {"$sum": 1}}},
+                    {"$sort": {"count": -1}},
+                ],
+                "cities": [
+                    {"$project": {"_id": 1, "addresses.city": 1}},
+                    {"$match": {"addresses.city": {"$exists": True, "$ne": ""}}},
+                    {"$unwind": "$addresses"},
+                    {"$match": {"addresses.city": {"$exists": True, "$ne": ""}}},
+                    {"$group": {"_id": {"affiliation_id": "$_id", "city": "$addresses.city"}}},
+                    {"$group": {"_id": "$_id.city", "count": {"$sum": 1}}},
+                    {"$sort": {"count": -1}},
+                ],
+            }
+        },
+    ]
+
+    available_filters: dict = next(database["affiliations"].aggregate(pipeline), {})
+    return available_filters
