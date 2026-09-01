@@ -77,6 +77,18 @@ def search_affiliations(affiliation_type: str, query_params: QueryParams) -> dic
     return {"data": data, "total_results": total_results}
 
 
+def get_search_affiliations_available_filters(
+    affiliation_type: str,
+    query_params: QueryParams,
+) -> dict:
+    available_filters = affiliation_repository.get_search_affiliations_available_filters(
+        affiliation_type=affiliation_type,
+        query_params=query_params,
+    )
+
+    return affiliation_parser.parse_available_affiliation_filters(available_filters)
+
+
 def set_relation_external_urls(affiliation: Affiliation) -> None:
     if not affiliation.relations:
         return
