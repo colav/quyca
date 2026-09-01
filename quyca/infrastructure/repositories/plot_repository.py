@@ -14,6 +14,16 @@ def get_affiliations_scienti_works_count_by_institution(
     institution_id: str, relation_type: str, query_params: QueryParams
 ) -> CommandCursor:
     affiliation_ids = affiliation_ids_for_institution(institution_id, relation_type)
+    match_initial: dict[str, Any] = {
+        "$match": {
+            "authors.affiliations.id": {"$in": affiliation_ids},
+            "types.source": "scienti",
+            "types.level": 2,
+        }
+    }
+    pipeline: list[dict[str, Any]] = [match_initial]
+    work_repository.set_product_filters(pipeline, query_params)
+
     static_fields = [
         "authors.affiliations.name",
         "authors.affiliations.id",
@@ -21,8 +31,8 @@ def get_affiliations_scienti_works_count_by_institution(
         "types.source",
         "types.level",
     ]
-    pipeline = [build_project_stage(static_fields)]
-    work_repository.set_product_filters(pipeline, query_params)
+    pipeline.append(build_project_stage(static_fields))
+
     pipeline += [
         {"$unwind": "$authors"},
         {"$unwind": "$authors.affiliations"},
@@ -31,11 +41,22 @@ def get_affiliations_scienti_works_count_by_institution(
         {"$match": {"types.source": "scienti", "types.level": 2}},
         {
             "$group": {
-                "_id": {"id": "$_id", "type": "$types.type", "name": "$authors.affiliations.name"},
+                "_id": {
+                    "id": "$_id",
+                    "type": "$types.type",
+                    "name": "$authors.affiliations.name",
+                },
                 "works_count": {"$sum": 1},
             }
         },
-        {"$project": {"_id": 0, "type": "$_id.type", "works_count": 1, "name": "$_id.name"}},
+        {
+            "$project": {
+                "_id": 0,
+                "type": "$_id.type",
+                "name": "$_id.name",
+                "works_count": 1,
+            }
+        },
     ]
     return database["works"].aggregate(pipeline)
 
@@ -289,11 +310,18 @@ def get_active_authors_by_sex(affiliation_id: str, query_params: QueryParams) ->
 
 
 def get_active_authors_by_age_range(affiliation_id: str, query_params: QueryParams) -> CommandCursor:
+    match_initial: dict[str, Any] = {
+        "$match": {
+            "authors.affiliations.id": affiliation_id,
+        }
+    }
+    pipeline: list[dict[str, Any]] = [match_initial]
+
     static_fields = [
         "authors.id",
         "authors.affiliations.id",
     ]
-    pipeline: list[dict[str, Any]] = [build_project_stage(static_fields)]
+    pipeline.append(build_project_stage(static_fields))
     work_repository.set_product_filters(pipeline, query_params)
     pipeline += [
         {"$match": {"authors.affiliations.id": affiliation_id}},
@@ -319,6 +347,7 @@ def get_active_authors_by_age_range(affiliation_id: str, query_params: QueryPara
         {"$match": {"affiliations": {"$elemMatch": {"id": affiliation_id, "end_date": -1}}}},
         {"$project": {"_id": 0, "birthday": 1}},
     ]
+    print(pipeline_person)
     return database["person"].aggregate(pipeline_person)
 
 
