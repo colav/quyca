@@ -1,5 +1,6 @@
-from typing import List
+from typing import Any, List
 
+from quyca.domain.constants.colombian_states_cities import AFFILIATION_STATE_MAPPING, AFFILIATION_CITY_MAPPING
 from quyca.domain.models.base_model import Affiliation
 
 
@@ -21,3 +22,77 @@ def parse_search_result(affiliations: List) -> List[Affiliation]:
         "ranking",
     ]
     return [affiliation.model_dump(include=include, exclude_none=True) for affiliation in affiliations]
+
+
+def parse_available_affiliation_filters(filters: dict) -> dict:
+    """
+    Parses the available affiliation filters from the search results.
+    """
+    available_filters: dict = {}
+
+    if states := filters.get("states"):
+        available_filters["states"] = parse_affiliation_state_filter(states)
+
+    if cities := filters.get("cities"):
+        available_filters["cities"] = parse_affiliation_city_filter(cities)
+
+    return available_filters
+
+
+def parse_affiliation_state_filter(states: List) -> List:
+    return parse_affiliation_location_filter(
+        states,
+        AFFILIATION_STATE_MAPPING,
+    )
+
+
+def parse_affiliation_city_filter(cities: List) -> List:
+    return parse_affiliation_location_filter(
+        cities,
+        AFFILIATION_CITY_MAPPING,
+    )
+
+
+def parse_affiliation_location_filter(
+    locations: List[dict[str, Any]],
+    mapping: dict[str, str],
+) -> List[dict[str, int | str]]:
+    """
+    Normalizes affiliation locations and aggregates counts
+    for values that resolve to the same label.
+    """
+    normalized_locations: dict[str, dict[str, int | str]] = {}
+
+    for location in locations:
+        value = location.get("_id")
+
+        if not isinstance(value, str) or not value:
+            continue
+
+        count = location.get("count", 0)
+
+        if not isinstance(count, int):
+            count = 0
+
+        label: str = mapping.get(value, value)
+
+        if label not in normalized_locations:
+            normalized_locations[label] = {
+                "count": 0,
+                "label": label,
+                "value": value,
+            }
+
+        current_count = normalized_locations[label]["count"]
+
+        if isinstance(current_count, int):
+            normalized_locations[label]["count"] = current_count + count
+
+    parsed_locations = list(normalized_locations.values())
+
+    parsed_locations.sort(
+        key=lambda location: (location["count"] if isinstance(location["count"], int) else 0),
+        reverse=True,
+    )
+
+    return parsed_locations
