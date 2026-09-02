@@ -61,8 +61,7 @@ def search_affiliations(affiliation_type: str, query_params: QueryParams) -> dic
             "citations_count",
             "products_count",
             "h_index",
-            "h5_index",
-            "relations_data",
+            "h5_index"
         ]
     }
     affiliations, total_results = affiliation_repository.search_affiliations(
@@ -93,13 +92,11 @@ def set_relation_external_urls(affiliation: Affiliation) -> None:
     if not affiliation.relations:
         return
 
-    relations_iterable: List[Relation]
-
     if isinstance(affiliation.relations, (list, tuple)):
         relations_iterable = affiliation.relations
-    elif isinstance(affiliation.relations, Dict):
+    elif isinstance(affiliation.relations, dict):
         relations_iterable = [Relation(**affiliation.relations)]
-    elif isinstance(affiliation.relations, (Dict, Relation)):
+    elif isinstance(affiliation.relations, Relation):
         relations_iterable = [affiliation.relations]
     else:
         return
@@ -113,17 +110,8 @@ def set_relation_external_urls(affiliation: Affiliation) -> None:
 
         relation_external_urls = None
 
-        if getattr(affiliation, "relations_data", None):
-            relation_data = next(
-                (x for x in affiliation.relations_data or [] if x.id == relation.id),
-                None,
-            )
-            if relation_data and getattr(relation_data, "external_urls", None):
-                relation_external_urls = relation_data.external_urls
-
-        if not relation_external_urls and getattr(relation, "id", None):
+        if getattr(relation, "id", None):
             try:
-                # In this case use the logo from the related affiliation
                 related_aff = affiliation_repository.get_affiliation_by_id(str(relation.id))
                 if getattr(related_aff, "external_urls", None):
                     relation_external_urls = related_aff.external_urls
