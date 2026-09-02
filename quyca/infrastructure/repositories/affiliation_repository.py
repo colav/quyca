@@ -1,6 +1,7 @@
 from typing import Any, Generator, Mapping, Tuple
 
 
+from quyca.domain.constants.colombian_states_cities import AFFILIATION_CITY_MAPPING, AFFILIATION_STATE_MAPPING
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.constants.institutions import institutions_list
 from quyca.domain.models.affiliation_model import Affiliation
@@ -82,32 +83,23 @@ def search_affiliations(
     if query_params.keywords:
         pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
 
+    set_affiliation_filters(pipeline, query_params)
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
+
     pipeline += [
         {
             "$match": {
                 "types.type": {"$in": types},
             }
         },
-        {
-            "$lookup": {
-                "from": "affiliations",
-                "localField": "relations.id",
-                "foreignField": "_id",
-                "as": "relations_data",
-                "pipeline": [{"$project": {"id": "$_id", "external_urls": 1}}],
-            }
-        },
     ]
-    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     affiliations = database["affiliations"].aggregate(pipeline)
 
-    count_pipeline: list[dict[str, Any]] = []
+    count_pipeline: list[dict[str, Any]] = [{"$match": {"types.type": {"$in": types}}}]
     if query_params.keywords:
         count_pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
-    count_pipeline += [
-        {"$match": {"types.type": {"$in": types}}},
-        {"$count": "total_results"},
-    ]
+    set_affiliation_filters(count_pipeline, query_params)
+    count_pipeline.append({"$count": "total_results"})
     total_results = next(database["affiliations"].aggregate(count_pipeline), {"total_results": 0})["total_results"]
     return affiliation_generator.get(affiliations), total_results
 
@@ -149,3 +141,106 @@ def get_search_affiliations_available_filters(
 
     available_filters: dict = next(database["affiliations"].aggregate(pipeline), {})
     return available_filters
+
+
+def set_affiliation_filters(pipeline: list, query_params: QueryParams) -> None:
+    """
+    Sets the affiliation filters based on the query parameters.
+    """
+    set_affiliation_states(pipeline, query_params.states)
+    set_affiliation_cities(pipeline, query_params.cities)
+
+
+def set_affiliation_states(pipeline: list, state_filters: str | None) -> None:
+    """
+    Adds a state filter to the affiliation search pipeline.
+
+    The filter accepts comma-separated normalized state values.
+    Database values are mapped to their normalized representation
+    before building the MongoDB query.
+
+    Example:
+        state=Antioquia,Tolima
+
+    Generates:
+        {"$match": {
+            "addresses.state": {
+                "$in": [
+                    "Antioquia",
+                    "Tolima",
+                    "Tolima Department",
+                    ]
+                }
+            }
+        }
+    """
+    if not state_filters:
+        return
+
+    states = []
+
+    for state in state_filters.split(","):
+        state = state.strip()
+
+        if not state:
+            continue
+
+        states.append(state)
+
+        for database_value, normalized_value in AFFILIATION_STATE_MAPPING.items():
+            if normalized_value == state:
+                states.append(database_value)
+
+    if states:
+        pipeline.append(
+            {
+                "$match": {
+                    "addresses.state": {
+                        "$in": states,
+                    }
+                }
+            }
+        )
+
+
+def set_affiliation_cities(pipeline: list, city_filters: str | None) -> None:
+    """
+    Adds a city filter to the affiliation search pipeline.
+
+    The filter accepts comma-separated normalized city values.
+    Database values are mapped to their normalized representation
+    before building the MongoDB query.
+
+    Example:
+        city=Bogotá,Cali
+
+    Generates a query that also matches database variants such as
+    "Bogotá, D.C." and "Santiago de Cali".
+    """
+    if not city_filters:
+        return
+
+    cities = []
+
+    for city in city_filters.split(","):
+        city = city.strip()
+
+        if not city:
+            continue
+
+        cities.append(city)
+
+        for database_value, normalized_value in AFFILIATION_CITY_MAPPING.items():
+            if normalized_value == city:
+                cities.append(database_value)
+
+    if cities:
+        pipeline.append(
+            {
+                "$match": {
+                    "addresses.city": {
+                        "$in": cities,
+                    }
+                }
+            }
+        )
