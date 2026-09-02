@@ -61,7 +61,7 @@ def search_affiliations(affiliation_type: str, query_params: QueryParams) -> dic
             "citations_count",
             "products_count",
             "h_index",
-            "h5_index"
+            "h5_index",
         ]
     }
     affiliations, total_results = affiliation_repository.search_affiliations(

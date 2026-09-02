@@ -179,7 +179,7 @@ class QueryParams(BaseModel):
     publication_time: str | None = None
     sort: str | None = None
     status: str | None = None
-    states: str | None = None 
+    states: str | None = None
     scimago_quartiles: str | None = None
     source_types: str | None = None
     subjects: str | None = None
