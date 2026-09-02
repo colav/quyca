@@ -169,6 +169,7 @@ class QueryParams(BaseModel):
     page: conint(ge=1) | None = None  # type: ignore
     apc_range: str | None = None
     authors_ranking: str | None = None
+    cities: str | None = None
     countries: str | None = None
     groups_ranking: str | None = None
     keywords: str | None = None
@@ -178,6 +179,7 @@ class QueryParams(BaseModel):
     publication_time: str | None = None
     sort: str | None = None
     status: str | None = None
+    states: str | None = None 
     scimago_quartiles: str | None = None
     source_types: str | None = None
     subjects: str | None = None
