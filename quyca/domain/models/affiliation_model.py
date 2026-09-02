@@ -51,7 +51,7 @@ class WorkType(BaseModel):
 
 class Work(BaseModel):
     types: list[WorkType] | None = None
-    scholar_distribution: list[int] | None = Field(default=0)
+    scholar_distribution: list[int] | None = Field(default_factory=list)
     source: list[dict] | None = None
 
 
@@ -81,7 +81,6 @@ class Affiliation(BaseModel):
     name: str | None = None
     logo: str | None = None
     affiliations: list[dict | Relation] | None = None
-    relations_data: list[Relation] | None = None
     h_index: int | None = None
     h5_index: int | None = None
 
