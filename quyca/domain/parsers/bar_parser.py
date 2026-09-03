@@ -1,4 +1,5 @@
 from collections import defaultdict
+from decimal import Decimal
 from typing import Generator
 
 from currency_converter import CurrencyConverter
@@ -96,7 +97,7 @@ def parse_annual_apc_expenses(works: Generator) -> dict:
             continue
         usd_charges = currency_converter.convert(apc_charges, apc_currency, "USD")
         data[work.year_published] += int(usd_charges)
-        total_apc += usd_charges
+        total_apc += Decimal(usd_charges)
     plot = [{"x": year, "y": value} for year, value in data.items()]
     return {
         "plot": sorted(plot, key=lambda x: -x.get("x")),

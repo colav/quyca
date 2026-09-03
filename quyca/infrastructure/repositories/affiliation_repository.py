@@ -284,6 +284,7 @@ def set_affiliation_cities(pipeline: list, city_filters: str | None) -> None:
             }
         )
 
+
 def set_affiliation_groups_ranking(pipeline: list, ranking_filters: str | None) -> None:
     """
     Adds a ranking filter to the affiliation search pipeline.
@@ -297,15 +298,11 @@ def set_affiliation_groups_ranking(pipeline: list, ranking_filters: str | None) 
     if not ranking_filters:
         return
 
-    rankings = [
-        ranking.strip()
-        for ranking in ranking_filters.split(",")
-        if ranking.strip()
-    ]
+    rankings = [ranking.strip() for ranking in ranking_filters.split(",") if ranking.strip()]
 
     if not rankings:
         return
-    
+
     pipeline.append(
         {
             "$match": {
@@ -318,12 +315,8 @@ def set_affiliation_groups_ranking(pipeline: list, ranking_filters: str | None) 
                                     "$arrayElemAt": [
                                         {
                                             "$sortArray": {
-                                                "input": {
-                                                    "$ifNull": ["$ranking", []]
-                                                },
-                                                "sortBy": {
-                                                    "from_date": -1
-                                                },
+                                                "input": {"$ifNull": ["$ranking", []]},
+                                                "sortBy": {"from_date": -1},
                                             }
                                         },
                                         0,
