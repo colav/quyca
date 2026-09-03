@@ -347,7 +347,6 @@ def get_active_authors_by_age_range(affiliation_id: str, query_params: QueryPara
         {"$match": {"affiliations": {"$elemMatch": {"id": affiliation_id, "end_date": -1}}}},
         {"$project": {"_id": 0, "birthday": 1}},
     ]
-    print(pipeline_person)
     return database["person"].aggregate(pipeline_person)
 
 
