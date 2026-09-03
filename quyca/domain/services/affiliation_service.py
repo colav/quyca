@@ -57,6 +57,7 @@ def search_affiliations(affiliation_type: str, query_params: QueryParams) -> dic
             "external_ids",
             "external_urls",
             "relations",
+            "ranking",
             "types",
             "citations_count",
             "products_count",

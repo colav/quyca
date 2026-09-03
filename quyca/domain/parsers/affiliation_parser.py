@@ -35,6 +35,11 @@ def parse_available_affiliation_filters(filters: dict) -> dict:
 
     if cities := filters.get("cities"):
         available_filters["cities"] = parse_affiliation_city_filter(cities)
+    if rankings := filters.get("ranking"):
+        available_filters["ranking"] = parse_affiliation_ranking_filter(rankings)
+
+    if groups_ranking := filters.get("groups_ranking"):
+        available_filters["groups_ranking"] = parse_affiliation_ranking_filter(groups_ranking)
 
     return available_filters
 
@@ -96,3 +101,29 @@ def parse_affiliation_location_filter(
     )
 
     return parsed_locations
+
+
+def parse_affiliation_ranking_filter(
+    rankings: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """
+    Parses affiliation ranking filters into the expected format.
+    """
+    parsed_rankings = []
+
+    for ranking in rankings:
+        value = ranking.get("_id")
+        count = ranking.get("count", 0)
+
+        if not isinstance(value, str) or not value:
+            continue
+
+        parsed_rankings.append(
+            {
+                "count": count,
+                "label": value,
+                "value": value,
+            }
+        )
+
+    return parsed_rankings

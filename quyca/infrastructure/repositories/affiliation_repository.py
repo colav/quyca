@@ -78,21 +78,13 @@ def search_affiliations(
     pipeline_params: dict | None = None,
 ) -> Tuple[Generator, int]:
     types = institutions_list if affiliation_type == "institution" else [affiliation_type]
-    pipeline: list[dict[str, Any]] = []
+    pipeline: list[dict[str, Any]] = [{"$match": {"types.type": {"$in": types}}}]
 
     if query_params.keywords:
         pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
 
     set_affiliation_filters(pipeline, query_params)
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
-
-    pipeline += [
-        {
-            "$match": {
-                "types.type": {"$in": types},
-            }
-        },
-    ]
     affiliations = database["affiliations"].aggregate(pipeline)
 
     count_pipeline: list[dict[str, Any]] = [{"$match": {"types.type": {"$in": types}}}]
@@ -101,6 +93,7 @@ def search_affiliations(
     set_affiliation_filters(count_pipeline, query_params)
     count_pipeline.append({"$count": "total_results"})
     total_results = next(database["affiliations"].aggregate(count_pipeline), {"total_results": 0})["total_results"]
+
     return affiliation_generator.get(affiliations), total_results
 
 
@@ -135,6 +128,51 @@ def get_search_affiliations_available_filters(
                     {"$group": {"_id": "$_id.city", "count": {"$sum": 1}}},
                     {"$sort": {"count": -1}},
                 ],
+                "ranking": [
+                    {"$project": {"ranking": 1}},
+                    {
+                        "$project": {
+                            "latest_ranking": {
+                                "$reduce": {
+                                    "input": {"$ifNull": ["$ranking", []]},
+                                    "initialValue": None,
+                                    "in": {
+                                        "$cond": [
+                                            {
+                                                "$or": [
+                                                    {"$eq": ["$$value", None]},
+                                                    {
+                                                        "$gt": [
+                                                            "$$this.from_date",
+                                                            "$$value.from_date",
+                                                        ]
+                                                    },
+                                                ]
+                                            },
+                                            "$$this",
+                                            "$$value",
+                                        ]
+                                    },
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "$match": {
+                            "latest_ranking.rank": {
+                                "$exists": True,
+                                "$nin": [None, ""],
+                            }
+                        }
+                    },
+                    {
+                        "$group": {
+                            "_id": "$latest_ranking.rank",
+                            "count": {"$sum": 1},
+                        }
+                    },
+                    {"$sort": {"count": -1}},
+                ],
             }
         },
     ]
@@ -149,6 +187,7 @@ def set_affiliation_filters(pipeline: list, query_params: QueryParams) -> None:
     """
     set_affiliation_states(pipeline, query_params.states)
     set_affiliation_cities(pipeline, query_params.cities)
+    set_affiliation_groups_ranking(pipeline, query_params.groups_ranking)
 
 
 def set_affiliation_states(pipeline: list, state_filters: str | None) -> None:
@@ -244,3 +283,57 @@ def set_affiliation_cities(pipeline: list, city_filters: str | None) -> None:
                 }
             }
         )
+
+def set_affiliation_groups_ranking(pipeline: list, ranking_filters: str | None) -> None:
+    """
+    Adds a ranking filter to the affiliation search pipeline.
+
+    The filter matches the most recent ranking by `from_date`,
+    regardless of the ranking source.
+
+    Example:
+        groups_ranking=A1,A2
+    """
+    if not ranking_filters:
+        return
+
+    rankings = [
+        ranking.strip()
+        for ranking in ranking_filters.split(",")
+        if ranking.strip()
+    ]
+
+    if not rankings:
+        return
+    
+    pipeline.append(
+        {
+            "$match": {
+                "$expr": {
+                    "$in": [
+                        {
+                            "$getField": {
+                                "field": "rank",
+                                "input": {
+                                    "$arrayElemAt": [
+                                        {
+                                            "$sortArray": {
+                                                "input": {
+                                                    "$ifNull": ["$ranking", []]
+                                                },
+                                                "sortBy": {
+                                                    "from_date": -1
+                                                },
+                                            }
+                                        },
+                                        0,
+                                    ]
+                                },
+                            }
+                        },
+                        rankings,
+                    ]
+                }
+            }
+        }
+    )
