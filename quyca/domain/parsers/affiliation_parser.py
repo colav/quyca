@@ -35,11 +35,9 @@ def parse_available_affiliation_filters(filters: dict) -> dict:
 
     if cities := filters.get("cities"):
         available_filters["cities"] = parse_affiliation_city_filter(cities)
-    if rankings := filters.get("ranking"):
-        available_filters["ranking"] = parse_affiliation_ranking_filter(rankings)
 
-    if groups_ranking := filters.get("groups_ranking"):
-        available_filters["groups_ranking"] = parse_affiliation_ranking_filter(groups_ranking)
+    if rankings := filters.get("groups_ranking"):
+        available_filters["groups_ranking"] = parse_affiliation_ranking_filter(rankings)
 
     return available_filters
 
