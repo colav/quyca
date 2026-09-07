@@ -105,9 +105,9 @@ def set_csv_citations_count(work: Work) -> None:
 
     for citation_count in work.citations_count:
         if citation_count.source == "openalex":
-            work.openalex_citations_count = str(citation_count.count or 0)
+            work.openalex_citations_count = citation_count.count or 0
         elif citation_count.source == "scholar":
-            work.scholar_citations_count = str(citation_count.count or 0)
+            work.scholar_citations_count = citation_count.count or 0
 
 
 def set_csv_bibliographic_info(work: Work) -> None:
@@ -120,11 +120,12 @@ def set_csv_bibliographic_info(work: Work) -> None:
     else:
         work.bibtex = ""
 
-    work.pages = getattr(biblio_info, "pages", None)
-    work.issue = getattr(biblio_info, "issue", "") or ""
-    work.start_page = getattr(biblio_info, "start_page", None)
-    work.end_page = getattr(biblio_info, "end_page", None)
-    work.volume = getattr(biblio_info, "volume", None)
+
+    work.pages = parse_integer(getattr(biblio_info, "pages", None))
+    work.issue = parse_integer(getattr(biblio_info, "issue", "") or "")
+    work.start_page = parse_integer(getattr(biblio_info, "start_page", None))
+    work.end_page = parse_integer(getattr(biblio_info, "end_page", None))
+    work.volume = parse_integer(getattr(biblio_info, "volume", None))
 
 
 def set_csv_authors(work: Work) -> None:
@@ -189,3 +190,19 @@ def sanitize_excel_value(value: Any) -> Any:
 
     # Elimina caracteres de control que Excel/openpyxl no soporta.
     return ILLEGAL_CHARACTERS_RE.sub("", value)
+
+
+def parse_integer(value: Any) -> int | None:
+    if value is None or value == "":
+        return None
+
+    if isinstance(value, int):
+        return value
+
+    if isinstance(value, str):
+        value = value.strip()
+
+        if value.isdigit():
+            return int(value)
+
+    return None
