@@ -1,7 +1,7 @@
 import json
 from typing import Tuple
 
-from flask import Blueprint, request, Response, jsonify
+from flask import Blueprint, request, Response, jsonify, stream_with_context
 from sentry_sdk import capture_exception
 
 from quyca.domain.models.base_model import QueryParams
@@ -129,9 +129,44 @@ def get_affiliation_research_products_filters(
 def get_works_csv_by_affiliation(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        data = csv_service.get_works_csv_by_affiliation(affiliation_id, query_params)
-        response = Response(data, content_type="text/csv")
-        response.headers["Content-Disposition"] = "attachment; filename=affiliation.csv"
+        data = csv_service.get_works_csv_by_affiliation(affiliation_id, affiliation_type, query_params)
+        response = Response(stream_with_context(data), content_type="text/csv; charset=utf-8")
+        response.headers["Content-Disposition"] = "attachment; filename=affiliations.csv"
+        return response
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"error": str(e)}), 400
+
+
+""" 
+@api {get} /app/affiliations/:affiliation_type/:affiliation_id/research/products/excel Get works excel by affiliation
+@apiName GetAffiliationResearchProductsExcel
+@apiGroup Affiliation
+@apiVersion 1.0.0
+@apiDescription Obtiene los productos bibliográficos de una afiliación en formato Excel.
+"""
+
+
+@affiliation_app_router.route(
+    "/<affiliation_type>/<affiliation_id>/research/products/excel",
+    methods=["GET"],
+)
+def get_works_excel_by_affiliation(
+    affiliation_type: str,
+    affiliation_id: str,
+) -> Response | Tuple[Response, int]:
+    try:
+        query_params = QueryParams(**request.args)
+        data = csv_service.get_works_excel_by_affiliation(
+            affiliation_id,
+            affiliation_type,
+            query_params,
+        )
+        response = Response(
+            data.getvalue(),
+            content_type=("application/vnd.openxmlformats-officedocument." "spreadsheetml.sheet"),
+        )
+        response.headers["Content-Disposition"] = "attachment; filename=affiliations.xlsx"
         return response
     except Exception as e:
         capture_exception(e)
