@@ -40,7 +40,7 @@ def search_geolocations(query_params: QueryParams, location_type: str) -> tuple[
         }
     )
 
-    result = next(
+    result: dict[str, Any] = next(
         database["affiliations"].aggregate(pipeline),
         {"data": [], "metadata": []},
     )

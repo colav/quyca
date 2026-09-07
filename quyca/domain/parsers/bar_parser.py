@@ -85,20 +85,33 @@ def parse_annual_articles_by_top_publishers(works: Generator) -> dict:
 
 def parse_annual_apc_expenses(works: Generator) -> dict:
     data: defaultdict = defaultdict(int)
-    total_apc = 0
+
+    total_apc = Decimal(0)
     total_results = 0
+
     currency_converter = CurrencyConverter()
+
     for work in works:
         total_results += 1
+
         source_apc = getattr(work.source, "apc", None)
         apc_charges = getattr(source_apc, "charges", None)
         apc_currency = getattr(source_apc, "currency", None)
+
         if not apc_charges or not apc_currency or apc_currency not in available_currencies:
             continue
-        usd_charges = currency_converter.convert(apc_charges, apc_currency, "USD")
+
+        usd_charges = currency_converter.convert(
+            apc_charges,
+            apc_currency,
+            "USD",
+        )
+
         data[work.year_published] += int(usd_charges)
         total_apc += Decimal(usd_charges)
+
     plot = [{"x": year, "y": value} for year, value in data.items()]
+
     return {
         "plot": sorted(plot, key=lambda x: -x.get("x")),
         "total_apc": int(total_apc),
