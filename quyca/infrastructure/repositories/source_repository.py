@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Any, Generator, Tuple
 from bson import ObjectId
 
@@ -264,25 +265,45 @@ def set_source_types(pipeline: list, type_filters: str | None) -> None:
 
 def set_scimago_quartiles(pipeline: list, quartile_filters: str | None) -> None:
     """
-    Filters sources by their current Scimago Best Quartile ranking.
-    If a source has had Q1 in its history and currently has Q3, it will be returned
-    only for Q1 filter (based on best historical quartile, not current).
+    Filters sources by their CURRENT Scimago Best Quartile ranking.
 
-    E.g {"$match": {"ranking": {"$elemMatch": {"source": {"$in": ["scimago Best Quartile", "Scimago Best Quartile"]}, "rank": {"$in": ["Q1", "Q2"]}}}}}
+    Only ranking entries with source == "scimago Best Quartile" are considered,
+    and the current timestamp must be within the ranking validity period.
+
+    Example:
+        quartile_filters = "Q1,Q2"
+
+    Matches documents whose current Scimago Best Quartile rank
+    is either Q1 or Q2.
     """
     if not quartile_filters:
         return
 
-    quartiles = []
-    for quartile in quartile_filters.split(","):
-        quartile = quartile.strip()
-        if quartile in ["Q1", "Q2", "Q3", "Q4", "-"]:
-            quartiles.append(quartile)
+    quartiles = [
+        quartile.strip()
+        for quartile in quartile_filters.split(",")
+        if quartile.strip() in {"Q1", "Q2", "Q3", "Q4", "-"}
+    ]
 
     if not quartiles:
         return
 
-    pipeline.append({"$match": {"scimago_best_quartile": {"$in": quartiles}}})
+    current_timestamp = int(datetime.now(timezone.utc).timestamp())
+
+    pipeline.append(
+        {
+            "$match": {
+                "ranking": {
+                    "$elemMatch": {
+                        "source": "scimago Best Quartile",
+                        "rank": {"$in": quartiles},
+                        "from_date": {"$lte": current_timestamp},
+                        "to_date": {"$gte": current_timestamp},
+                    }
+                }
+            }
+        }
+    )
 
 
 def set_apc_range(pipeline: list, apc_range: str | None) -> None:
