@@ -5,6 +5,7 @@ from sentry_sdk import capture_exception
 
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.services import (
+    geo_service,
     work_service,
     person_service,
     affiliation_service,
@@ -210,6 +211,27 @@ def get_search_sources_filters() -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
         data = source_service.get_search_sources_available_filters(query_params)
+        return jsonify(data), 200
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"error": str(e)}), 400
+
+
+""" 
+@api {get} /app/search/geo/<location_type> Search sources by location
+@apiName SearchSourcesByLocation
+@apiGroup Search
+@apiVersion 1.0.0
+
+@apiDescription Búsqueda de ubicación geográfica por tipo de ubicación (ej. "state", "city").
+"""
+
+
+@search_app_router.route("/geo/<location_type>", methods=["GET"])
+def search_geolocation(location_type: str) -> Response | Tuple[Response, int]:
+    try:
+        query_params = QueryParams(**request.args)
+        data = geo_service.search_geolocation(query_params, location_type)
         return jsonify(data), 200
     except Exception as e:
         capture_exception(e)
