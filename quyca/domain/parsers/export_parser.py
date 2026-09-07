@@ -120,7 +120,6 @@ def set_csv_bibliographic_info(work: Work) -> None:
     else:
         work.bibtex = ""
 
-
     work.pages = parse_integer(getattr(biblio_info, "pages", None))
     work.issue = parse_integer(getattr(biblio_info, "issue", "") or "")
     work.start_page = parse_integer(getattr(biblio_info, "start_page", None))

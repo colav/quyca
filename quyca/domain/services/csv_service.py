@@ -9,31 +9,79 @@ from quyca.domain.parsers import work_parser
 def get_works_csv_by_affiliation(
     affiliation_id: str, affiliation_type: str, query_params: QueryParams
 ) -> Generator[str, None, None]:
+    """
+    Orchestrate the complete CSV generation process for works associated with a specific affiliation.
+
+    Parameters
+    ----------
+    - affiliation_id: Unique identifier of the affiliation
+    - affiliation_type: Type of the affiliation (e.g., "institution", "department", "faculty", "group")
+    - query_params: Query parameters for filtering and pagination
+
+    Returns
+    -------
+        Generator: Complete CSV file content as string, ready for HTTP response
+    """
     pipeline_params = get_works_project_pipeline_params()
     works = csv_repository.get_works_by_affiliation(affiliation_id, affiliation_type, query_params, pipeline_params)
     return work_parser.parse_csv(works)
 
 
 def get_works_excel_by_affiliation(affiliation_id: str, affiliation_type: str, query_params: QueryParams) -> BytesIO:
-    pipeline_params = get_works_project_pipeline_params()
+    """
+    Orchestrate the complete Excel generation process for works associated with a specific affiliation.
 
+    Parameters
+    ----------
+    - affiliation_id: Unique identifier of the affiliation
+    - affiliation_type: Type of the affiliation (e.g., "institution", "department", "faculty", "group")
+    - query_params: Query parameters for filtering and pagination
+
+    Returns
+    -------
+        BytesIO: Complete Excel file as bytes, ready for HTTP response
+    """
+    pipeline_params = get_works_project_pipeline_params()
     works = csv_repository.get_works_by_affiliation(
         affiliation_id,
         affiliation_type,
         query_params,
         pipeline_params,
     )
-
     return work_parser.parse_excel(works)
 
 
 def get_works_csv_by_person(person_id: str, query_params: QueryParams) -> Generator[str, None, None]:
+    """
+    Orchestrate the complete CSV generation process for works associated with a specific person.
+
+    Parameters
+    ----------
+    - person_id: Unique identifier of the author
+    - query_params: Query parameters for filtering and pagination
+
+    Returns
+    -------
+        Generator: Complete CSV file content as string, ready for HTTP response
+    """
     pipeline_params = get_works_project_pipeline_params()
     works = csv_repository.get_works_csv_by_person(person_id, query_params, pipeline_params)
     return work_parser.parse_csv(works)
 
 
 def get_works_excel_by_person(person_id: str, query_params: QueryParams) -> BytesIO:
+    """
+    Orchestrate the complete Excel generation process for works associated with a specific person.
+
+    Parameters
+    ----------
+    - person_id: Unique identifier of the author
+    - query_params: Query parameters for filtering and pagination
+
+    Returns
+    -------
+        BytesIO: Complete Excel file as bytes, ready for HTTP response
+    """
     pipeline_params = get_works_project_pipeline_params()
     works = csv_repository.get_works_csv_by_person(person_id, query_params, pipeline_params)
     return work_parser.parse_excel(works)
@@ -56,7 +104,7 @@ def get_works_csv_by_source(source_id: str, query_params: QueryParams) -> Genera
 
     Returns
     -------
-        str: Complete CSV file content as string, ready for HTTP response
+        Generator: Complete CSV file content as string, ready for HTTP response
     """
     pipeline_params = get_works_project_pipeline_params()
     works = csv_repository.get_works_csv_by_source(source_id, query_params, pipeline_params)

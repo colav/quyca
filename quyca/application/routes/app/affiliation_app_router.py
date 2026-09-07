@@ -151,10 +151,7 @@ def get_works_csv_by_affiliation(affiliation_type: str, affiliation_id: str) -> 
     "/<affiliation_type>/<affiliation_id>/research/products/excel",
     methods=["GET"],
 )
-def get_works_excel_by_affiliation(
-    affiliation_type: str,
-    affiliation_id: str,
-) -> Response | Tuple[Response, int]:
+def get_works_excel_by_affiliation(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
         data = csv_service.get_works_excel_by_affiliation(

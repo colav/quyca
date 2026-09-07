@@ -120,7 +120,7 @@ class Work(BaseModel):
     departments: str | None = None
     faculties: str | None = None
     groups_ranking: str | None = None
-    pages: str | int |None = None
+    pages: str | int | None = None
     start_page: str | int | None = None
     end_page: str | int | None = None
     bibtex: str | None = None
