@@ -451,12 +451,12 @@ def get_works_csv_by_source(source_id: str) -> Response | Tuple[Response, int]:
 @apiVersion 1.0.0
 @apiDescription Obtiene los productos bibliográficos de una fuente en formato Excel.
 
-@apiParam {String} source_id ID de la afiliación.
+@apiParam {String} source_id ID de la fuente.
 
 @apiSuccessExample {excel} Success-Response:
 HTTP/1.1 200 OK
-Content-Type: text/excel
-Content-Disposition: attachment; filename=source.excel
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+Content-Disposition: attachment; filename=source_works.xlsx
 """
 
 
