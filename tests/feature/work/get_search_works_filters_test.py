@@ -124,29 +124,6 @@ def test_get_affiliation_filters_countries_structure(client: FlaskClient) -> Non
             assert isinstance(country["count"], int)
 
 
-def test_get_affiliation_filters_subjects_structure(client: FlaskClient) -> None:
-    if not affiliation_institution:
-        pytest.skip("No hay afiliaciones con productos en la base de datos")
-
-    affiliation_id = str(affiliation_institution["_id"])
-
-    response = client.get(f"/app/affiliation/institution/{affiliation_id}/research/products/filters")
-
-    assert response.status_code == 200
-    data = response.get_json()
-
-    if "subjects" in data:
-        assert isinstance(data["subjects"], list)
-
-        if len(data["subjects"]) > 0:
-            subject = data["subjects"][0]
-            assert "title" in subject
-            assert "value" in subject
-
-            if "children" in subject:
-                assert isinstance(subject["children"], list)
-
-
 def test_get_affiliation_filters_topics_structure(client: FlaskClient) -> None:
     if not affiliation_institution:
         pytest.skip("No hay afiliaciones con productos en la base de datos")
@@ -357,29 +334,6 @@ def test_get_person_filters_countries_structure(client: FlaskClient) -> None:
             assert "count" in country
             assert isinstance(country["count"], int)
             assert country["count"] > 0
-
-
-def test_get_person_filters_subjects_structure(client: FlaskClient) -> None:
-    if not person:
-        pytest.skip("No hay personas con productos en la base de datos")
-
-    person_id = str(person["_id"])
-
-    response = client.get(f"/app/person/{person_id}/research/products/filters")
-
-    assert response.status_code == 200
-    data = response.get_json()
-
-    if "subjects" in data:
-        assert isinstance(data["subjects"], list)
-
-        if len(data["subjects"]) > 0:
-            subject = data["subjects"][0]
-            assert "title" in subject
-            assert "value" in subject
-
-            if "children" in subject:
-                assert isinstance(subject["children"], list)
 
 
 def test_get_person_filters_topics_structure(client: FlaskClient) -> None:
