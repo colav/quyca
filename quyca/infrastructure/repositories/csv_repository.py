@@ -7,6 +7,7 @@ from quyca.domain.models.base_model import QueryParams
 from quyca.infrastructure.generators import work_generator
 from quyca.infrastructure.mongo import database
 from quyca.infrastructure.repositories import base_repository, work_repository
+from quyca.domain.constants.institutions import institutions_list
 
 
 def get_works_csv_by_person(person_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:
@@ -14,20 +15,38 @@ def get_works_csv_by_person(person_id: str, query_params: QueryParams, pipeline_
         {"$match": {"authors.id": person_id}},
     ]
     work_repository.set_authors_filter_if_large(pipeline)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
     work_repository.set_product_filters(pipeline, query_params)
-    cursor = database["works"].aggregate(pipeline)
+    base_repository.set_project(pipeline, pipeline_params.get("$project"))
+    cursor = database["works"].aggregate(
+        pipeline,
+        batchSize=500,
+    )
     return work_generator.get(cursor)
 
 
-def get_works_csv_by_affiliation(affiliation_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:
+def get_works_by_affiliation(
+    affiliation_id: str, affiliation_type: str, query_params: QueryParams, pipeline_params: dict
+) -> Generator:
+    types = institutions_list if affiliation_type == "institution" else [affiliation_type]
     pipeline: List[Dict[str, Any]] = [
-        {"$match": {"authors.affiliations.id": affiliation_id}},
+        {
+            "$match": {
+                "authors.affiliations": {
+                    "$elemMatch": {
+                        "id": affiliation_id,
+                        "types": {"$elemMatch": {"type": {"$in": types}}},
+                    }
+                }
+            }
+        },
     ]
     work_repository.set_authors_filter_if_large(pipeline)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
     work_repository.set_product_filters(pipeline, query_params)
-    cursor = database["works"].aggregate(pipeline)
+    base_repository.set_project(pipeline, pipeline_params.get("$project"))
+    cursor = database["works"].aggregate(
+        pipeline,
+        batchSize=500,
+    )
     return work_generator.get(cursor)
 
 
@@ -60,7 +79,10 @@ def get_works_csv_by_source(source_id: str, query_params: QueryParams, pipeline_
         {"$match": {"source.id": ObjectId(source_id)}},
     ]
     work_repository.set_authors_filter_if_large(pipeline)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
     work_repository.set_product_filters(pipeline, query_params)
-    cursor = database["works"].aggregate(pipeline)
+    base_repository.set_project(pipeline, pipeline_params.get("$project"))
+    cursor = database["works"].aggregate(
+        pipeline,
+        batchSize=500,
+    )
     return work_generator.get(cursor)

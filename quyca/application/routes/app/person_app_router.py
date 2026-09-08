@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from flask import Blueprint, request, Response, jsonify
+from flask import Blueprint, request, Response, jsonify, stream_with_context
 from sentry_sdk import capture_exception
 
 from quyca.domain.models.base_model import QueryParams
@@ -100,8 +100,35 @@ def get_works_csv_by_person(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
         data = csv_service.get_works_csv_by_person(person_id, query_params)
-        response = Response(data, content_type="text/csv")
-        response.headers["Content-Disposition"] = "attachment; filename=affiliation.csv"
+        response = Response(stream_with_context(data), content_type="text/csv")
+        response.headers["Content-Disposition"] = "attachment; filename=person_works.csv"
+        return response
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"error": str(e)}), 400
+
+
+"""
+@api {get} /app/person/:person_id/research/products/excel Get person research products excel
+@apiName GetPersonResearchProductsExcel
+@apiGroup Person
+@apiVersion 1.0.0
+@apiDescription Obtiene los productos bibliográficos de un autor en formato EXCEL.
+
+@apiParam {String} person_id ID del autor.
+"""
+
+
+@person_app_router.route("/<person_id>/research/products/excel", methods=["GET"])
+def get_works_excel_by_person(person_id: str) -> Response | Tuple[Response, int]:
+    try:
+        query_params = QueryParams(**request.args)
+        data = csv_service.get_works_excel_by_person(person_id, query_params)
+        response = Response(
+            data.getvalue(),
+            content_type=("application/vnd.openxmlformats-officedocument." "spreadsheetml.sheet"),
+        )
+        response.headers["Content-Disposition"] = "attachment; filename=person_works.xlsx"
         return response
     except Exception as e:
         capture_exception(e)

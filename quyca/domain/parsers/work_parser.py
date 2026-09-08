@@ -1,54 +1,95 @@
 import csv
-import io
-from typing import Any
+from io import BytesIO, StringIO
+from openpyxl import Workbook
+from typing import Any, Generator
 
 from quyca.domain.constants import countries_iso
 from quyca.domain.constants.open_access_status import open_access_status_dict
 from quyca.domain.constants.product_types import source_titles
 from quyca.domain.models.work_model import Work
+from quyca.domain.parsers import export_parser
 
 
-def parse_csv(works: list) -> str:
-    include = [
-        "title",
-        "language",
-        "authors_csv",
-        "institutions",
-        "faculties",
-        "departments",
-        "groups_csv",
-        "countries",
-        "groups_ranking",
-        "ranking",
-        "issue",
-        "open_access_status",
-        "pages",
-        "start_page",
-        "end_page",
-        "volume",
-        "bibtex",
-        "scimago_quartile",
-        "openalex_citations_count",
-        "scholar_citations_count",
-        "subjects",
-        "primary_topic_csv",
-        "year_published",
-        "doi",
-        "publisher",
-        "openalex_types",
-        "scienti_types",
-        "impactu_types",
-        "source_name",
-        "source_apc",
-        "source_urls",
-    ]
-    works_dict = [work.model_dump(include=include) for work in works]
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=include, escapechar="\\", quoting=csv.QUOTE_MINIMAL)
+EXPORT_COLUMNS = [
+    "title",
+    "language",
+    "authors_csv",
+    "institutions",
+    "faculties",
+    "departments",
+    "groups_csv",
+    "countries",
+    "groups_ranking",
+    "ranking",
+    "issue",
+    "open_access_status",
+    "pages",
+    "start_page",
+    "end_page",
+    "volume",
+    "bibtex",
+    "scimago_quartile",
+    "openalex_citations_count",
+    "scholar_citations_count",
+    "subjects",
+    "primary_topic_csv",
+    "year_published",
+    "doi",
+    "publisher",
+    "openalex_types",
+    "scienti_types",
+    "impactu_types",
+    "source_name",
+    "source_apc",
+    "source_urls",
+]
+
+
+def parse_csv(works: Generator) -> Generator[str, None, None]:
+    output = StringIO(newline="")
+    writer = csv.DictWriter(
+        output,
+        fieldnames=EXPORT_COLUMNS,
+        escapechar="\\",
+        quoting=csv.QUOTE_MINIMAL,
+    )
+    SET_EXPORT_COLUMNS = set(EXPORT_COLUMNS)
     writer.writeheader()
-    writer.writerows(works_dict)
-    del works_dict
-    return output.getvalue()
+    yield output.getvalue()
+
+    output.seek(0)
+    output.truncate(0)
+
+    for work in works:
+        export_parser.prepare_work_for_export(work)
+
+        writer.writerow(work.model_dump(include=SET_EXPORT_COLUMNS))
+
+        yield output.getvalue()
+
+        output.seek(0)
+        output.truncate(0)
+
+
+def parse_excel(works: Generator) -> BytesIO:
+    output = BytesIO()
+
+    workbook = Workbook(write_only=True)
+    worksheet = workbook.create_sheet("Works")
+
+    worksheet.append(EXPORT_COLUMNS)
+
+    for work in works:
+        export_parser.prepare_work_for_export(work)
+
+        row = [export_parser.sanitize_excel_value(getattr(work, column, None)) for column in EXPORT_COLUMNS]
+
+        worksheet.append(row)
+
+    workbook.save(output)
+    output.seek(0)
+
+    return output
 
 
 def parse_search_results(works: list) -> list:

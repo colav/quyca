@@ -442,3 +442,35 @@ def get_works_csv_by_source(source_id: str) -> Response | Tuple[Response, int]:
     except Exception as e:
         capture_exception(e)
         return jsonify({"error": str(e)}), 400
+
+
+"""
+@api {get} /app/source/:source_id/products/excel Get works excel by Source
+@apiName GetSourceProductsExcel
+@apiGroup Source
+@apiVersion 1.0.0
+@apiDescription Obtiene los productos bibliográficos de una fuente en formato Excel.
+
+@apiParam {String} source_id ID de la fuente.
+
+@apiSuccessExample {excel} Success-Response:
+HTTP/1.1 200 OK
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+Content-Disposition: attachment; filename=source_works.xlsx
+"""
+
+
+@source_app_router.route("/<source_id>/products/excel", methods=["GET"])
+def get_works_excel_by_source(source_id: str) -> Response | Tuple[Response, int]:
+    try:
+        query_params = QueryParams(**request.args)
+        data = csv_service.get_works_excel_by_source(source_id, query_params)
+        response = Response(
+            data.getvalue(),
+            content_type=("application/vnd.openxmlformats-officedocument." "spreadsheetml.sheet"),
+        )
+        response.headers["Content-Disposition"] = "attachment; filename=source_works.xlsx"
+        return response
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"error": str(e)}), 400
