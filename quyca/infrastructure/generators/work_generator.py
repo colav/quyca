@@ -10,5 +10,5 @@ def get(cursor: CommandCursor) -> Generator:
         try:
             yield Work(**document)
         except Exception as e:
-            print("VALIDATION ERROR:", e)
+            print("Validation error while parsing Work document _id=%s", e)
             raise
