@@ -642,29 +642,30 @@ def get_products_by_database_by_person(person_id: str, query_params: QueryParams
     work_repository.set_product_filters(pipeline, query_params)
 
     pipeline.extend(
-            [
-                {
-                    "$project": {
-                        "sources": {
-                            "$setIntersection": [
-                                "$updated.source",
-                                ["minciencias", "openalex", "scholar", "scienti"],
-                            ]
-                        }
+        [
+            {
+                "$project": {
+                    "sources": {
+                        "$setIntersection": [
+                            "$updated.source",
+                            ["minciencias", "openalex", "scholar", "scienti"],
+                        ]
                     }
-                },
-                {
-                    "$group": {
-                        "_id": "$sources",
-                        "count": {"$sum": 1},
-                    }
-                },
-            ]
-        )
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$sources",
+                    "count": {"$sum": 1},
+                }
+            },
+        ]
+    )
 
     results = list(database["works"].aggregate(pipeline))
 
     return results
+
 
 def pipeline_to_filter_for_affiliation(pipeline: list[dict[str, Any]], sources: list[str]) -> dict[str, Any]:
     filters: list[dict[str, Any]] = []

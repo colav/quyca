@@ -10,14 +10,7 @@ VENN_SOURCES = (
 
 
 def parse_products_by_database(data: list[dict]) -> dict:
-    counts = {
-        "_".join(
-            source
-            for source in VENN_SOURCES
-            if source in item["_id"]
-        ): item["count"]
-        for item in data
-    }
+    counts = {"_".join(source for source in VENN_SOURCES if source in item["_id"]): item["count"] for item in data}
 
     venn_source = {
         "_".join(combination): counts.get("_".join(combination), 0)
