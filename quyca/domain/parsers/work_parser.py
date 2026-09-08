@@ -161,8 +161,6 @@ def parse_available_filters(filters: dict) -> dict:
         available_filters["years"] = years
     if status := filters.get("status"):
         available_filters["status"] = parse_status_filter(status)
-    if subjects := filters.get("subjects"):
-        available_filters["subjects"] = parse_subject_filter(subjects)
     if topics := filters.get("topics"):
         available_filters["topics"] = parse_topic_filter(topics)
     if countries := filters.get("countries"):
@@ -179,15 +177,28 @@ def parse_authors_ranking_filter(authors_ranking: list) -> list:
 
     for ranking in authors_ranking:
         _id = ranking.get("_id")
+        count = ranking.get("count", 0)
 
         if isinstance(_id, dict):
             label = (_id.get("rank") or "").strip()
             if label:
-                parsed_authors_ranking.append({"value": label, "label": label})
+                parsed_authors_ranking.append(
+                    {
+                        "value": label,
+                        "label": label,
+                        "count": count,
+                    }
+                )
         elif _id:
             label = str(_id).strip()
             if label:
-                parsed_authors_ranking.append({"value": label, "label": label})
+                parsed_authors_ranking.append(
+                    {
+                        "value": label,
+                        "label": label,
+                        "count": count,
+                    }
+                )
 
     parsed_authors_ranking.sort(key=lambda x: x.get("label") or "")
     return parsed_authors_ranking
@@ -195,9 +206,17 @@ def parse_authors_ranking_filter(authors_ranking: list) -> list:
 
 def parse_groups_ranking_filter(groups_ranking: list) -> list:
     parsed_groups_ranking = []
+
     for ranking in groups_ranking:
         if ranking.get("_id"):
-            parsed_groups_ranking.append({"value": ranking.get("_id") or "", "label": ranking.get("_id") or ""})
+            parsed_groups_ranking.append(
+                {
+                    "value": ranking.get("_id") or "",
+                    "label": ranking.get("_id") or "",
+                    "count": ranking.get("count", 0),
+                }
+            )
+
     parsed_groups_ranking.sort(key=lambda x: x.get("label") or "")
     return parsed_groups_ranking
 
@@ -229,30 +248,6 @@ def parse_country_filter(countries: list) -> list:
 
     parsed_countries.sort(key=lambda x: x.get("count", 0), reverse=True)
     return parsed_countries
-
-
-def parse_subject_filter(subjects: list) -> list:
-    groups: dict[int, dict[str, Any]] = {
-        0: {"value": "0", "title": "Gran área de conocimiento", "children": []},
-        1: {"value": "1", "title": "Áreas de especialidad", "children": []},
-    }
-
-    for entry in subjects:
-        for subject in entry.get("subjects", []):
-            level = subject.get("level")
-            name = subject.get("name")
-            count = subject.get("count", 0)
-
-            if level in groups and name:
-                groups[level]["children"].append({"value": f"{level}_{name}", "title": name, "count": count})
-
-    parsed_subjects = []
-    for level, group in groups.items():
-        if group["children"]:
-            group["children"].sort(key=lambda x: x.get("count", 0), reverse=True)
-            parsed_subjects.append(group)
-
-    return parsed_subjects
 
 
 def parse_status_filter(status: list) -> list:

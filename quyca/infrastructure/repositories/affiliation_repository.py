@@ -119,7 +119,6 @@ def get_search_affiliations_available_filters(
                     {"$match": {"addresses.state": {"$exists": True, "$ne": ""}}},
                     {"$group": {"_id": {"affiliation_id": "$_id", "state": "$addresses.state"}}},
                     {"$group": {"_id": "$_id.state", "count": {"$sum": 1}}},
-                    {"$sort": {"count": -1}},
                 ],
                 "cities": [
                     {"$project": {"_id": 1, "addresses.city": 1}},
@@ -128,7 +127,6 @@ def get_search_affiliations_available_filters(
                     {"$match": {"addresses.city": {"$exists": True, "$ne": ""}}},
                     {"$group": {"_id": {"affiliation_id": "$_id", "city": "$addresses.city"}}},
                     {"$group": {"_id": "$_id.city", "count": {"$sum": 1}}},
-                    {"$sort": {"count": -1}},
                 ],
                 "groups_ranking": [
                     {"$project": {"ranking": 1}},
@@ -173,7 +171,6 @@ def get_search_affiliations_available_filters(
                             "count": {"$sum": 1},
                         }
                     },
-                    {"$sort": {"count": -1}},
                 ],
             }
         },
