@@ -455,37 +455,44 @@ def get_coauthorship_by_country_map_by_person(person_id: str, query_params: Quer
 
 
 def get_coauthorship_by_colombian_department_map_by_affiliation(affiliation_id: str, query_params: QueryParams) -> list:
-    data = []
     pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.affiliations.id": affiliation_id}},
     ]
     work_repository.set_product_filters(pipeline, query_params)
-    pipeline += [
-        {"$unwind": "$authors"},
-        {"$group": {"_id": "$authors.affiliations.id", "count": {"$sum": 1}}},
-        {"$unwind": "$_id"},
-        {
-            "$lookup": {
-                "from": "affiliations",
-                "localField": "_id",
-                "foreignField": "_id",
-                "as": "affiliation",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "addresses.country_code": 1,
-                            "addresses.city": 1,
-                        }
-                    }
-                ],
-            }
-        },
-        {"$unwind": "$affiliation"},
-        {"$unwind": "$affiliation.addresses"},
-    ]
-    for work in database["works"].aggregate(pipeline):
-        data.append(work)
-    return data
+    pipeline.extend(
+        [
+            {
+                "$project": {
+                    "authors.affiliations.id": 1,
+                    "authors.affiliations.addresses.country_code": 1,
+                    "authors.affiliations.addresses.city": 1,
+                }
+            },
+            {
+                "$match": {
+                    "authors.affiliations.addresses.country_code": "CO",
+                }
+            },
+            {"$unwind": "$authors"},
+            {"$unwind": "$authors.affiliations"},
+            {
+                "$match": {
+                    "authors.affiliations.addresses.country_code": "CO",
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$authors.affiliations.id",
+                    "count": {"$sum": 1},
+                    "addresses": {
+                        "$addToSet": "$authors.affiliations.addresses",
+                    },
+                }
+            },
+        ]
+    )
+
+    return list(database["works"].aggregate(pipeline))
 
 
 def get_coauthorship_by_colombian_department_map_by_person(person_id: str, query_params: QueryParams) -> list:
@@ -598,61 +605,66 @@ def get_annual_scimago_quartile_by_source(source_id: str) -> CommandCursor:
     return database["sources"].aggregate(pipeline)
 
 
-def get_products_by_database_by_affiliation(affiliation_id: str, query_params: QueryParams) -> dict:
+def get_products_by_database_by_affiliation(affiliation_id: str, query_params: QueryParams) -> list:
     pipeline: list[dict[str, Any]] = [{"$match": {"authors.affiliations.id": affiliation_id}}]
 
     work_repository.set_product_filters(pipeline, query_params)
 
-    return {
-        "minciencias": count_sources_affiliation(pipeline, ["minciencias"]),
-        "openalex": count_sources_affiliation(pipeline, ["openalex"]),
-        "scholar": count_sources_affiliation(pipeline, ["scholar"]),
-        "scienti": count_sources_affiliation(pipeline, ["scienti"]),
-        "scienti_minciencias": count_sources_affiliation(pipeline, ["scienti", "minciencias"]),
-        "scienti_openalex": count_sources_affiliation(pipeline, ["scienti", "openalex"]),
-        "scienti_scholar": count_sources_affiliation(pipeline, ["scienti", "scholar"]),
-        "minciencias_openalex": count_sources_affiliation(pipeline, ["minciencias", "openalex"]),
-        "minciencias_scholar": count_sources_affiliation(pipeline, ["minciencias", "scholar"]),
-        "openalex_scholar": count_sources_affiliation(pipeline, ["openalex", "scholar"]),
-        "scienti_minciencias_openalex": count_sources_affiliation(pipeline, ["scienti", "minciencias", "openalex"]),
-        "scienti_minciencias_scholar": count_sources_affiliation(pipeline, ["scienti", "minciencias", "scholar"]),
-        "scienti_openalex_scholar": count_sources_affiliation(pipeline, ["scienti", "openalex", "scholar"]),
-        "minciencias_openalex_scholar": count_sources_affiliation(pipeline, ["minciencias", "openalex", "scholar"]),
-        "minciencias_openalex_scholar_scienti": count_sources_affiliation(
-            pipeline, ["minciencias", "openalex", "scholar", "scienti"]
-        ),
-    }
+    pipeline.extend(
+        [
+            {
+                "$project": {
+                    "sources": {
+                        "$setIntersection": [
+                            "$updated.source",
+                            ["minciencias", "openalex", "scholar", "scienti"],
+                        ]
+                    }
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$sources",
+                    "count": {"$sum": 1},
+                }
+            },
+        ]
+    )
+
+    results = list(database["works"].aggregate(pipeline))
+
+    return results
 
 
-def get_products_by_database_by_person(person_id: str, query_params: QueryParams) -> dict:
+def get_products_by_database_by_person(person_id: str, query_params: QueryParams) -> list:
     pipeline: list[dict[str, Any]] = [{"$match": {"authors.id": person_id}}]
 
     work_repository.set_product_filters(pipeline, query_params)
 
-    return {
-        "minciencias": count_sources_person(pipeline, person_id, ["minciencias"]),
-        "openalex": count_sources_person(pipeline, person_id, ["openalex"]),
-        "scholar": count_sources_person(pipeline, person_id, ["scholar"]),
-        "scienti": count_sources_person(pipeline, person_id, ["scienti"]),
-        "scienti_minciencias": count_sources_person(pipeline, person_id, ["scienti", "minciencias"]),
-        "scienti_openalex": count_sources_person(pipeline, person_id, ["scienti", "openalex"]),
-        "scienti_scholar": count_sources_person(pipeline, person_id, ["scienti", "scholar"]),
-        "minciencias_openalex": count_sources_person(pipeline, person_id, ["minciencias", "openalex"]),
-        "minciencias_scholar": count_sources_person(pipeline, person_id, ["minciencias", "scholar"]),
-        "openalex_scholar": count_sources_person(pipeline, person_id, ["openalex", "scholar"]),
-        "scienti_minciencias_openalex": count_sources_person(
-            pipeline, person_id, ["scienti", "minciencias", "openalex"]
-        ),
-        "scienti_minciencias_scholar": count_sources_person(pipeline, person_id, ["scienti", "minciencias", "scholar"]),
-        "scienti_openalex_scholar": count_sources_person(pipeline, person_id, ["scienti", "openalex", "scholar"]),
-        "minciencias_openalex_scholar": count_sources_person(
-            pipeline, person_id, ["minciencias", "openalex", "scholar"]
-        ),
-        "minciencias_openalex_scholar_scienti": count_sources_person(
-            pipeline, person_id, ["minciencias", "openalex", "scholar", "scienti"]
-        ),
-    }
+    pipeline.extend(
+            [
+                {
+                    "$project": {
+                        "sources": {
+                            "$setIntersection": [
+                                "$updated.source",
+                                ["minciencias", "openalex", "scholar", "scienti"],
+                            ]
+                        }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$sources",
+                        "count": {"$sum": 1},
+                    }
+                },
+            ]
+        )
 
+    results = list(database["works"].aggregate(pipeline))
+
+    return results
 
 def pipeline_to_filter_for_affiliation(pipeline: list[dict[str, Any]], sources: list[str]) -> dict[str, Any]:
     filters: list[dict[str, Any]] = []
@@ -688,16 +700,6 @@ def pipeline_to_filter_for_person(pipeline: list[dict[str, Any]], person_id: str
             filters.append(stage["$match"])
 
     return {"$and": filters}
-
-
-def count_sources_affiliation(pipeline: list[dict[str, Any]], sources: list[str]) -> int:
-    filter_ = pipeline_to_filter_for_affiliation(pipeline, sources)
-    return int(database["works"].count_documents(filter_))
-
-
-def count_sources_person(pipeline: list[dict[str, Any]], person_id: str, sources: list[str]) -> int:
-    filter_ = pipeline_to_filter_for_person(pipeline, person_id, sources)
-    return int(database["works"].count_documents(filter_))
 
 
 def project_pipeline_params_for_filter() -> Dict[str, List[str]]:
