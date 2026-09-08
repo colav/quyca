@@ -57,27 +57,27 @@ def parse_csv(works: Generator) -> Generator[str, None, None]:
     writer.writeheader()
     yield output.getvalue()
 
+    output.seek(0)
+    output.truncate(0)
+
     for work in works:
         export_parser.prepare_work_for_export(work)
 
-        output = StringIO(newline="")
-        writer = csv.DictWriter(
-            output,
-            fieldnames=EXPORT_COLUMNS,
-            escapechar="\\",
-            quoting=csv.QUOTE_MINIMAL,
+        writer.writerow(
+            work.model_dump(include=set(EXPORT_COLUMNS))
         )
 
-        writer.writerow(work.model_dump(include=set(EXPORT_COLUMNS)))
-
         yield output.getvalue()
+
+        output.seek(0)
+        output.truncate(0)
 
 
 def parse_excel(works: Generator) -> BytesIO:
     output = BytesIO()
 
     workbook = Workbook(write_only=True)
-    worksheet = workbook.create_sheet("Affiliations")
+    worksheet = workbook.create_sheet("Works")
 
     worksheet.append(EXPORT_COLUMNS)
 
