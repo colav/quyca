@@ -53,7 +53,7 @@ def parse_csv(works: Generator) -> Generator[str, None, None]:
         escapechar="\\",
         quoting=csv.QUOTE_MINIMAL,
     )
-
+    SET_EXPORT_COLUMNS = set(EXPORT_COLUMNS)
     writer.writeheader()
     yield output.getvalue()
 
@@ -63,9 +63,7 @@ def parse_csv(works: Generator) -> Generator[str, None, None]:
     for work in works:
         export_parser.prepare_work_for_export(work)
 
-        writer.writerow(
-            work.model_dump(include=set(EXPORT_COLUMNS))
-        )
+        writer.writerow(work.model_dump(include=SET_EXPORT_COLUMNS))
 
         yield output.getvalue()
 
