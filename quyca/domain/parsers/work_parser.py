@@ -1,6 +1,5 @@
 import csv
 import io
-from typing import Any
 
 from quyca.domain.constants import countries_iso
 from quyca.domain.constants.open_access_status import open_access_status_dict
