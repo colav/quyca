@@ -257,43 +257,6 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
             {"$group": {"_id": "$open_access.open_access_status", "count": {"$sum": 1}}},
             {"$sort": {"count": -1}},
         ],
-        "subjects": pipeline.copy()
-        + [
-            {
-                "$project": {
-                    "subjects.source": 1,
-                    "subjects.subjects.id": 1,
-                    "subjects.subjects.name": 1,
-                    "subjects.subjects.level": 1,
-                }
-            },
-            {"$unwind": "$subjects"},
-            {"$unwind": "$subjects.subjects"},
-            {
-                "$group": {
-                    "_id": {
-                        "source": "$subjects.source",
-                        "subject_id": "$subjects.subjects.id",
-                        "subject_name": "$subjects.subjects.name",
-                        "subject_level": "$subjects.subjects.level",
-                    },
-                    "count": {"$sum": 1},
-                }
-            },
-            {
-                "$group": {
-                    "_id": "$_id.source",
-                    "subjects": {
-                        "$addToSet": {
-                            "id": "$_id.subject_id",
-                            "name": "$_id.subject_name",
-                            "level": "$_id.subject_level",
-                            "count": "$count",
-                        }
-                    },
-                }
-            },
-        ],
         "countries": pipeline.copy()
         + [
             {"$match": {"authors.affiliations.addresses.country_code": {"$ne": None}}},
@@ -311,7 +274,7 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
             {"$unwind": "$authors"},
             {"$unwind": "$authors.ranking"},
             {"$match": {"authors.ranking.source": "minciencias"}},
-            {"$group": {"_id": "$authors.ranking"}},
+            {"$group": {"_id": "$authors.ranking", "count": {"$sum": 1}}},
         ],
         "groups_ranking": pipeline.copy()
         + [
@@ -330,7 +293,7 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
                     }
                 }
             },
-            {"$group": {"_id": "$rank_val"}},
+            {"$group": {"_id": "$rank_val", "count": {"$sum": 1}}},
         ],
         "topics": pipeline.copy()
         + [
@@ -354,7 +317,7 @@ def get_works_available_filters(pipeline: list, query_params: QueryParams) -> di
         else:
             return key, list(collection.aggregate(pipe))
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=7) as executor:
         futures = [executor.submit(run_pipeline, k, v) for k, v in pipelines.items()]
         for future in as_completed(futures):
             key, result = future.result()
