@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from quyca.domain.services import source_service, work_service
@@ -8,7 +8,7 @@ from quyca.domain.constants.openalex_types import openalex_types_dict
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
 
-def prepare_work_for_export(work: Work) -> None:
+def prepare_work_for_export(work: Work, person_id: str | None = None) -> None:
     set_open_access_status(work)
     set_doi(work)
     set_csv_ranking(work)
@@ -17,9 +17,11 @@ def prepare_work_for_export(work: Work) -> None:
     set_csv_bibliographic_info(work)
     set_csv_citations_count(work)
     set_csv_subjects(work)
+    set_csv_contract_type(work, person_id)
     work_service.set_title_and_language(work)
     set_csv_types(work)
     set_primary_topic(work)
+    set_csv_identifiers(work)
     source_service.update_csv_work_source(work)
 
 
@@ -132,6 +134,24 @@ def set_csv_authors(work: Work) -> None:
     work.authors_csv = " | ".join(sorted(set(authors_full_names)))
 
 
+def set_csv_identifiers(work: Work) -> None:
+    scienti_ids: list[str] = []
+    minciencias_ids: list[str] = []
+
+    for external_id in getattr(work, "external_ids", None) or []:
+        provenance = getattr(external_id, "provenance", None)
+        source = getattr(external_id, "source", None)
+        identifier = getattr(external_id, "id", None)
+        if provenance == "scienti" and source == "scienti" and isinstance(identifier, str):
+            scienti_ids.append(identifier)
+
+        elif provenance == "minciencias" and source == "minciencias" and isinstance(identifier, str):
+            minciencias_ids.append(identifier)
+
+    work.scienti_id = " | ".join(dict.fromkeys(scienti_ids)) if scienti_ids else None
+    work.minciencias_id = " | ".join(dict.fromkeys(minciencias_ids)) if minciencias_ids else None
+
+
 def set_csv_affiliations(work: Work) -> None:
     countries, institutions, departments, faculties, groups = (set(), set(), set(), set(), set())
     groups_ranking = set()
@@ -205,3 +225,42 @@ def parse_integer(value: Any) -> int | None:
             return int(value)
 
     return None
+
+
+def set_csv_contract_type(work: Work, person_id: str | None) -> None:
+    if not person_id:
+        work.contract_type = None
+        return
+
+    ranks = [
+        rank
+        for author in work.authors or []
+        if str(author.id) == str(person_id)
+        for rank in (getattr(author, "ranking", None) or [])
+        if getattr(rank, "source", None) == "tipo_contrato" and rank.rank
+    ]
+
+    if not ranks:
+        work.contract_type = None
+        return
+
+    if work.year_published:
+        eligible = [rank for rank in ranks if (year := get_rank_year(rank)) is not None and year <= work.year_published]
+    else:
+        eligible = []
+
+    if eligible:
+        work.contract_type = max(eligible, key=contract_rank_key).rank
+    else:
+        work.contract_type = min(ranks, key=contract_rank_key).rank
+
+
+def contract_rank_key(rank: Any) -> tuple[int, bool]:
+    date = rank.date if isinstance(rank.date, int) else -1
+    return (date, rank.rank != "Desconocido")
+
+
+def get_rank_year(rank: Any) -> int | None:
+    if not isinstance(rank.date, int):
+        return None
+    return datetime.fromtimestamp(rank.date, tz=timezone.utc).year
