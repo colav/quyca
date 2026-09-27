@@ -10,7 +10,7 @@ from werkzeug.datastructures import FileStorage
 from quyca.application.services.ciarp_service import CiarpService
 from quyca.application.services.staff_service import StaffService, StaffUploadError
 from quyca.domain.exceptions.project_file_exceptions import ProjectFileException
-from quyca.domain.services.scienti_service import ScientiService
+from quyca.domain.services.submit.scienti_service import ScientiService
 from quyca.domain.services.submit import submit_project_file_service
 from quyca.infrastructure.container import build_ciarp_service, build_scienti_service, build_staff_service
 

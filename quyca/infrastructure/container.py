@@ -21,9 +21,9 @@ from quyca.infrastructure.repositories.user_repository import UserRepositoryMong
 from quyca.infrastructure.annotators.annotator import Annotator
 from quyca.infrastructure.exporters.xlsx_writer_exporter import XlsxWriteExporter
 
-from quyca.domain.services.scienti_service import ScientiService
-from quyca.domain.services.staff_report_service import StaffReportService
-from quyca.domain.services.ciarp_report_service import CiarpReportService
+from quyca.domain.services.submit.scienti_service import ScientiService
+from quyca.domain.services.submit.staff_report_service import StaffReportService
+from quyca.domain.services.submit.ciarp_report_service import CiarpReportService
 
 """
 DI composer for Staff: builds infrastructure, use cases and service.
