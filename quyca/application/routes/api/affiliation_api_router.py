@@ -25,7 +25,9 @@ affiliation_api_router = Blueprint("affiliation_api_router", __name__)
 def get_works_by_affiliation_api_expert(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        data = affiliation_api_expert_service.get_works_by_affiliation(affiliation_id, query_params, affiliation_type, request.url)
+        data = affiliation_api_expert_service.get_works_by_affiliation(
+            affiliation_id, query_params, affiliation_type, request.url
+        )
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
