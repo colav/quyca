@@ -13,7 +13,6 @@ from quyca.application.routes.app.user_auth_app_router import user_auth_app_rout
 from quyca.application.routes.app.me_app_router import me_app_router
 from quyca.application.routes.app.user_crud_app_router import user_crud_app_router
 from quyca.application.routes.app.submit_app_router import submit_app_router
-from quyca.application.routes.app.scienti_app_router import scienti_app_router
 from quyca.application.routes.app.person_app_router import person_app_router
 from quyca.application.routes.api.person_api_router import person_api_router
 from quyca.application.routes.app.source_app_router import source_app_router

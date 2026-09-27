@@ -11,7 +11,7 @@ from quyca.application.services.ciarp_service import CiarpService
 from quyca.application.services.staff_service import StaffService, StaffUploadError
 from quyca.domain.exceptions.project_file_exceptions import ProjectFileException
 from quyca.domain.services.scienti_service import ScientiService
-from quyca.domain.services.submit import submit_project_service
+from quyca.domain.services.submit import submit_project_file_service
 from quyca.infrastructure.container import build_ciarp_service, build_scienti_service, build_staff_service
 
 submit_app_router = Blueprint("submit_app_router", __name__)
@@ -204,15 +204,15 @@ def submit_scienti() -> Tuple[Response, int]:
  
 @apiBody {File} file Archivo .xlsx enviado como multipart/form-data.
 """
- 
- 
+
+
 @submit_app_router.route("/project", methods=["POST"])
 def validate_project_file() -> Response | Tuple[Response, int]:
     try:
         file = request.files.get("file")
         if file is None or not file.filename:
             raise ProjectFileException("Debe enviar el archivo en el campo 'file' (multipart/form-data).")
-        data = submit_project_service.validate_project_file(file.stream, file.filename)
+        data = submit_project_file_service.validate_project_file(file.stream, file.filename)
         return jsonify(data)
     except ProjectFileException as e:
         return jsonify({"error": str(e)}), 400
