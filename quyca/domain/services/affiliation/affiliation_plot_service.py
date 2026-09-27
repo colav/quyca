@@ -7,7 +7,6 @@ from quyca.infrastructure.repositories import (
     work_repository,
     plot_repository,
     calculations_repository,
-    affiliation_repository,
 )
 from quyca.domain.parsers import (
     pie_parser,
@@ -16,6 +15,7 @@ from quyca.domain.parsers import (
     bar_parser,
     network_parser,
 )
+from quyca.infrastructure.repositories.affiliation import affiliation_repository
 
 
 def get_affiliation_plot(

@@ -5,8 +5,6 @@ from quyca.infrastructure.repositories import (
     plot_repository,
     work_repository,
     calculations_repository,
-    person_repository,
-    affiliation_repository,
 )
 from quyca.domain.parsers import (
     pie_parser,
@@ -15,6 +13,8 @@ from quyca.domain.parsers import (
     bar_parser,
     network_parser,
 )
+from quyca.infrastructure.repositories.affiliation import affiliation_repository
+from quyca.infrastructure.repositories.person import person_repository
 
 
 def get_person_plot(person_id: str, query_params: QueryParams) -> dict[str, Any]:

@@ -9,23 +9,37 @@ from quyca.domain.constants.apc_currencies import available_currencies
 
 def parse_annual_evolution_by_scienti_classification(works: Generator) -> dict:
     data: defaultdict = defaultdict(lambda: defaultdict(int))
+
     for work in works:
         if not work.year_published:
             continue
+
         for work_type in work.types:
             if work_type.source == "scienti" and work_type.level == 2:
                 data[work.year_published][work_type.type] += 1
+
     plot = [
         {"x": year, "y": count, "type": work_type}
         for year, work_types in data.items()
         for work_type, count in work_types.items()
     ]
-    return {"plot": sorted(plot, key=lambda x: (-x.get("x"), -x.get("y")))}
+
+    return {
+        "plot": sorted(
+            plot,
+            key=lambda x: (x.get("x"), -x.get("y")),
+        ),
+    }
 
 
 def parse_affiliations_by_product_type(data: CommandCursor) -> dict:
     plot = [{"x": item["name"], "y": item["works_count"], "type": item["type"]} for item in data]
-    return {"plot": sorted(plot, key=lambda x: x.get("y"), reverse=True)}
+    totals_by_x: dict[str, int] = {}
+    for item in plot:
+        totals_by_x[item["x"]] = totals_by_x.get(item["x"], 0) + item["y"]
+    plot.sort(key=lambda item: (totals_by_x[item["x"]], item["x"], -item["y"]))
+
+    return {"plot": plot}
 
 
 def parse_annual_citation_count(works: Generator) -> dict:

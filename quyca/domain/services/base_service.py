@@ -7,8 +7,9 @@ from quyca.domain.models.base_model import Title, ProductType, ExternalUrl, Type
 from quyca.domain.models.patent_model import Patent
 from quyca.domain.models.project_model import Project
 from quyca.domain.models.work_model import Work, Source as WorkSource
-from quyca.infrastructure.repositories import affiliation_repository, person_repository
+from quyca.infrastructure.repositories.person import person_repository
 from quyca.domain.constants.sensitive_data import SENSITIVE_ID_SOURCES
+from quyca.infrastructure.repositories.affiliation import affiliation_repository
 
 
 def get_entity_data(documents: Generator) -> list:

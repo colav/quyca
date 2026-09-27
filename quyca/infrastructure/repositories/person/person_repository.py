@@ -9,7 +9,7 @@ from quyca.domain.models.person_model import Person
 from quyca.infrastructure.mongo import database
 
 
-def get_person_by_id(person_id: str, pipeline_params: dict = {}) -> Person:
+def get_person_by_id(person_id: str, pipeline_params: dict) -> Person:
     old_id = None
     try:
         old_id = ObjectId(person_id)

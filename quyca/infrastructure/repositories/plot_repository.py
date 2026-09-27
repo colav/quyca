@@ -7,7 +7,7 @@ from quyca.domain.models.base_model import QueryParams
 from quyca.infrastructure.generators import work_generator
 from quyca.infrastructure.mongo import database, calculations_database
 from quyca.infrastructure.repositories import work_repository
-from quyca.infrastructure.repositories import affiliation_repository
+from quyca.infrastructure.repositories.affiliation import affiliation_repository
 
 
 def get_affiliations_scienti_works_count_by_institution(
@@ -98,6 +98,14 @@ def get_groups_scienti_works_count_by_faculty_or_department(
                     "id": "$_id",
                     "type": "$types.type",
                     "name": "$groups.name",
+                },
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "type": "$_id.type",
+                    "name": "$_id.name",
                 },
                 "works_count": {"$sum": 1},
             }

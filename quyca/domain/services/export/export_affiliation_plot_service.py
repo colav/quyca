@@ -7,13 +7,13 @@ from quyca.domain.models.affiliation_model import Affiliation
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.models.calculations_model import Calculations
 from quyca.infrastructure.repositories import (
-    affiliation_repository,
     calculations_repository,
     plot_repository,
     work_repository,
 )
 from quyca.domain.parsers import map_parser
 from quyca.domain.parsers.export import export_plot_parser
+from quyca.infrastructure.repositories.affiliation import affiliation_repository
 
 
 PlotExporter = Callable[..., Any]

@@ -1,8 +1,8 @@
 from quyca.domain.services.base_service import set_relation_external_urls, set_upper_affiliations_and_logo
-from quyca.infrastructure.repositories import (
+from quyca.infrastructure.repositories.person import (
     person_repository,
-    affiliation_repository,
 )
+from quyca.infrastructure.repositories.affiliation import affiliation_repository
 
 
 def get_affiliation_by_id(affiliation_id: str, affiliation_type: str) -> dict:

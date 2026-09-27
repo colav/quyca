@@ -1,9 +1,8 @@
 from quyca.domain.models.person_model import Person
 
 
-def parse_person(person: Person, include: list = []) -> dict:
-    if not include:
-        include = [
+def parse_person(person: Person) -> dict:
+    include = [
             "id",
             "full_name",
             "affiliations",
