@@ -2,7 +2,7 @@ from typing import Any, Callable
 
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.parsers.plot import bar_parser
-from quyca.infrastructure.repositories import plot_repository
+from quyca.infrastructure.repositories.plot import plot_repository
 
 
 def get_source_products_plot(source_id: str, query_params: QueryParams) -> dict[str, Any] | None:

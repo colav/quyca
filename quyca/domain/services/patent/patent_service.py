@@ -1,5 +1,5 @@
 from quyca.domain.models.base_model import QueryParams
-from quyca.infrastructure.repositories import patent_repository
+from quyca.infrastructure.repositories.patent import patent_repository
 from quyca.domain.services.base_service import (
     build_patents_pipeline_params,
     get_entity_data,
@@ -10,7 +10,7 @@ from quyca.domain.services.base_service import (
     set_product_types,
     set_title_and_language,
 )
-from quyca.domain.parsers import patent_parser
+from quyca.domain.parsers.patent import patent_parser
 
 
 def get_patent_by_id(patent_id: str) -> dict:

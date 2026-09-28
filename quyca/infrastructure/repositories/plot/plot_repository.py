@@ -6,7 +6,7 @@ from pymongo.command_cursor import CommandCursor
 from quyca.domain.models.base_model import QueryParams
 from quyca.infrastructure.generators import work_generator
 from quyca.infrastructure.mongo import database, calculations_database
-from quyca.infrastructure.repositories import work_repository
+from quyca.infrastructure.repositories.work import work_repository
 from quyca.infrastructure.repositories.affiliation import affiliation_repository
 
 

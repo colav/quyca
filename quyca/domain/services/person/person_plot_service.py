@@ -3,8 +3,6 @@ from quyca.domain.constants.articles_types import articles_types_list
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.parsers.plot import bar_parser, map_parser, network_parser, pie_parser
 from quyca.infrastructure.repositories import (
-    plot_repository,
-    work_repository,
     calculations_repository,
 )
 from quyca.domain.parsers.plot import (
@@ -12,6 +10,8 @@ from quyca.domain.parsers.plot import (
 )
 from quyca.infrastructure.repositories.affiliation import affiliation_repository
 from quyca.infrastructure.repositories.person import person_repository
+from quyca.infrastructure.repositories.plot import plot_repository
+from quyca.infrastructure.repositories.work import work_repository
 
 
 def get_person_plot(person_id: str, query_params: QueryParams) -> dict[str, Any]:

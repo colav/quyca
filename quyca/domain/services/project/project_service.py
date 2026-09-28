@@ -1,5 +1,5 @@
 from quyca.domain.models.base_model import QueryParams
-from quyca.infrastructure.repositories import project_repository
+from quyca.infrastructure.repositories.project import project_repository
 from quyca.domain.services.base_service import (
     build_projects_pipeline_params,
     get_entity_data,
@@ -10,7 +10,7 @@ from quyca.domain.services.base_service import (
     set_product_types,
     set_title_and_language,
 )
-from quyca.domain.parsers import project_parser
+from quyca.domain.parsers.project import project_parser
 
 
 def get_project_by_id(project_id: str) -> dict:

@@ -1,6 +1,6 @@
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.models.work_model import Work, Abstract
-from quyca.infrastructure.repositories import work_repository
+from quyca.infrastructure.repositories.work import work_repository
 from quyca.domain.services.base_service import (
     get_entity_data,
     limit_authors,
@@ -11,7 +11,7 @@ from quyca.domain.services.base_service import (
     set_external_ids,
     build_work_pipeline_params,
 )
-from quyca.domain.parsers import work_parser
+from quyca.domain.parsers.work import work_parser
 
 
 def get_work_by_id(work_id: str) -> dict:

@@ -1,7 +1,8 @@
 from typing import Dict
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.parsers import affiliation_parser, work_parser
+from quyca.domain.parsers.work import work_parser
+from quyca.domain.parsers.affiliation import affiliation_parser
 from quyca.domain.parsers.search import search_parser
 from quyca.domain.parsers.source import source_parser
 from quyca.infrastructure.repositories.search import (

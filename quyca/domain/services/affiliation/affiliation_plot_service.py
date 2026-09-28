@@ -5,14 +5,14 @@ from quyca.domain.constants.articles_types import articles_types_list
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.parsers.plot import bar_parser, map_parser, network_parser, pie_parser
 from quyca.infrastructure.repositories import (
-    work_repository,
-    plot_repository,
     calculations_repository,
 )
 from quyca.domain.parsers.plot import (
     venn_parser,
 )
 from quyca.infrastructure.repositories.affiliation import affiliation_repository
+from quyca.infrastructure.repositories.plot import plot_repository
+from quyca.infrastructure.repositories.work import work_repository
 
 
 def get_affiliation_plot(

@@ -10,12 +10,13 @@ from quyca.infrastructure.generators import (
 from quyca.domain.models.base_model import QueryParams
 from quyca.infrastructure.mongo import database
 from quyca.domain.constants.institutions import institutions_list
-from quyca.infrastructure.repositories import base_repository, work_repository
+from quyca.infrastructure.repositories import base_repository
 from quyca.infrastructure.repositories.search import (
     search_affiliation_filters_repository,
     search_source_filters_repository,
 )
 from quyca.infrastructure.repositories.search.search_work_filters_repository import set_authors_filter_if_large
+from quyca.infrastructure.repositories.work import work_repository
 
 
 def search_persons_for_api_expert(query_params: QueryParams, pipeline_params: Dict | None = None) -> Generator:

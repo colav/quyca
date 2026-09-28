@@ -3,7 +3,7 @@ from flask import Blueprint, Response, jsonify, request
 from sentry_sdk import capture_exception
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.services import work_service
+from quyca.domain.services.work import work_service
 from quyca.domain.services.export import export_service
 from quyca.domain.services.source import source_plot_service, source_service
 

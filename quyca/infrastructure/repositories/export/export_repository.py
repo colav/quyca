@@ -6,9 +6,10 @@ from bson import ObjectId
 from quyca.domain.models.base_model import QueryParams
 from quyca.infrastructure.generators import work_generator
 from quyca.infrastructure.mongo import database
-from quyca.infrastructure.repositories import base_repository, work_repository
+from quyca.infrastructure.repositories import base_repository
 from quyca.domain.constants.institutions import institutions_list
 from quyca.infrastructure.repositories.search import search_work_filters_repository
+from quyca.infrastructure.repositories.work import work_repository
 
 
 def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:

@@ -8,12 +8,12 @@ from quyca.domain.models.base_model import QueryParams
 from quyca.domain.models.calculations_model import Calculations
 from quyca.infrastructure.repositories import (
     calculations_repository,
-    plot_repository,
-    work_repository,
 )
 from quyca.domain.parsers.plot import map_parser
 from quyca.domain.parsers.export import export_plot_parser
 from quyca.infrastructure.repositories.affiliation import affiliation_repository
+from quyca.infrastructure.repositories.plot import plot_repository
+from quyca.infrastructure.repositories.work import work_repository
 
 
 PlotExporter = Callable[..., Any]

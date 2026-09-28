@@ -6,13 +6,13 @@ from sentry_sdk import capture_exception
 
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.services import (
-    work_service,
-    project_service,
-    patent_service,
     news_service,
 )
 from quyca.domain.services.affiliation import affiliation_plot_service, affiliation_service
 from quyca.domain.services.export import export_affiliation_plot_service, export_service
+from quyca.domain.services.patent import patent_service
+from quyca.domain.services.project import project_service
+from quyca.domain.services.work import work_service
 
 affiliation_app_router = Blueprint("affiliation_app_router", __name__)
 

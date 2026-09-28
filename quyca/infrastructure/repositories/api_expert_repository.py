@@ -5,7 +5,7 @@ from quyca.infrastructure.generators import (
     work_generator,
 )
 from quyca.domain.models.base_model import QueryParams
-from quyca.infrastructure.repositories import work_repository
+from quyca.infrastructure.repositories.work import work_repository
 from quyca.infrastructure.mongo import database
 from quyca.domain.constants.institutions import institutions_list
 from quyca.infrastructure.repositories.search import (

@@ -3,7 +3,7 @@ from typing import Generator
 
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.models.export_model import ExportEntity
-from quyca.infrastructure.repositories import export_repository
+from quyca.infrastructure.repositories.export import export_repository
 from quyca.domain.parsers.export import export_parser
 
 

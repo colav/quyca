@@ -5,13 +5,13 @@ from sentry_sdk import capture_exception
 
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.services import (
-    work_service,
-    project_service,
-    patent_service,
     news_service,
 )
 from quyca.domain.services.export import export_service
+from quyca.domain.services.patent import patent_service
 from quyca.domain.services.person import person_plot_service, person_service
+from quyca.domain.services.project import project_service
+from quyca.domain.services.work import work_service
 
 person_app_router = Blueprint("person_app_router", __name__)
 
