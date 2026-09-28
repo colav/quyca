@@ -4,8 +4,8 @@ from unittest.mock import patch
 import pytest
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.infrastructure.repositories.source_repository import (
-    get_search_sources_available_filters,
+from quyca.infrastructure.repositories.search.search_source_filters_repository import (
+    search_sources_available_filters,
     set_scimago_quartiles,
     set_apc_range,
     set_open_access_routes,
@@ -246,54 +246,54 @@ def test_set_topics_strips_and_filters_blanks():
 
 
 @patch("quyca.infrastructure.repositories.source_repository.database")
-def test_get_search_sources_available_filters_returns_aggregate_result(mock_database):
+def test_search_sources_available_filters_returns_aggregate_result(mock_database):
     expected_filters = {"apc_range": [{"min_apc": 10, "max_apc": 200}]}
     mock_database.__getitem__.return_value.aggregate.return_value = iter([expected_filters])
     query_params = QueryParams()
 
-    result = get_search_sources_available_filters(query_params)
+    result = search_sources_available_filters(query_params)
 
     assert result == expected_filters
 
 
 @patch("quyca.infrastructure.repositories.source_repository.database")
-def test_get_search_sources_available_filters_returns_empty_dict_when_no_results(mock_database):
+def test_search_sources_available_filters_returns_empty_dict_when_no_results(mock_database):
     mock_database.__getitem__.return_value.aggregate.return_value = iter([])
     query_params = QueryParams()
 
-    result = get_search_sources_available_filters(query_params)
+    result = search_sources_available_filters(query_params)
 
     assert result == {}
 
 
 @patch("quyca.infrastructure.repositories.source_repository.database")
-def test_get_search_sources_available_filters_adds_keyword_match_stage(mock_database):
+def test_search_sources_available_filters_adds_keyword_match_stage(mock_database):
     mock_database.__getitem__.return_value.aggregate.return_value = iter([{}])
     query_params = QueryParams(keywords="philosophy")
 
-    get_search_sources_available_filters(query_params)
+    search_sources_available_filters(query_params)
 
     sent_pipeline = mock_database.__getitem__.return_value.aggregate.call_args[0][0]
     assert sent_pipeline[0] == {"$match": {"$text": {"$search": "philosophy"}}}
 
 
 @patch("quyca.infrastructure.repositories.source_repository.database")
-def test_get_search_sources_available_filters_no_keyword_skips_text_match(mock_database):
+def test_search_sources_available_filters_no_keyword_skips_text_match(mock_database):
     mock_database.__getitem__.return_value.aggregate.return_value = iter([{}])
     query_params = QueryParams()
 
-    get_search_sources_available_filters(query_params)
+    search_sources_available_filters(query_params)
 
     sent_pipeline = mock_database.__getitem__.return_value.aggregate.call_args[0][0]
     assert all("$text" not in stage.get("$match", {}) for stage in sent_pipeline if "$match" in stage)
 
 
 @patch("quyca.infrastructure.repositories.source_repository.database")
-def test_get_search_sources_available_filters_applies_query_param_filters(mock_database):
+def test_search_sources_available_filters_applies_query_param_filters(mock_database):
     mock_database.__getitem__.return_value.aggregate.return_value = iter([{}])
     query_params = QueryParams(scimago_quartiles="Q1", license_type="CC BY")
 
-    get_search_sources_available_filters(query_params)
+    search_sources_available_filters(query_params)
 
     sent_pipeline = mock_database.__getitem__.return_value.aggregate.call_args[0][0]
     match_stages = [stage["$match"] for stage in sent_pipeline if "$match" in stage]

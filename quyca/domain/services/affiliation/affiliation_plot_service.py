@@ -3,17 +3,14 @@ from pymongo.command_cursor import CommandCursor
 
 from quyca.domain.constants.articles_types import articles_types_list
 from quyca.domain.models.base_model import QueryParams
+from quyca.domain.parsers.plots import bar_parser, map_parser, network_parser, pie_parser
 from quyca.infrastructure.repositories import (
     work_repository,
     plot_repository,
     calculations_repository,
 )
-from quyca.domain.parsers import (
-    pie_parser,
-    map_parser,
+from quyca.domain.parsers.plots import (
     venn_parser,
-    bar_parser,
-    network_parser,
 )
 from quyca.infrastructure.repositories.affiliation import affiliation_repository
 

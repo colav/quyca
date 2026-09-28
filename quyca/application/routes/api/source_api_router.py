@@ -2,7 +2,7 @@ from typing import Tuple
 from flask import Blueprint, request, jsonify, Response
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.services import api_expert_service
+from quyca.domain.services.source import source_api_expert_service
 
 source_api_router = Blueprint("source_api_router", __name__)
 
@@ -127,7 +127,7 @@ HTTP/1.1 404 Not Found
 def get_research_products(source_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        data = api_expert_service.get_works_by_source(source_id, query_params, request.url)
+        data = source_api_expert_service.get_works_by_source(source_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 404
