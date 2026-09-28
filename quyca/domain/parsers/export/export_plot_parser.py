@@ -13,7 +13,7 @@ from quyca.domain.constants.apc_currencies import available_currencies
 from quyca.domain.constants.open_access_status import open_access_status_dict
 from quyca.domain.models.affiliation_model import Affiliation
 from quyca.domain.models.calculations_model import Calculations
-from quyca.domain.parsers.plots import map_parser
+from quyca.domain.parsers.plot import map_parser
 from quyca.domain.parsers.export import export_network_parser
 
 

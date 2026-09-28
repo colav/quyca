@@ -1,7 +1,7 @@
 from typing import Any, Callable
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.parsers.plots import bar_parser
+from quyca.domain.parsers.plot import bar_parser
 from quyca.infrastructure.repositories import plot_repository
 
 
