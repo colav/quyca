@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 from collections.abc import Generator, Iterable, Iterator
 from datetime import datetime
 from itertools import chain
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from currency_converter import CurrencyConverter
 from pymongo.command_cursor import CommandCursor
@@ -24,6 +24,8 @@ VENN_SOURCES = (
     "openalex",
     "scholar",
 )
+
+PlotParser = Callable[[Any], Iterator[dict[str, Any]]]
 
 
 def csv_rows(rows: Iterable[dict[str, Any]], columns: CsvColumns) -> Iterator[str]:
@@ -374,7 +376,7 @@ def parse_annual_apc_expenses(works: Generator) -> Iterator[dict[str, Any]]:
         yield {"year": year, "apc_usd": value}
 
 
-PLOT_PARSERS = {
+PLOT_PARSERS: dict[str, PlotParser] = {
     "faculties_by_product_type": parse_affiliations_by_product_type,
     "departments_by_product_type": parse_affiliations_by_product_type,
     "research_groups_by_product_type": parse_affiliations_by_product_type,
