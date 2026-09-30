@@ -4,8 +4,6 @@ from .base_validator import BaseValidator
 REQUIRED_FIELDS = [
     "tipo_documento",
     "identificación",
-    "código_unidad_académica",
-    "unidad_académica",
 ]
 
 NAME_REQUIRED_FIELDS = [
