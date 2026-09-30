@@ -29,8 +29,6 @@ Aplica al flujo de carga de Staff (`/app/submit/staff`) y a la construccion de:
 - identificacion
 - primer_apellido
 - nombres
-- codigo_unidad_academica
-- unidad_academica
 
 **## Regla especial para `nombre_completo`**
 
@@ -53,8 +51,6 @@ Aplica al flujo de carga de Staff (`/app/submit/staff`) y a la construccion de:
 - nombre_completo
 - codigo_unidad_academica
 - unidad_academica
-- codigo_subunidad_academica
-- subunidad_academica
 
 ## Campos fuera de catalogo (advertencia + mapeo a desconocido)
 
@@ -79,8 +75,6 @@ Si el campo viene vacio, se mantiene vacio. Solo se mapea a `desconocido` cuando
 - nombre_completo
 - codigo_unidad_academica
 - unidad_academica
-- codigo_subunidad_academica
-- subunidad_academica
 
 ## Campos que pueden estar vacios sin error ni advertencia
 
@@ -119,3 +113,4 @@ Si incluir cambios de negocio, por ejemplo:
 ## Historial
 
 - 2026-05-29: Primera version formal del documento para Staff.
+- 2026-09-30: Actualización campos `nombre_completo`, `subunidad_academica`, `codigo_unidad_academica`
