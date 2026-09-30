@@ -17,6 +17,7 @@ class IPDFRepository(ABC):
         upload_date: str,
         user: str,
         normalized_changes: List[Dict[str, Any]] | None = None,
+        has_nombre_completo: bool = False,
     ) -> io.BytesIO:
         """Generates a Staff quality validation PDF report."""
 

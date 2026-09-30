@@ -21,6 +21,10 @@ class StaffReportService:
         self.annotator = annotator
         self.xlsx_exporter = xlsx_exporter
 
+    @staticmethod
+    def _has_nombre_completo(df: pd.DataFrame) -> bool:
+        return any(str(column).strip().lower().replace(" ", "_") == "nombre_completo" for column in df.columns)
+
     def generate_report(
         self,
         df: pd.DataFrame,
@@ -31,6 +35,7 @@ class StaffReportService:
         normalized_changes: list[dict[str, Any]] | None = None,
     ) -> tuple[StaffReport, list[dict]]:
         """Validates the dataframe and generates Staff report attachments."""
+        has_nombre_completo = self._has_nombre_completo(df)
         staff_report: StaffReport = StaffValidator.validate_dataframe(df)
 
         attachments: list[dict] = []
@@ -61,6 +66,7 @@ class StaffReportService:
                 upload_date,
                 user,
                 normalized_changes=normalized_changes,
+                has_nombre_completo=has_nombre_completo,
             )
 
             attachments.insert(0, {"bytes": pdf_bytes, "filename": "reporte_staff.pdf", "mime": "application/pdf"})

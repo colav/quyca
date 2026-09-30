@@ -20,13 +20,39 @@ class PDFRepository(IPDFRepository):
         upload_date: str,
         user: str,
         normalized_changes: List[Dict[str, Any]] | None = None,
+        has_nombre_completo: bool = False,
     ) -> io.BytesIO:
         """Generates the Staff PDF report with errors/warnings/duplicates."""
         report_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
 
+        name_rows = ""
+
+        if has_nombre_completo:
+            name_rows = """
+                <tr>
+                    <td>nombre_completo</td>
+                    <td>Nombre completo del autor</td>
+                </tr>
+            """
+        else:
+            name_rows = """
+                <tr>
+                    <td>primer_apellido</td>
+                    <td>Primer apellido del autor</td>
+                </tr>
+                <tr>
+                    <td>segundo_apellido</td>
+                    <td>Segundo apellido del autor</td>
+                </tr>
+                <tr>
+                    <td>nombres</td>
+                    <td>Todos los nombres del autor</td>
+                </tr>
+            """
+
         if errors:
             title = "Reporte de Calidad de Datos"
-            intro = """
+            intro = f"""
                 <h2><li>Corrección de errores en la información cargada</li></h2>
                 <p>
                     Este reporte tiene como objetivo concientizar sobre la importancia de la calidad de los datos.
@@ -44,9 +70,7 @@ class PDFRepository(IPDFRepository):
                     <tr><th>Columna</th><th>Valores admitidos / Observaciones</th></tr>
                     <tr><td>tipo_documento</td><td>cédula de ciudadanía, cédula de extranjería, pasaporte</td></tr>
                     <tr><td>identificación</td><td>Número de identificación según tipo</td></tr>
-                    <tr><td>primer_apellido</td><td>Primer apellido del autor</td></tr>
-                    <tr><td>segundo_apellido</td><td>Segundo apellido del autor</td></tr>
-                    <tr><td>nombres</td><td>Todos los nombres del autor</td></tr>
+                    {name_rows}
                     <tr><td>nivel_académico</td><td>técnico, pregrado, maestría, doctorado, especialización, especialización médica</td></tr>
                     <tr><td>tipo_contrato</td><td>vinculado, ocasional, cátedra, prestación de servicios, postdoc</td></tr>
                     <tr><td>jornada_laboral</td><td>medio tiempo, tiempo completo, tiempo parcial</td></tr>
@@ -226,10 +250,18 @@ class PDFRepository(IPDFRepository):
             html += "<p><b>Ejemplo de duplicados:</b></p><ul>"
             for dup in eje:
                 row = dup.get("row") or {}
+                if has_nombre_completo:
+                    name_preview = {
+                        "nombre_completo": row.get("nombre_completo"),
+                    }
+                else:
+                    name_preview = {
+                        "primer_apellido": row.get("primer_apellido"),
+                        "nombres": row.get("nombres"),
+                    }
                 preview = {
                     "identificación": row.get("identificación"),
-                    "primer_apellido": row.get("primer_apellido"),
-                    "nombres": row.get("nombres"),
+                    **name_preview,
                     "jornada_laboral": row.get("jornada_laboral"),
                     "....": "....",
                     "unidad_académica": row.get("unidad_académica"),
