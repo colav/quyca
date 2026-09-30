@@ -404,7 +404,7 @@ def get_plot_csv(
     affiliation_id: str,
     affiliation_type: str,
     query_params: QueryParams,
-):
+) -> Iterable[str]:
     plot = query_params.plot
 
     if not plot:

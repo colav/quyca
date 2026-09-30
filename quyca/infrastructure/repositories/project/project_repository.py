@@ -27,7 +27,7 @@ def get_projects_by_affiliation(
     types = institutions_list if affiliation_type == "institution" else [affiliation_type]
     if pipeline_params is None:
         pipeline_params = {}
-    pipeline = [
+    pipeline: List[Dict[str, Any]] = [
         {"$match": {"authors.affiliations.id": affiliation_id}},
         {"$match": {"authors.affiliations.types.type": {"$in": types}}},
     ]

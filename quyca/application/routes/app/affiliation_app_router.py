@@ -130,7 +130,7 @@ def get_works_csv_by_affiliation(affiliation_type: str, affiliation_id: str) -> 
         query_params = QueryParams(**request.args)
         if query_params.plot:
             data = export_affiliation_plot_service.get_plot_csv(affiliation_id, affiliation_type, query_params)
-            response = Response(stream_with_context(data), content_type="text/csv; charset=utf-8")
+            response = Response(data, content_type="text/csv; charset=utf-8")
             response.headers["Content-Disposition"] = f'attachment; filename="{query_params.plot}.csv"'
             return response
         data = export_service.get_works_csv_by_affiliation(affiliation_id, affiliation_type, query_params)

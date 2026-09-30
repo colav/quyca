@@ -1,5 +1,5 @@
 import re
-from typing import Iterator, Optional, Set, Tuple
+from typing import Any, Iterator, Optional, Set, Tuple
 
 from quyca.domain.models.calculations_model import Calculations
 
@@ -10,7 +10,7 @@ def _normalize_label(raw_label: str) -> str:
     return PARENTHETICAL_SUFFIX.sub("", raw_label).strip()
 
 
-def node_label(node) -> Optional[str]:
+def node_label(node: Any) -> Optional[str]:
     name = getattr(node, "name", None)
     if not name:
         return None

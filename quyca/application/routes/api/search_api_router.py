@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from flask import Blueprint, request, Response, jsonify
+from flask import Blueprint, request, jsonify
 from werkzeug.wrappers.response import Response
 from sentry_sdk import capture_exception
 

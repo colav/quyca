@@ -1,6 +1,6 @@
 import os
 import zipfile
-from typing import Any, IO
+from typing import Any, IO, Iterator
 from io import BytesIO
 
 from openpyxl import load_workbook
@@ -65,7 +65,7 @@ def _map_headers(header_row: tuple) -> tuple[dict[int, str], list[str], list[str
     return index_to_column, ignored, duplicated
 
 
-def read_rows(rows_iterator, index_to_column: dict[int, str]) -> list[ProjectFileRow]:
+def read_rows(rows_iterator: Iterator, index_to_column: dict[int, str]) -> list[ProjectFileRow]:
     rows = []
     for row_number, cells in enumerate(rows_iterator, start=2):
         values = {

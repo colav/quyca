@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Generator
 
 from quyca.domain.models.export_model import EXPORT_MODEL_BY_ENTITY, ExportEntity, WorkExportBase, export_columns
 from quyca.domain.services.base_service import set_title_and_language, update_csv_work_source
@@ -10,17 +10,17 @@ from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 from quyca.infrastructure.exporters import tabular_writer_exporter
 
 
-def parse_csv(works, entity: ExportEntity, person_id: str | None = None):
+def parse_csv(works: Generator, entity: ExportEntity, person_id: str | None = None):
     columns = export_columns(entity)
     return tabular_writer_exporter.write_csv(export_rows(works, entity, person_id), columns)
 
 
-def parse_excel(works, entity: ExportEntity, person_id: str | None = None):
+def parse_excel(works: Generator, entity: ExportEntity, person_id: str | None = None):
     columns = export_columns(entity)
     return tabular_writer_exporter.write_excel(export_rows(works, entity, person_id), columns)
 
 
-def export_rows(works, entity: ExportEntity, person_id: str | None):
+def export_rows(works: Generator, entity: ExportEntity, person_id: str | None):
     model_cls = EXPORT_MODEL_BY_ENTITY[entity]
     for work in works:
         export_row = build_export(work, model_cls, person_id)

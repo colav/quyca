@@ -2,6 +2,7 @@ from typing import Any
 from quyca.domain.constants.articles_types import articles_types_list
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.parsers.plot import bar_parser, map_parser, network_parser, pie_parser
+from quyca.domain.services.base_service import build_person_pipeline_params
 from quyca.infrastructure.repositories import (
     calculations_repository,
 )
@@ -145,7 +146,8 @@ def plot_articles_by_scimago_quartile(person_id: str, query_params: QueryParams)
 
 
 def plot_articles_by_publishing_institution(person_id: str, query_params: QueryParams) -> dict:
-    person = person_repository.get_person_by_id(person_id)
+    pipeline_params = build_person_pipeline_params()
+    person = person_repository.get_person_by_id(person_id, pipeline_params)
     institution = None
 
     if person.affiliations:

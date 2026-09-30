@@ -97,7 +97,9 @@ def search_patents(query_params: QueryParams, pipeline_params: Dict) -> Tuple[Ge
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     patents = database["patents"].aggregate(pipeline)
 
-    count_pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    count_pipeline: List[Dict[str, Any]] = (
+        [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    )
     count_pipeline += [{"$count": "total_results"}]
     total_results = next(database["patents"].aggregate(count_pipeline), {"total_results": 0}).get("total_results", 0)
     return patent_generator.get(patents), total_results
