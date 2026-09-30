@@ -50,7 +50,7 @@ def aggregate_coauthorship_by_country(data: list) -> dict[str, dict[str, Any]]:
 
 
 def aggregate_coauthorship_by_colombian_department(data: list) -> dict[str, dict[str, Any]]:
-    cities_by_state_path = os.path.join(os.path.dirname(__file__), "concerns/cities_by_state.csv")
+    cities_by_state_path = os.path.join(os.path.dirname(__file__), "../concerns/cities_by_state.csv")
     cities_by_state = pd.read_csv(cities_by_state_path)
     city_to_state = dict(zip(cities_by_state["MUNICIPIO"], cities_by_state["DEPARTAMENTO"]))
 
@@ -68,7 +68,7 @@ def aggregate_coauthorship_by_colombian_department(data: list) -> dict[str, dict
 
 
 def get_country_centroids() -> dict[str, Coordinate]:
-    worldmap_path = os.path.join(os.path.dirname(__file__), "concerns/worldmap.json")
+    worldmap_path = os.path.join(os.path.dirname(__file__), "../concerns/worldmap.json")
     with open(worldmap_path, "r") as worldmap_file:
         worldmap = json.load(worldmap_file)
 
@@ -82,7 +82,7 @@ def get_country_centroids() -> dict[str, Coordinate]:
 
 
 def get_colombian_department_centroids() -> dict[str, Coordinate]:
-    colombiamap_path = os.path.join(os.path.dirname(__file__), "concerns/colombiamap.json")
+    colombiamap_path = os.path.join(os.path.dirname(__file__), "../concerns/colombiamap.json")
     with open(colombiamap_path, "r") as colombiamap_file:
         colombiamap = json.load(colombiamap_file)
 
@@ -102,7 +102,7 @@ def parse_coauthorship_by_country_map(data: list) -> dict:
     for country_data in countries.values():
         country_data["log_count"] = log(country_data["count"])
 
-    worldmap_path = os.path.join(os.path.dirname(__file__), "concerns/worldmap.json")
+    worldmap_path = os.path.join(os.path.dirname(__file__), "../concerns/worldmap.json")
     with open(worldmap_path, "r") as worldmap_file:
         plot = json.load(worldmap_file)
 
@@ -123,7 +123,7 @@ def get_coauthorship_by_colombian_department_map(data: list) -> dict:
     for state_data in states.values():
         state_data["log_count"] = log(state_data["count"])
 
-    colombiamap_path = os.path.join(os.path.dirname(__file__), "concerns/colombiamap.json")
+    colombiamap_path = os.path.join(os.path.dirname(__file__), "../concerns/colombiamap.json")
     with open(colombiamap_path, "r") as colombiamap_file:
         plot = json.load(colombiamap_file)
 

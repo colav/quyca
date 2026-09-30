@@ -10,6 +10,7 @@ from currency_converter import CurrencyConverter
 from pymongo.command_cursor import CommandCursor
 
 from quyca.domain.constants.apc_currencies import available_currencies
+from quyca.domain.constants.csv_indicator_columns import CSV_COLUMNS_BY_PLOT, CsvColumns
 from quyca.domain.constants.open_access_status import open_access_status_dict
 from quyca.domain.models.affiliation_model import Affiliation
 from quyca.domain.models.calculations_model import Calculations
@@ -25,16 +26,9 @@ VENN_SOURCES = (
 )
 
 
-def csv_rows(
-    rows: Iterable[dict[str, Any]],
-    fieldnames: list[str],
-) -> Iterator[str]:
+def csv_rows(rows: Iterable[dict[str, Any]], columns: CsvColumns) -> Iterator[str]:
     buffer = io.StringIO()
-    writer = csv.DictWriter(
-        buffer,
-        fieldnames=fieldnames,
-        extrasaction="ignore",
-    )
+    writer = csv.DictWriter(buffer, fieldnames=list(columns.values()))
 
     writer.writeheader()
     yield buffer.getvalue()
@@ -42,9 +36,7 @@ def csv_rows(
     for row in rows:
         buffer.seek(0)
         buffer.truncate(0)
-
-        writer.writerow(row)
-
+        writer.writerow({csv_name: row.get(field) for field, csv_name in columns.items()})
         yield buffer.getvalue()
 
 
@@ -66,7 +58,6 @@ def network_csv_rows(
     nodes: Iterable[str],
     edges: Iterable[Tuple[str, str]],
 ) -> Iterator[str]:
-    """Escribe un CSV de dos secciones: nombres únicos, una línea en blanco, y relaciones 'nombre1-nombre2'."""
     yield from single_column_csv_rows("nombre", nodes)
 
     buffer = io.StringIO()
@@ -384,128 +375,35 @@ def parse_annual_apc_expenses(works: Generator) -> Iterator[dict[str, Any]]:
 
 
 PLOT_PARSERS = {
-    "faculties_by_product_type": (
-        parse_affiliations_by_product_type,
-        ["name", "works_count", "type"],
-    ),
-    "departments_by_product_type": (
-        parse_affiliations_by_product_type,
-        ["name", "works_count", "type"],
-    ),
-    "research_groups_by_product_type": (
-        parse_affiliations_by_product_type,
-        ["name", "works_count", "type"],
-    ),
-    "citations_by_faculty": (
-        parse_citations_by_affiliation,
-        ["name", "citations"],
-    ),
-    "citations_by_department": (
-        parse_citations_by_affiliation,
-        ["name", "citations"],
-    ),
-    "citations_by_research_group": (
-        parse_citations_by_affiliation,
-        ["name", "citations"],
-    ),
-    "apc_expenses_by_faculty": (
-        parse_apc_expenses_by_affiliation,
-        ["name", "charges", "currency"],
-    ),
-    "apc_expenses_by_department": (
-        parse_apc_expenses_by_affiliation,
-        ["name", "charges", "currency"],
-    ),
-    "apc_expenses_by_group": (
-        parse_apc_expenses_by_affiliation,
-        ["name", "charges", "currency"],
-    ),
-    "h_index_by_faculty": (
-        parse_h_index_by_affiliation,
-        ["name", "h_index"],
-    ),
-    "h_index_by_department": (
-        parse_h_index_by_affiliation,
-        ["name", "h_index"],
-    ),
-    "h_index_by_research_group": (
-        parse_h_index_by_affiliation,
-        ["name", "h_index"],
-    ),
-    "products_by_database": (
-        parse_products_by_database,
-        [
-            "scienti",
-            "minciencias",
-            "openalex",
-            "scholar",
-            "count",
-        ],
-    ),
-    "coauthorship_by_country_map": (
-        parse_coauthorship_by_country_map,
-        ["country_name", "latitude", "longitude", "coautorships"],
-    ),
-    "coauthorship_by_colombian_department_map": (
-        parse_coauthorship_by_colombian_department_map,
-        ["department_name", "latitude", "longitude", "coautorships"],
-    ),
-    "annual_evolution_by_scienti_classification": (
-        parse_annual_evolution_by_scienti_classification,
-        ["year", "type", "count"],
-    ),
-    "annual_citation_count": (
-        parse_annual_citation_count,
-        ["year", "citations"],
-    ),
-    "annual_articles_open_access": (
-        parse_annual_articles_open_access,
-        ["year", "access_type", "count"],
-    ),
-    "annual_articles_by_top_publishers": (
-        parse_annual_articles_by_top_publishers,
-        ["year", "publisher", "count"],
-    ),
-    "most_used_title_words": (
-        parse_most_used_title_words,
-        ["word", "count"],
-    ),
-    "articles_by_publisher": (
-        parse_articles_by_publisher,
-        ["publisher", "count"],
-    ),
-    "products_by_subject": (
-        parse_products_by_subject,
-        ["subject", "count"],
-    ),
-    "articles_by_access_route": (
-        parse_articles_by_access_route,
-        ["access_route", "count"],
-    ),
-    "active_authors_by_sex": (
-        parse_active_authors_by_sex,
-        ["sex", "count"],
-    ),
-    "active_authors_by_age_range": (
-        parse_active_authors_by_age_range,
-        ["age_range", "count"],
-    ),
-    "articles_by_scienti_category": (
-        parse_articles_by_scienti_category,
-        ["category", "count"],
-    ),
-    "articles_by_scimago_quartile": (
-        parse_articles_by_scimago_quartile,
-        ["quartile", "count"],
-    ),
-    "articles_by_publishing_institution": (
-        parse_articles_by_publishing_institution,
-        ["category", "count"],
-    ),
-    "annual_apc_expenses": (
-        parse_annual_apc_expenses,
-        ["year", "apc_usd"],
-    ),
+    "faculties_by_product_type": parse_affiliations_by_product_type,
+    "departments_by_product_type": parse_affiliations_by_product_type,
+    "research_groups_by_product_type": parse_affiliations_by_product_type,
+    "citations_by_faculty": parse_citations_by_affiliation,
+    "citations_by_department": parse_citations_by_affiliation,
+    "citations_by_research_group": parse_citations_by_affiliation,
+    "apc_expenses_by_faculty": parse_apc_expenses_by_affiliation,
+    "apc_expenses_by_department": parse_apc_expenses_by_affiliation,
+    "apc_expenses_by_group": parse_apc_expenses_by_affiliation,
+    "h_index_by_faculty": parse_h_index_by_affiliation,
+    "h_index_by_department": parse_h_index_by_affiliation,
+    "h_index_by_research_group": parse_h_index_by_affiliation,
+    "products_by_database": parse_products_by_database,
+    "coauthorship_by_country_map": parse_coauthorship_by_country_map,
+    "coauthorship_by_colombian_department_map": parse_coauthorship_by_colombian_department_map,
+    "annual_evolution_by_scienti_classification": parse_annual_evolution_by_scienti_classification,
+    "annual_citation_count": parse_annual_citation_count,
+    "annual_articles_open_access": parse_annual_articles_open_access,
+    "annual_articles_by_top_publishers": parse_annual_articles_by_top_publishers,
+    "most_used_title_words": parse_most_used_title_words,
+    "articles_by_publisher": parse_articles_by_publisher,
+    "products_by_subject": parse_products_by_subject,
+    "articles_by_access_route": parse_articles_by_access_route,
+    "active_authors_by_sex": parse_active_authors_by_sex,
+    "active_authors_by_age_range": parse_active_authors_by_age_range,
+    "articles_by_scienti_category": parse_articles_by_scienti_category,
+    "articles_by_scimago_quartile": parse_articles_by_scimago_quartile,
+    "articles_by_publishing_institution": parse_articles_by_publishing_institution,
+    "annual_apc_expenses": parse_annual_apc_expenses,
 }
 
 
@@ -522,16 +420,9 @@ def parse_plot_to_csv(
         edges = export_network_parser.parse_institutional_coauthorship_network_edges(calculations)
         return network_csv_rows(nodes, edges)
 
-    parser_config = PLOT_PARSERS.get(plot)
-
-    if parser_config is None:
+    parser = PLOT_PARSERS.get(plot)
+    columns = CSV_COLUMNS_BY_PLOT.get(plot)
+    if parser is None or columns is None:
         raise ValueError(f"No existe un parser CSV para el plot '{plot}'.")
 
-    parser, fieldnames = parser_config
-
-    rows = parser(data)
-
-    return csv_rows(
-        rows,
-        fieldnames,
-    )
+    return csv_rows(parser(data), columns)

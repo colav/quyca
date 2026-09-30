@@ -350,18 +350,18 @@ def get_active_authors_by_age_range(affiliation_id: str, query_params: QueryPara
     author_ids = [author["authors"]["id"] for author in author_list]
     pipeline_person: list[dict[str, Any]] = [
         {
-            "$project": {
-                "_id": 1,
-                "affiliations.id": 1,
-                "affiliations.end_date": 1,
-                "birthday": 1,
-                "end_date": 1,
-                "updated.source": 1,
+            "$match": {
+                "_id": {"$in": author_ids},
+                "updated.source": "staff",
+                "affiliations": {
+                    "$elemMatch": {
+                        "id": affiliation_id,
+                        "end_date": -1,
+                    }
+                },
             }
         },
-        {"$match": {"_id": {"$in": author_ids}, "updated.source": "staff"}},
-        {"$match": {"affiliations": {"$elemMatch": {"id": affiliation_id, "end_date": -1}}}},
-        {"$project": {"_id": 0, "birthday": 1}},
+        {"$project": {"_id": 0, "birthdate": 1}},
     ]
     return database["person"].aggregate(pipeline_person)
 
