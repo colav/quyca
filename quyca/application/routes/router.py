@@ -12,9 +12,7 @@ from quyca.application.routes.api.affiliation_api_router import affiliation_api_
 from quyca.application.routes.app.user_auth_app_router import user_auth_app_router
 from quyca.application.routes.app.me_app_router import me_app_router
 from quyca.application.routes.app.user_crud_app_router import user_crud_app_router
-from quyca.application.routes.app.staff_app_router import staff_app_router
-from quyca.application.routes.app.ciarp_app_router import ciarp_app_router
-from quyca.application.routes.app.scienti_app_router import scienti_app_router
+from quyca.application.routes.app.submit_app_router import submit_app_router
 from quyca.application.routes.app.person_app_router import person_app_router
 from quyca.application.routes.api.person_api_router import person_api_router
 from quyca.application.routes.app.source_app_router import source_app_router
@@ -76,8 +74,4 @@ router.register_blueprint(me_app_router, url_prefix=f"{settings.APP_URL_PREFIX}"
 
 router.register_blueprint(user_crud_app_router, url_prefix=f"{settings.APP_URL_PREFIX}")
 
-router.register_blueprint(staff_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/submit")
-
-router.register_blueprint(ciarp_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/submit")
-
-router.register_blueprint(scienti_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/submit")
+router.register_blueprint(submit_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/submit")

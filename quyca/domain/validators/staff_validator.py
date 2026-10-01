@@ -33,6 +33,16 @@ REQUIRED_COLUMNS = [
     "subunidad_académica",
 ]
 
+OPTIONAL_COLUMNS = {
+    "nombre_completo",
+}
+
+NAME_COLUMNS = {
+    "primer_apellido",
+    "segundo_apellido",
+    "nombres",
+}
+
 EXTRA_ALLOWED = {"estado_de_validación", "observación"}
 
 
@@ -65,10 +75,12 @@ class StaffValidator:
         raw_cols = [str(c).strip() for c in df.columns]
         errors: List[str] = []
         usecols: list[str] = []
-
         matched_required: set[str] = set()
+        matched_optional: set[str] = set()
 
         relaxed_required_map = {_relaxed_normalize(required): required for required in REQUIRED_COLUMNS}
+
+        normalized_optional = {_normalize(column): column for column in OPTIONAL_COLUMNS}
 
         for idx, c in enumerate(raw_cols):
             col = c.strip()
@@ -77,11 +89,13 @@ class StaffValidator:
 
             if idx == 0 and (col_norm.startswith("unnamed") or col == "" or col_norm == "index"):
                 continue
+
             if col_norm.startswith("unnamed") or col == "":
                 if not df.iloc[:, idx].dropna(how="all").empty:
-                    errors.append(f"Columna sin nombre en posición {idx+1}")
+                    errors.append(f"Columna sin nombre en posición {idx + 1}")
                 continue
 
+            # Columnas obligatorias
             if col_norm in _NORMALIZED_REQUIRED:
                 canonical = _NORMALIZED_REQUIRED[col_norm]
                 matched_required.add(canonical)
@@ -94,23 +108,32 @@ class StaffValidator:
                 usecols.append(canonical)
                 continue
 
-            # Ignore extra columns. They are allowed in the uploaded file,
-            # but they are not part of the normalized schema used for ETL.
+            # Columnas opcionales
+            if col_norm in normalized_optional:
+                canonical = normalized_optional[col_norm]
+                matched_optional.add(canonical)
+                usecols.append(canonical)
+                continue
+
+            # Otras columnas permitidas
             continue
 
-        missing = [c for c in REQUIRED_COLUMNS if c not in matched_required]
+        # Si viene nombre_completo, primer_apellido, segundo_apellido
+        # y nombres dejan de ser obligatorias.
+        has_full_name = "nombre_completo" in matched_optional
+
+        required_for_file = [column for column in REQUIRED_COLUMNS if not (has_full_name and column in NAME_COLUMNS)]
+
+        missing = [column for column in required_for_file if column not in matched_required]
 
         if missing:
             errors.append(f"Columnas faltantes: {', '.join(missing)}")
 
-        # Return usecols using canonical names from REQUIRED_COLUMNS where possible
-        usecols = [
-            _NORMALIZED_REQUIRED.get(_normalize(c), c)
-            for c in usecols
-            if _normalize(c) not in _NORMALIZED_EXTRA_ALLOWED
-        ]
-
-        return (len(errors) == 0, errors, usecols)
+        return (
+            len(errors) == 0,
+            errors,
+            usecols,
+        )
 
     @staticmethod
     def validate_row(row: dict, index: int) -> dict:
@@ -155,11 +178,17 @@ class StaffValidator:
         """Validates the full Staff dataframe and detects duplicates."""
         errors: List[Dict[str, Any]] = []
         warnings: List[Dict[str, Any]] = []
-
+        _NORMALIZED_OPTIONAL = {_normalize(c): c for c in OPTIONAL_COLUMNS}
         # Rename columns to canonical names so row validators always find the right keys
-        rename_map = {
-            col: _NORMALIZED_REQUIRED[_normalize(col)] for col in df.columns if _normalize(col) in _NORMALIZED_REQUIRED
-        }
+        rename_map = {}
+
+        for col in df.columns:
+            normalized = _normalize(col)
+            if normalized in _NORMALIZED_REQUIRED:
+                rename_map[col] = _NORMALIZED_REQUIRED[normalized]
+            elif normalized in _NORMALIZED_OPTIONAL:
+                rename_map[col] = _NORMALIZED_OPTIONAL[normalized]
+
         df = df.rename(columns=rename_map)
 
         df = df.dropna(how="all").reset_index(drop=True)

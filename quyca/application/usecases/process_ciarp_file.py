@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 import pandas as pd
 
 from quyca.domain.models.staff_report_model import StaffReport
-from quyca.domain.services.ciarp_report_service import CiarpReportService
+from quyca.domain.services.submit.ciarp_report_service import CiarpReportService
 from quyca.domain.repositories.notification_service_interface import INotificationService
 from quyca.domain.validators.ciarp_validator_interface import ICiarpValidator
 from quyca.domain.validators.ciarp_validator import CiarpValidator

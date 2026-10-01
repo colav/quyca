@@ -16,7 +16,7 @@ from quyca.domain.normalizers.staff_normalizer_service import StaffNormalizerSer
 from quyca.domain.validators.name_validator import NameValidator
 from quyca.domain.validators.staff_validator import StaffValidator
 from quyca.domain.validators.unit_validator import UnitValidator
-from quyca.domain.services.staff_report_service import StaffReportService
+from quyca.domain.services.submit.staff_report_service import StaffReportService
 from quyca.infrastructure.repositories.pdf_repository import PDFRepository
 
 

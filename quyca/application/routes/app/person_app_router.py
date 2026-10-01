@@ -5,14 +5,13 @@ from sentry_sdk import capture_exception
 
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.services import (
-    work_service,
-    person_service,
-    project_service,
-    person_plot_service,
-    csv_service,
-    patent_service,
     news_service,
 )
+from quyca.domain.services.export import export_service
+from quyca.domain.services.patent import patent_service
+from quyca.domain.services.person import person_plot_service, person_service
+from quyca.domain.services.project import project_service
+from quyca.domain.services.work import work_service
 
 person_app_router = Blueprint("person_app_router", __name__)
 
@@ -28,9 +27,9 @@ person_app_router = Blueprint("person_app_router", __name__)
 
 
 @person_app_router.route("/<person_id>", methods=["GET"])
-def get_person_by_id(person_id: str, pipeline_params: dict = {}) -> Response | Tuple[Response, int]:
+def get_person_by_id(person_id: str) -> Response | Tuple[Response, int]:
     try:
-        data = person_service.get_person_by_id(person_id, pipeline_params)
+        data = person_service.get_person_by_id(person_id)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
@@ -99,7 +98,7 @@ def get_person_research_products_filters(person_id: str) -> Response | Tuple[Res
 def get_works_csv_by_person(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        data = csv_service.get_works_csv_by_person(person_id, query_params)
+        data = export_service.get_works_csv_by_person(person_id, query_params)
         response = Response(stream_with_context(data), content_type="text/csv")
         response.headers["Content-Disposition"] = "attachment; filename=person_works.csv"
         return response
@@ -123,7 +122,7 @@ def get_works_csv_by_person(person_id: str) -> Response | Tuple[Response, int]:
 def get_works_excel_by_person(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        data = csv_service.get_works_excel_by_person(person_id, query_params)
+        data = export_service.get_works_excel_by_person(person_id, query_params)
         response = Response(
             data.getvalue(),
             content_type=("application/vnd.openxmlformats-officedocument." "spreadsheetml.sheet"),
@@ -190,29 +189,11 @@ def get_person_research_projects(person_id: str) -> Response | Tuple[Response, i
 
 
 @person_app_router.route("/<person_id>/research/news")
-def news_for_person_app(person_id: str) -> Response:
-    """
-    Flask route to retrieve news for a given person ID.
-
-    Validates and parses query parameters, invokes the service layer to get the
-    related news data, and returns a JSON response.
-
-    Route:
-    ------
-    GET /<person_id>/research/news
-
-    Parameters:
-    -----------
-    person_id : str
-        The ID of the person whose news entries are to be retrieved.
-
-    Returns:
-    --------
-    Response
-        Flask JSON response containing news data and total result count.
-    """
-    qp = QueryParams.model_validate(
-        request.args.to_dict(),
-        context={"default_max": 25},
-    )
-    return jsonify(news_service.get_news_by_person(person_id, qp))
+def news_for_person_app(person_id: str) -> Response | Tuple[Response, int]:
+    try:
+        query_params = QueryParams(**request.args)
+        data = news_service.get_news_by_person(person_id, query_params)
+        return jsonify(data)
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"error": str(e)}), 400

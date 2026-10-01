@@ -36,10 +36,26 @@ class NameValidator:
     @staticmethod
     def validate(row: dict, index: int) -> List[Dict[str, Any]]:
         errors: List[Dict[str, Any]] = []
-        for field in ["primer_apellido", "segundo_apellido", "nombres"]:
+
+        # Si existe nombre_completo, solamente se valida ese campo.
+        if not BaseValidator.is_empty(row.get("nombre_completo")):
+            fields = ["nombre_completo"]
+        else:
+            fields = [
+                "primer_apellido",
+                "segundo_apellido",
+                "nombres",
+            ]
+
+        for field in fields:
             value = row.get(field)
+
+            if BaseValidator.is_empty(value):
+                continue
+
             normalized_value = NameValidator._normalize_name(value)
-            if not BaseValidator.is_empty(value) and not NameValidator._is_valid_name(normalized_value):
+
+            if not NameValidator._is_valid_name(normalized_value):
                 errors.append(
                     {
                         "fila": index,
@@ -48,4 +64,5 @@ class NameValidator:
                         "valor": value,
                     }
                 )
+
         return errors

@@ -7,7 +7,7 @@ import pandas as pd
 
 from quyca.domain.models.staff_report_model import StaffReport
 from quyca.domain.normalizers.staff_normalizer_service import StaffNormalizerService
-from quyca.domain.services.staff_report_service import StaffReportService
+from quyca.domain.services.submit.staff_report_service import StaffReportService
 from quyca.domain.validators.error_grouper import ErrorGrouper
 from quyca.domain.validators.staff_validator import REQUIRED_COLUMNS, StaffValidator
 from quyca.infrastructure.notifications.notification import StaffNotification

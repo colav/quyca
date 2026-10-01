@@ -4,7 +4,7 @@ from typing import Generator
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.parsers import work_parser
+from quyca.domain.parsers.work import work_parser
 
 
 def build_metadata(
