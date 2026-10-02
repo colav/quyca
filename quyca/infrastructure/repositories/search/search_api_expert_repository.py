@@ -1,6 +1,7 @@
 from typing import Any, Dict, Generator, List
 from quyca.infrastructure.generators import (
     affiliation_generator,
+    geo_generator,
     patent_generator,
     person_generator,
     project_generator,
@@ -11,6 +12,7 @@ from quyca.domain.models.base_model import QueryParams
 from quyca.infrastructure.mongo import database
 from quyca.domain.constants.institutions import institutions_list
 from quyca.infrastructure.repositories import base_repository
+from quyca.infrastructure.repositories.geo.geo_repository import resolve_geo_type
 from quyca.infrastructure.repositories.search import (
     search_affiliation_filters_repository,
     search_source_filters_repository,
@@ -105,3 +107,17 @@ def search_sources_for_api_expert(query_params: QueryParams, pipeline_params: Di
 
     cursor = database["sources"].aggregate(pipeline)
     return source_generator.get(cursor)
+
+
+def search_geo_for_api_expert(query_params: QueryParams, geo_type: str) -> Generator:
+    geo_type = resolve_geo_type(geo_type)
+    pipeline: List[Dict[str, Any]] = [{"$match": {"type": geo_type}}]
+    if query_params.keywords:
+        pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
+    if sort := query_params.sort:
+        base_repository.set_sort(sort, pipeline)
+    if query_params.page and query_params.limit:
+        base_repository.set_pagination(pipeline, query_params)
+
+    cursor = database["geo"].aggregate(pipeline)
+    return geo_generator.get(cursor)

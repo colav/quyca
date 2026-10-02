@@ -165,3 +165,31 @@ def search_projects() -> Response | Tuple[Response, int]:
     except Exception as e:
         capture_exception(e)
         return jsonify({"error": str(e)}), 400
+
+
+"""
+@api {get} /geo/:geo_type Buscar entidades geográficas
+@apiName SearchGeo
+@apiGroup Search
+@apiDescription Busca entidades geográficas de Colombia según el tipo especificado.
+
+@apiParam (Path) {String} geo_type Tipo de entidad geográfica (por ejemplo: `states`, `city`).
+@apiParam (Query Params) {String} [keywords] Palabras clave de búsqueda.
+@apiParam (Query Params) {Number{1..250}} [limit] Límite máximo de resultados por página.
+@apiParam (Query Params) {Number} [page] Número de página a consultar.
+@apiParam (Query Params) {String} [sort] Criterio de ordenamiento (por ejemplo: `name:asc`).
+
+@apiSuccess (Success 200) {Object[]} data Lista de entidades geográficas encontradas.
+@apiError (400) {String} error Mensaje de error en caso de fallo o parámetros inválidos.
+"""
+
+
+@search_api_router.route("/geo/<geo_type>", methods=["GET"])
+def search_geo(geo_type: str) -> Response | Tuple[Response, int]:
+    try:
+        query_params = QueryParams(**request.args)
+        data = search_api_expert_service.search_geo(query_params, geo_type, request.url)
+        return jsonify(data)
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"error": str(e)}), 400

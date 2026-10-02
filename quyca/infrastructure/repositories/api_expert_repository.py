@@ -5,6 +5,7 @@ from quyca.infrastructure.generators import (
     work_generator,
 )
 from quyca.domain.models.base_model import QueryParams
+from quyca.infrastructure.repositories.geo.geo_repository import build_works_geo_match, resolve_geo_type
 from quyca.infrastructure.repositories.work import work_repository
 from quyca.infrastructure.mongo import database
 from quyca.domain.constants.institutions import institutions_list
@@ -61,6 +62,13 @@ def get_works_by_source_for_api_expert(
     return search_works_for_api_expert(query_params, pipeline_params, pipeline)
 
 
+def get_works_by_geo_for_api_expert(
+    geo_type: str, geo_id: str, query_params: QueryParams, pipeline_params: dict | None = None
+) -> Generator:
+    pipeline = [build_works_geo_match(geo_type, geo_id)]
+    return search_works_for_api_expert(query_params, pipeline_params or {}, pipeline)
+
+
 def count_works_for_api_expert(query_params: QueryParams) -> int:
     return count_works(query_params)
 
@@ -72,6 +80,11 @@ def count_works_by_person_for_api_expert(person_id: str, query_params: QueryPara
 
 def count_works_by_source_for_api_expert(source_id: str, query_params: QueryParams) -> int:
     base_pipeline = [{"$match": {"source.id": ObjectId(source_id)}}]
+    return count_works(query_params, base_pipeline)
+
+
+def count_works_by_geo_for_api_expert(geo_type: str, geo_id: str, query_params: QueryParams) -> int:
+    base_pipeline = [build_works_geo_match(geo_type, geo_id)]
     return count_works(query_params, base_pipeline)
 
 
@@ -172,4 +185,14 @@ def count_sources_for_api_expert(query_params: QueryParams) -> int:
     search_source_filters_repository.set_source_filters(count_pipeline, query_params)
     count_pipeline.append({"$count": "total_count"})
     result = next(database["sources"].aggregate(count_pipeline), {"total_count": 0})
+    return int(result.get("total_count", 0))
+
+
+def count_geo_for_api_expert(query_params: QueryParams, geo_type: str) -> int:
+    geo_type = resolve_geo_type(geo_type)
+    count_pipeline: list[dict[str, Any]] = [{"$match": {"type": geo_type}}]
+    if query_params.keywords:
+        count_pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
+    count_pipeline += [{"$count": "total_count"}]
+    result = next(database["geo"].aggregate(count_pipeline), {"total_count": 0})
     return int(result.get("total_count", 0))
