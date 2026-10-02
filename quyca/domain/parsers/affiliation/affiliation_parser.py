@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from quyca.domain.constants.colombian_states_cities import AFFILIATION_STATE_MAPPING, AFFILIATION_CITY_MAPPING
+from quyca.domain.constants.geo_states_cities import AFFILIATION_STATE_MAPPING, AFFILIATION_CITY_MAPPING
 
 
 def parse_available_affiliation_filters(filters: dict) -> dict:
