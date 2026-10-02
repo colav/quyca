@@ -1,5 +1,7 @@
 from typing import List
 
+from quyca.domain.models.geo_model import Geo
+
 
 def parse_works_search(works: List) -> List:
     nested_include = {
@@ -134,9 +136,5 @@ def parse_sources_search(sources: List) -> List:
     ]
 
 
-def parse_geolocations_search(geolocations: List) -> List:
-    data = []
-    for geolocation in geolocations:
-        data.append({"geoname": geolocation["_id"]})
-
-    return data
+def parse_geolocations_search(geolocations: list) -> list:
+    return [Geo(**geolocation).model_dump(exclude_none=True, exclude={"type"}) for geolocation in geolocations]

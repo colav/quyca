@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from quyca.domain.constants.colombian_states_cities import AFFILIATION_CITY_MAPPING, AFFILIATION_STATE_MAPPING
+from quyca.domain.constants.geo_states_cities import AFFILIATION_CITY_MAPPING, AFFILIATION_STATE_MAPPING
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.constants.institutions import institutions_list
 from quyca.infrastructure.mongo import database

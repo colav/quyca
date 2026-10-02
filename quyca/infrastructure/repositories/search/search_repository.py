@@ -14,6 +14,8 @@ from quyca.infrastructure.generators import (
 from quyca.infrastructure.repositories import base_repository
 from quyca.domain.constants.institutions import institutions_list
 from quyca.infrastructure.mongo import database
+from quyca.infrastructure.repositories.geo.geo_filters_repository import set_geo_filters
+from quyca.infrastructure.repositories.geo.geo_repository import resolve_geo_type
 from quyca.infrastructure.repositories.search import (
     search_affiliation_filters_repository,
     search_source_filters_repository,
@@ -157,43 +159,19 @@ def search_sources(query_params: QueryParams, pipeline_params: dict) -> Tuple[Ge
     return source_generator.generate_sources(sources), total_results
 
 
-def search_geolocations(query_params: QueryParams, location_type: str) -> Tuple[Iterator[Dict[str, Any]], int]:
-    VALID_LOCATION_TYPES = {"states": "state", "cities": "city"}
-    if location_type not in VALID_LOCATION_TYPES:
-        raise ValueError(f"location_type inválido: {location_type}. Debe ser 'states' o 'cities'.")
+def search_geolocations(
+    query_params: QueryParams, geo_type: str, pipeline_params: Dict[str, Any]
+) -> Tuple[Iterator[Dict[str, Any]], int]:
+    geo_type = resolve_geo_type(geo_type)
+    if not query_params.sort:
+        query_params = query_params.model_copy(update={"sort": "alphabetical_asc"})
 
-    address_field = VALID_LOCATION_TYPES[location_type]
+    pipeline = set_geo_filters(query_params, geo_type)
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
+    geolocations = database["geo"].aggregate(pipeline)
 
-    pipeline: List[Dict[str, Any]] = []
+    count_pipeline = set_geo_filters(query_params, geo_type)
+    count_pipeline.append({"$count": "total_results"})
+    total_results = next(database["geo"].aggregate(count_pipeline), {"total_results": 0})["total_results"]
 
-    if query_params.keywords:
-        pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
-
-    pipeline.append({"$match": {"addresses.country": "Colombia"}})
-    pipeline.append({"$unwind": "$addresses"})
-    pipeline.append({"$match": {"addresses.country": "Colombia"}})
-
-    pipeline.append({"$group": {"_id": f"$addresses.{address_field}"}})
-    pipeline.append({"$match": {"_id": {"$nin": [None, ""]}}})
-
-    data_stage: List[Dict[str, Any]] = [{"$sort": {"_id": 1}}]
-    base_repository.set_pagination(data_stage, query_params)
-
-    pipeline.append(
-        {
-            "$facet": {
-                "data": data_stage,
-                "metadata": [{"$count": "total"}],
-            }
-        }
-    )
-
-    result: Dict[str, Any] = next(
-        database["affiliations"].aggregate(pipeline),
-        {"data": [], "metadata": []},
-    )
-
-    geolocations = iter(result["data"])
-    total_geolocations = result["metadata"][0]["total"] if result["metadata"] else 0
-
-    return geolocations, total_geolocations
+    return geolocations, total_results
