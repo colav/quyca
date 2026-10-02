@@ -1,6 +1,8 @@
 from flask import Blueprint
 
 from quyca.application.routes.api.apc_api_router import apc_api_router
+from quyca.application.routes.app.geo_app_router import geo_app_router
+from quyca.application.routes.api.geo_api_router import geo_api_router
 from quyca.application.routes.app.info_app_router import info_app_router
 from quyca.config import settings
 from quyca.application.routes.app.patent_app_router import patent_app_router
@@ -63,6 +65,9 @@ router.register_blueprint(work_api_router, url_prefix=f"{settings.API_URL_PREFIX
 router.register_blueprint(patent_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/patent")
 
 router.register_blueprint(project_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/project")
+
+router.register_blueprint(geo_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/geo")
+router.register_blueprint(geo_api_router, url_prefix=f"{settings.API_URL_PREFIX}/geo")
 
 router.register_blueprint(apc_api_router, url_prefix=f"{settings.API_URL_PREFIX}/apc")
 
