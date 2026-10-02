@@ -15,7 +15,6 @@ from quyca.infrastructure.repositories import base_repository
 from quyca.domain.constants.institutions import institutions_list
 from quyca.infrastructure.mongo import database
 from quyca.infrastructure.repositories.geo.geo_filters_repository import set_geo_filters
-from quyca.infrastructure.repositories.geo.geo_repository import resolve_geo_type
 from quyca.infrastructure.repositories.search import (
     search_affiliation_filters_repository,
     search_source_filters_repository,
@@ -162,7 +161,6 @@ def search_sources(query_params: QueryParams, pipeline_params: dict) -> Tuple[Ge
 def search_geolocations(
     query_params: QueryParams, geo_type: str, pipeline_params: Dict[str, Any]
 ) -> Tuple[Iterator[Dict[str, Any]], int]:
-    geo_type = resolve_geo_type(geo_type)
     if not query_params.sort:
         query_params = query_params.model_copy(update={"sort": "alphabetical_asc"})
 

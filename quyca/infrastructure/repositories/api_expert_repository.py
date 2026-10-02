@@ -5,7 +5,7 @@ from quyca.infrastructure.generators import (
     work_generator,
 )
 from quyca.domain.models.base_model import QueryParams
-from quyca.infrastructure.repositories.geo.geo_repository import build_works_geo_match, resolve_geo_type
+from quyca.infrastructure.repositories.geo.geo_repository import build_works_geo_match
 from quyca.infrastructure.repositories.work import work_repository
 from quyca.infrastructure.mongo import database
 from quyca.domain.constants.institutions import institutions_list
@@ -189,7 +189,6 @@ def count_sources_for_api_expert(query_params: QueryParams) -> int:
 
 
 def count_geo_for_api_expert(query_params: QueryParams, geo_type: str) -> int:
-    geo_type = resolve_geo_type(geo_type)
     count_pipeline: list[dict[str, Any]] = [{"$match": {"type": geo_type}}]
     if query_params.keywords:
         count_pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})

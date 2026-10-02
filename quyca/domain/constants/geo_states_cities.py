@@ -32,8 +32,6 @@ AFFILIATION_CITY_MAPPING = {
     "Santiago de Tolú": "Tolú",
 }
 
-GEO_LOCATION_TYPES = {"states": "state", "cities": "city"}
-
 GEO_SORT_FIELDS = {
     "alphabetical": "name",
     "products": "products_count",

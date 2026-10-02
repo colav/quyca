@@ -1,6 +1,6 @@
 from typing import Any, List, Dict
 
-from quyca.domain.constants.geo_states_cities import GEO_LOCATION_TYPES, GEO_RELATED_FIELDS
+from quyca.domain.constants.geo_states_cities import GEO_RELATED_FIELDS
 from quyca.domain.exceptions.not_entity_exception import NotEntityException
 from quyca.domain.models.geo_model import Geo
 from quyca.infrastructure.generators import geo_generator
@@ -26,15 +26,8 @@ def get_geo_affiliations(geo_type: str, geo_id: str) -> Geo:
 
 
 def get_geo(geo_type: str, geo_id: str, project_stage: Dict[str, Any]) -> Geo:
-    geo_type = resolve_geo_type(geo_type)
     pipeline: List[Dict[str, Any]] = [{"$match": {"_id": geo_id, "type": geo_type}}, project_stage]
     geo = next(geo_generator.get(database["geo"].aggregate(pipeline)), None)
     if geo is None:
         raise NotEntityException(f"The geolocation with id {geo_id} does not exist.")
     return geo
-
-
-def resolve_geo_type(geo_type: str) -> str:
-    if geo_type not in GEO_LOCATION_TYPES:
-        raise ValueError(f"geo_type inválido: {geo_type}. Debe ser 'states' o 'cities'.")
-    return GEO_LOCATION_TYPES[geo_type]
