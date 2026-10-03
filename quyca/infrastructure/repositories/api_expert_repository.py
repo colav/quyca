@@ -38,7 +38,18 @@ def get_works_by_affiliation_for_api_expert(
         pipeline_params = {}
     pipeline = [
         {
-            "$match": {"authors.affiliations.id": affiliation_id, "authors.affiliations.types.type": affiliation_type},
+            "$match": {
+                "authors": {
+                    "$elemMatch": {
+                        "affiliations": {
+                            "$elemMatch": {
+                                "id": affiliation_id,
+                                "types.type": affiliation_type,
+                            }
+                        }
+                    }
+                }
+            }
         }
     ]
     return search_works_for_api_expert(query_params, pipeline_params, pipeline)
