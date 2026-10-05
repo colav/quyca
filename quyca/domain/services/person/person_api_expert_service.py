@@ -5,7 +5,7 @@ from quyca.infrastructure.repositories.person import person_repository
 def get_person_by_id(person_id: str) -> dict:
     pipeline_params = build_person_api_pipeline_params()
     person = person_repository.get_person_by_id(person_id, pipeline_params)
-    data = person_parser.parse_person(person)
+    data = person_parser.parse_person_api(person)
     return {"data": data}
 
 
@@ -23,14 +23,12 @@ def build_person_api_pipeline_params() -> dict:
             "external_ids",
             "citations_count",
             "products_count",
-            "affiliations_data",
             "age",
             "degrees",
             "updated",
             "sex",
             "subjects",
             "ranking",
-            "birthdate",
         ]
     }
     return pipeline_params
