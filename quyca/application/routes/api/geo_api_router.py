@@ -7,7 +7,14 @@ from quyca.domain.services.geo import geo_api_expert_service
 geo_api_router = Blueprint("geo_api_router", __name__)
 
 """
-Get research products by geo type and geo id.
+@api {get} /api/geo/:geo_type/:geo_id/research/products Get research products by geographic entity
+@apiName GetWorksByGeo
+@apiGroup API Expert
+@apiVersion 1.0.0
+@apiDescription Obtiene los productos de investigación relacionados con una entidad geográfica específica. Para una ciudad o departamento colombiano.
+
+@apiParam {String} geo_type Tipo de entidad geográfica. Valores permitidos: "city" o "state".
+@apiParam {String} geo_id ID de la entidad geográfica. Para ciudades corresponde al código DANE de la ciudad y para estados/departamentos al código DANE del departamento.
 """
 
 

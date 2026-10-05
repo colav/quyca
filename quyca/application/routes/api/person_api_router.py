@@ -56,7 +56,7 @@ def news_for_person(person_id: str) -> Response | Tuple[Response, int]:
 """
 @api {get} /api/person/:person_id Get person by id
 @apiName GetPersonById
-@apiGroup Person
+@apiGroup API Expert
 @apiVersion 1.0.0
 @apiDescription Obtiene un autor por su ID.
 

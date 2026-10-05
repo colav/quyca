@@ -10,7 +10,7 @@ source_api_router = Blueprint("source_api_router", __name__)
 """
 @api {get} /source/:source_id/research/products Get Research Products by Source
 @apiName GetResearchProducts
-@apiGroup Source
+@apiGroup API Expert
 @apiVersion 1.0.0
 @apiDescription Obtiene una lista paginada de productos de investigación publicados en una fuente específica.
 
