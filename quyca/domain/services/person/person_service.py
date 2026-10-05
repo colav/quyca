@@ -15,6 +15,8 @@ def build_person_api_pipeline_params() -> dict:
             "_id",
             "full_name",
             "first_names",
+            "h5_index",
+            "h_index",
             "last_names",
             "initials",
             "affiliations",
