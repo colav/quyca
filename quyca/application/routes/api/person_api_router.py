@@ -5,7 +5,7 @@ from sentry_sdk import capture_exception
 
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.services import api_expert_service, news_service
-from quyca.domain.services.person import person_service
+from quyca.domain.services.person import person_api_expert_service
 
 person_api_router = Blueprint("person_api_router", __name__)
 
@@ -67,7 +67,7 @@ def news_for_person(person_id: str) -> Response | Tuple[Response, int]:
 @person_api_router.route("/<person_id>", methods=["GET"])
 def get_person_by_id(person_id: str) -> Response | Tuple[Response, int]:
     try:
-        data = person_service.get_person_by_id(person_id)
+        data = person_api_expert_service.get_person_by_id(person_id)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
