@@ -1,30 +1,28 @@
 from flask import Blueprint
 
+from quyca.application.routes.app.affiliation_app_router import affiliation_app_router
+from quyca.application.routes.api.affiliation_api_router import affiliation_api_router
 from quyca.application.routes.api.apc_api_router import apc_api_router
+from quyca.application.routes.app.completer_app_router import completer_app_router
+from quyca.application.routes.docs_router import router as docs_router
 from quyca.application.routes.app.geo_app_router import geo_app_router
 from quyca.application.routes.api.geo_api_router import geo_api_router
 from quyca.application.routes.app.info_app_router import info_app_router
-from quyca.config import settings
 from quyca.application.routes.app.patent_app_router import patent_app_router
+from quyca.application.routes.app.person_app_router import person_app_router
+from quyca.application.routes.api.person_api_router import person_api_router
+from quyca.application.routes.ping_router import ping_router
 from quyca.application.routes.app.project_app_router import project_app_router
 from quyca.application.routes.app.search_app_router import search_app_router
 from quyca.application.routes.api.search_api_router import search_api_router
-from quyca.application.routes.app.affiliation_app_router import affiliation_app_router
-from quyca.application.routes.api.affiliation_api_router import affiliation_api_router
-from quyca.application.routes.app.user_auth_app_router import user_auth_app_router
-from quyca.application.routes.app.me_app_router import me_app_router
-from quyca.application.routes.app.user_crud_app_router import user_crud_app_router
-from quyca.application.routes.app.submit_app_router import submit_app_router
-from quyca.application.routes.app.person_app_router import person_app_router
-from quyca.application.routes.api.person_api_router import person_api_router
 from quyca.application.routes.app.source_app_router import source_app_router
 from quyca.application.routes.api.source_api_router import source_api_router
+from quyca.application.routes.app.submit_app_router import submit_app_router
+from quyca.application.routes.app.user_auth_app_router import user_auth_app_router
+from quyca.application.routes.app.user_crud_app_router import user_crud_app_router
 from quyca.application.routes.app.work_app_router import work_app_router
 from quyca.application.routes.api.work_api_router import work_api_router
-from quyca.application.routes.docs_router import router as docs_router
-from quyca.application.routes.ping_router import ping_router
-
-from quyca.application.routes.app.completer_app_router import completer_app_router
+from quyca.application.routes.app.me_app_router import me_app_router
 
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -33,9 +31,11 @@ from quyca.config import settings
 limiter = Limiter(get_remote_address, storage_uri=str(settings.MONGO_URI), strategy="fixed-window", default_limits=[])
 
 for limit in settings.API_LIMITS.split(","):
+    limiter.limit(limit)(affiliation_api_router)
+    limiter.limit(limit)(geo_api_router)
     limiter.limit(limit)(person_api_router)
     limiter.limit(limit)(search_api_router)
-    limiter.limit(limit)(affiliation_api_router)
+    limiter.limit(limit)(source_api_router)
     limiter.limit(limit)(apc_api_router)
     limiter.limit(limit)(ping_router)
     limiter.limit(limit)(docs_router)
