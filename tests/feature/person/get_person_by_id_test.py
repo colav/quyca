@@ -11,7 +11,7 @@ def test_get_by_id(client):
     assert response.status_code == 200
 
 
-@patch("quyca.domain.services.person_service.get_person_by_id")
+@patch("quyca.domain.services.person.person_service.get_person_by_id")
 def test_get_person_by_id_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 
@@ -27,7 +27,7 @@ def test_get_api_person_by_id(client):
     assert response.status_code == 200
 
 
-@patch("quyca.domain.services.person_service.get_person_by_id")
+@patch("quyca.domain.services.person.person_service.get_person_by_id")
 def test_get_api_person_by_id_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 

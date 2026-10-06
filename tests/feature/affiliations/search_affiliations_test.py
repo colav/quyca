@@ -63,7 +63,8 @@ def test_get_search_affiliations_filters_returns_service_result(affiliation_type
     assert antioquia["value"] == "Antioquia"
 
 
-@patch("quyca.domain.services.affiliation_service.get_search_affiliations_available_filters")
+
+@patch("quyca.domain.services.search.search_service.search_affiliations_available_filters")
 def test_get_search_affiliations_filters_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 
@@ -73,7 +74,7 @@ def test_get_search_affiliations_filters_returns_400_on_error(mock_service, clie
     assert response.get_json() == {"error": "boom"}
 
 
-@patch("quyca.domain.services.affiliation_service.get_search_affiliations_available_filters")
+@patch("quyca.domain.services.search.search_service.search_affiliations_available_filters")
 def test_get_search_affiliations_filters_invalid_query_params_returns_400(mock_service, client):
     url = f"{ENDPOINT}/institution/filters?max=invalid"
 
@@ -86,7 +87,8 @@ def test_get_search_affiliations_filters_invalid_query_params_returns_400(mock_s
     mock_service.assert_not_called()
 
 
-@patch("quyca.domain.services.affiliation_service.search_affiliations")
+
+@patch("quyca.domain.services.search.search_service.search_affiliations")
 def test_search_affiliations_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 

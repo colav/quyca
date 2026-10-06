@@ -1,66 +1,390 @@
 import pytest
-from typing import List
+from quyca.domain.parsers.search import search_parser
 
-from quyca.domain.parsers import geo_parser
-
-"""
-These are unit tests for the search geolocation endpoint. Using the AAA (Arrange, Act, Assert) pattern with pytest.
-
-Arrange: Set up the test client.
-Act: Send a request to the search geolocation endpoint.
-Assert: Check the response from the search geolocation endpoint.
-"""
 
 ENDPOINT = "/app/search/geo"
 
+def assert_common_search_response(data):
+    """Valida la estructura común de cualquier respuesta de búsqueda."""
+    assert "data" in data
+    assert "total_results" in data
+
+    assert isinstance(data["data"], list)
+    assert isinstance(data["total_results"], int)
+    assert data["total_results"] >= 0
+
+
+def assert_citation_structure(citations):
+    """Valida la estructura de citations_count."""
+    assert isinstance(citations, list)
+
+    for citation in citations:
+        assert isinstance(citation, dict)
+        assert "count" in citation
+        assert "source" in citation
+
+        assert isinstance(citation["count"], int)
+        assert isinstance(citation["source"], str)
+
+
+def assert_external_ids_structure(external_ids):
+    """Valida la estructura de external_ids."""
+    assert isinstance(external_ids, list)
+
+    for external_id in external_ids:
+        assert isinstance(external_id, dict)
+        assert "id" in external_id
+        assert "source" in external_id
+
 
 @pytest.mark.parametrize(
-    "location_type, query, status_code",
+    "location_type",
     [
-        ("states", "?keywords=antioquia&max=4&page=1", 200),
-        ("states", "?max=3&page=1", 200),
-        ("states", "?keywords=", 200),
-        ("cities", "?keywords=medellin&max=4&page=1", 200),
-        ("cities", "?max=3&page=1", 200),
-        ("cities", "?keywords=", 200),
+        "states",
+        "cities",
     ],
 )
-def test_search_geolocation_parametrize(client, location_type, query, status_code):
-    url = f"{ENDPOINT}/{location_type}{query}"
-
-    response = client.get(url)
-
-    assert response.status_code == status_code
-    data = response.get_json()
-    assert "data" in data
-    assert "total_results" in data
-    assert isinstance(data["data"], List)
-
-
-def test_search_geolocation_states_empty(client):
-    url = f"{ENDPOINT}/states?keywords=Th1sSt4t3DoesNotExist"
+def test_search_geolocation_returns_success(client, location_type):
+    url = f"{ENDPOINT}/{location_type}?max=10&page=1"
 
     response = client.get(url)
 
     assert response.status_code == 200
+
     data = response.get_json()
-    assert "data" in data
-    assert len(data["data"]) == 0
-    assert "total_results" in data
-    assert data["total_results"] == 0
+
+    assert_common_search_response(data)
 
 
-def test_search_geolocation_cities_empty(client):
-    url = f"{ENDPOINT}/cities?keywords=Th1sC1tyDoesNotExist"
+def test_search_geolocation_states(client):
+    url = f"{ENDPOINT}/states?max=10&page=1"
 
     response = client.get(url)
 
     assert response.status_code == 200
+
     data = response.get_json()
-    assert "data" in data
-    assert len(data["data"]) == 0
-    assert "total_results" in data
+
+    assert_common_search_response(data)
+
+    for state in data["data"]:
+        assert "id" in state
+        assert "name" in state
+        assert "country" in state
+        assert "country_code" in state
+        assert "external_ids" in state
+        assert "authors_count" in state
+        assert "citations_count" in state
+        assert "cities_count" in state
+        assert "groups_count" in state
+        assert "institutions_count" in state
+        assert "products_count" in state
+
+        assert isinstance(state["id"], str)
+        assert isinstance(state["name"], str)
+        assert isinstance(state["country"], str)
+        assert isinstance(state["country_code"], str)
+
+        assert isinstance(state["authors_count"], int)
+        assert isinstance(state["cities_count"], int)
+        assert isinstance(state["groups_count"], int)
+        assert isinstance(state["institutions_count"], int)
+        assert isinstance(state["products_count"], int)
+
+        assert_external_ids_structure(state["external_ids"])
+        assert_citation_structure(state["citations_count"])
+
+
+def test_search_geolocation_states_response_structure(client):
+    url = f"{ENDPOINT}/states?keywords=Antioquia&max=10&page=1"
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["total_results"] >= 1
+    assert len(data["data"]) >= 1
+
+    state = data["data"][0]
+
+    assert state["id"] == "05"
+    assert state["name"] == "Antioquia"
+    assert state["country"] == "Colombia"
+    assert state["country_code"] == "CO"
+
+    assert state["cities_count"] == 22
+
+    assert isinstance(state["authors_count"], int)
+    assert isinstance(state["groups_count"], int)
+    assert isinstance(state["institutions_count"], int)
+    assert isinstance(state["products_count"], int)
+
+
+def test_search_geolocation_cities(client):
+    url = f"{ENDPOINT}/cities?max=10&page=1"
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert_common_search_response(data)
+
+    for city in data["data"]:
+        assert "id" in city
+        assert "name" in city
+        assert "country" in city
+        assert "country_code" in city
+        assert "external_ids" in city
+        assert "latitude" in city
+        assert "longitude" in city
+        assert "state" in city
+        assert "authors_count" in city
+        assert "citations_count" in city
+        assert "groups_count" in city
+        assert "institutions_count" in city
+        assert "products_count" in city
+
+        assert isinstance(city["id"], str)
+        assert isinstance(city["name"], str)
+        assert isinstance(city["country"], str)
+        assert isinstance(city["country_code"], str)
+
+        assert isinstance(city["latitude"], (int, float))
+        assert isinstance(city["longitude"], (int, float))
+
+        assert isinstance(city["authors_count"], int)
+        assert isinstance(city["groups_count"], int)
+        assert isinstance(city["institutions_count"], int)
+        assert isinstance(city["products_count"], int)
+
+        assert isinstance(city["state"], dict)
+        assert "id" in city["state"]
+        assert "name" in city["state"]
+
+        assert isinstance(city["state"]["id"], str)
+        assert isinstance(city["state"]["name"], str)
+
+        assert_external_ids_structure(city["external_ids"])
+        assert_citation_structure(city["citations_count"])
+
+
+def test_search_geolocation_cities_response_structure(client):
+    url = f"{ENDPOINT}/cities?keywords=Bogota&max=10&page=1"
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["total_results"] >= 1
+    assert len(data["data"]) >= 1
+
+    city = data["data"][0]
+
+    assert city["id"] == "11001"
+    assert city["country"] == "Colombia"
+    assert city["country_code"] == "CO"
+
+    assert isinstance(city["name"], str)
+    assert isinstance(city["latitude"], (int, float))
+    assert isinstance(city["longitude"], (int, float))
+
+    assert city["state"]["id"] == "11"
+    assert city["state"]["name"] == "Bogotá, D.c."
+
+
+@pytest.mark.parametrize(
+    "location_type, keyword",
+    [
+        ("states", "Antioquia"),
+        ("cities", "Medellin"),
+        ("cities", "Bogota"),
+    ],
+)
+def test_search_geolocation_with_keywords(client, location_type, keyword):
+    url = f"{ENDPOINT}/{location_type}?keywords={keyword}&max=10&page=1"
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert_common_search_response(data)
+    assert data["total_results"] >= len(data["data"])
+
+
+@pytest.mark.parametrize(
+    "location_type",
+    [
+        "states",
+        "cities",
+    ],
+)
+def test_search_geolocation_empty_keywords(client, location_type):
+    url = f"{ENDPOINT}/{location_type}?keywords=&max=10&page=1"
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert_common_search_response(data)
+
+
+@pytest.mark.parametrize(
+    "location_type, keyword",
+    [
+        ("states", "Th1sSt4t3DoesNotExist"),
+        ("cities", "Th1sC1tyDoesNotExist"),
+    ],
+)
+def test_search_geolocation_no_results(client, location_type, keyword):
+    url = f"{ENDPOINT}/{location_type}?keywords={keyword}"
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert_common_search_response(data)
+    assert data["data"] == []
     assert data["total_results"] == 0
+
+
+@pytest.mark.parametrize(
+    "location_type",
+    [
+        "states",
+        "cities",
+    ],
+)
+@pytest.mark.parametrize(
+    "sort",
+    [
+        "alphabetical",
+        "citations",
+    ],
+)
+def test_search_geolocation_sort(client, location_type, sort):
+    url = f"{ENDPOINT}/{location_type}?sort={sort}&max=10&page=1"
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert_common_search_response(data)
+
+
+@pytest.mark.parametrize(
+    "location_type",
+    [
+        "states",
+        "cities",
+    ],
+)
+def test_search_geolocation_alphabetical_sort(client, location_type):
+    url = f"{ENDPOINT}/{location_type}?sort=alphabetical&max=10&page=1"
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert_common_search_response(data)
+
+    names = [item["name"] for item in data["data"]]
+
+    assert names == sorted(names, key=str.casefold)
+
+
+@pytest.mark.parametrize(
+    "location_type",
+    [
+        "states",
+        "cities",
+    ],
+)
+def test_search_geolocation_invalid_sort(client, location_type):
+    url = f"{ENDPOINT}/{location_type}?sort=invalid&max=10&page=1"
+
+    response = client.get(url)
+
+    assert response.status_code == 400
+
+    data = response.get_json()
+
+    assert "error" in data
+
+
+@pytest.mark.parametrize(
+    "location_type",
+    [
+        "states",
+        "cities",
+    ],
+)
+def test_search_geolocation_first_page(client, location_type):
+    url = f"{ENDPOINT}/{location_type}?max=1&page=1"
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert_common_search_response(data)
+    assert len(data["data"]) <= 1
+
+
+@pytest.mark.parametrize(
+    "location_type",
+    [
+        "states",
+        "cities",
+    ],
+)
+def test_search_geolocation_second_page(client, location_type):
+    url = f"{ENDPOINT}/{location_type}?max=1&page=2"
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert_common_search_response(data)
+    assert len(data["data"]) <= 1
+
+
+@pytest.mark.parametrize(
+    "location_type",
+    [
+        "states",
+        "cities",
+    ],
+)
+def test_search_geolocation_large_page(client, location_type):
+    url = f"{ENDPOINT}/{location_type}?max=250&page=1"
+
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert_common_search_response(data)
+    assert len(data["data"]) <= data["total_results"]
 
 
 def test_search_geolocation_invalid_params(client):
@@ -69,9 +393,49 @@ def test_search_geolocation_invalid_params(client):
     response = client.get(url)
 
     assert response.status_code == 400
+
     data = response.get_json()
+
     assert "error" in data
     assert "Input should be a valid integer" in data["error"]
+
+
+@pytest.mark.parametrize(
+    "location_type",
+    [
+        "states",
+        "cities",
+    ],
+)
+def test_search_geolocation_negative_page(client, location_type):
+    url = f"{ENDPOINT}/{location_type}?max=10&page=-1"
+
+    response = client.get(url)
+
+    assert response.status_code == 400
+
+    data = response.get_json()
+
+    assert "error" in data
+
+
+@pytest.mark.parametrize(
+    "location_type",
+    [
+        "states",
+        "cities",
+    ],
+)
+def test_search_geolocation_zero_max(client, location_type):
+    url = f"{ENDPOINT}/{location_type}?max=0&page=1"
+
+    response = client.get(url)
+
+    assert response.status_code == 400
+
+    data = response.get_json()
+
+    assert "error" in data
 
 
 @pytest.mark.parametrize(
@@ -89,154 +453,11 @@ def test_search_geolocation_invalid_location_type(client, location_type):
     response = client.get(url)
 
     assert response.status_code == 400
+
     data = response.get_json()
+
     assert "error" in data
     assert "location_type inválido" in data["error"]
-
-
-def test_search_geolocation_states(client):
-    url = f"{ENDPOINT}/states?max=10&page=1"
-
-    response = client.get(url)
-
-    assert response.status_code == 200
-    data = response.get_json()
-
-    assert "data" in data
-    assert isinstance(data["data"], List)
-    assert "total_results" in data
-    assert data["total_results"] >= len(data["data"])
-
-
-def test_search_geolocation_cities(client):
-    url = f"{ENDPOINT}/cities?max=10&page=1"
-
-    response = client.get(url)
-
-    assert response.status_code == 200
-    data = response.get_json()
-
-    assert "data" in data
-    assert isinstance(data["data"], List)
-    assert "total_results" in data
-    assert data["total_results"] >= len(data["data"])
-
-
-@pytest.mark.parametrize(
-    "location_type, keyword",
-    [
-        ("states", "Antioquia"),
-        ("cities", "Medellin"),
-    ],
-)
-def test_search_geolocation_with_keywords(client, location_type, keyword):
-    url = f"{ENDPOINT}/{location_type}?keywords={keyword}&max=10&page=1"
-
-    response = client.get(url)
-
-    assert response.status_code == 200
-    data = response.get_json()
-
-    assert "data" in data
-    assert isinstance(data["data"], List)
-    assert "total_results" in data
-    assert data["total_results"] >= len(data["data"])
-
-
-@pytest.mark.parametrize(
-    "location_type",
-    [
-        "states",
-        "cities",
-    ],
-)
-def test_search_geolocation_pagination(client, location_type):
-    url = f"{ENDPOINT}/{location_type}?max=1&page=1"
-
-    response = client.get(url)
-
-    assert response.status_code == 200
-    data = response.get_json()
-
-    assert "data" in data
-    assert isinstance(data["data"], List)
-    assert len(data["data"]) <= 1
-    assert "total_results" in data
-
-
-@pytest.mark.parametrize(
-    "location_type",
-    [
-        "states",
-        "cities",
-    ],
-)
-def test_search_geolocation_second_page(client, location_type):
-    url = f"{ENDPOINT}/{location_type}?max=1&page=2"
-
-    response = client.get(url)
-
-    assert response.status_code == 200
-    data = response.get_json()
-
-    assert "data" in data
-    assert isinstance(data["data"], List)
-    assert len(data["data"]) <= 1
-    assert "total_results" in data
-
-
-@pytest.mark.parametrize(
-    "location_type",
-    [
-        "states",
-        "cities",
-    ],
-)
-def test_search_geolocation_large_page(client, location_type):
-    url = f"{ENDPOINT}/{location_type}?max=250&page=1"
-
-    response = client.get(url)
-
-    assert response.status_code == 200
-    data = response.get_json()
-
-    assert "data" in data
-    assert isinstance(data["data"], List)
-    assert "total_results" in data
-
-
-@pytest.mark.parametrize(
-    "location_type",
-    [
-        "states",
-        "cities",
-    ],
-)
-def test_search_geolocation_negative_page(client, location_type):
-    url = f"{ENDPOINT}/{location_type}?max=10&page=-1"
-
-    response = client.get(url)
-
-    assert response.status_code == 400
-    data = response.get_json()
-    assert "error" in data
-
-
-@pytest.mark.parametrize(
-    "location_type",
-    [
-        "states",
-        "cities",
-    ],
-)
-def test_search_geolocation_zero_max(client, location_type):
-    url = f"{ENDPOINT}/{location_type}?max=0&page=1"
-
-    response = client.get(url)
-
-    assert response.status_code == 400
-    data = response.get_json()
-    assert "error" in data
 
 
 def test_search_geolocation_missing_location_type(client):
@@ -247,100 +468,169 @@ def test_search_geolocation_missing_location_type(client):
     assert response.status_code == 404
 
 
-@pytest.mark.parametrize(
-    "geolocations, expected",
-    [
-        (
-            [{"_id": "Antioquia"}],
-            [{"geoname": "Antioquia"}],
-        ),
-        (
-            [
-                {"_id": "Antioquia"},
-                {"_id": "Cundinamarca"},
-                {"_id": "Valle del Cauca"},
-            ],
-            [
-                {"geoname": "Antioquia"},
-                {"geoname": "Cundinamarca"},
-                {"geoname": "Valle del Cauca"},
-            ],
-        ),
-        (
-            [{"_id": "Medellín"}],
-            [{"geoname": "Medellín"}],
-        ),
-    ],
-)
-def test_parse_search_result_parametrize(geolocations, expected):
-    result = geo_parser.parse_search_result(geolocations)
-
-    assert result == expected
-
-
 def test_parse_search_result_empty():
     geolocations = []
 
-    result = geo_parser.parse_search_result(geolocations)
+    result = search_parser.parse_geolocations_search(geolocations)
 
     assert result == []
 
 
 def test_parse_search_result_preserves_order():
     geolocations = [
-        {"_id": "Valle del Cauca"},
-        {"_id": "Antioquia"},
-        {"_id": "Cundinamarca"},
+        {
+            "_id": "05",
+            "name": "Antioquia",
+        },
+        {
+            "_id": "11",
+            "name": "Bogotá, D.c.",
+        },
     ]
 
-    result = geo_parser.parse_search_result(geolocations)
+    result = search_parser.parse_geolocations_search(geolocations)
 
-    assert result == [
-        {"geoname": "Valle del Cauca"},
-        {"geoname": "Antioquia"},
-        {"geoname": "Cundinamarca"},
-    ]
+    assert len(result) == 2
+    assert result[0]["id"] == "05"
+    assert result[0]["name"] == "Antioquia"
+    assert result[1]["id"] == "11"
+    assert result[1]["name"] == "Bogotá, D.c."
 
 
-def test_parse_search_result_ignores_extra_fields():
+def test_parse_search_result_preserves_fields():
     geolocations = [
         {
-            "_id": "Antioquia",
+            "_id": "05",
             "name": "Antioquia",
             "country": "Colombia",
-            "extra": "value",
+            "country_code": "CO",
+            "authors_count": 43836,
+            "cities_count": 22,
+            "groups_count": 1117,
+            "institutions_count": 178,
+            "products_count": 295187,
+            "citations_count": [
+                {
+                    "count": 1172650,
+                    "source": "openalex",
+                },
+                {
+                    "count": 1126729,
+                    "source": "scholar",
+                },
+            ],
+            "external_ids": [
+                {
+                    "id": "05",
+                    "source": "dane",
+                }
+            ],
         }
     ]
 
-    result = geo_parser.parse_search_result(geolocations)
+    result = search_parser.parse_geolocations_search(geolocations)
 
-    assert result == [{"geoname": "Antioquia"}]
+    assert len(result) == 1
+
+    state = result[0]
+
+    assert state["id"] == "05"
+    assert state["name"] == "Antioquia"
+    assert state["country"] == "Colombia"
+    assert state["country_code"] == "CO"
+
+    assert state["authors_count"] == 43836
+    assert state["cities_count"] == 22
+    assert state["groups_count"] == 1117
+    assert state["institutions_count"] == 178
+    assert state["products_count"] == 295187
+
+    assert state["citations_count"] == [
+        {
+            "count": 1172650,
+            "source": "openalex",
+        },
+        {
+            "count": 1126729,
+            "source": "scholar",
+        },
+    ]
+
+    assert state["external_ids"] == [
+        {
+            "id": "05",
+            "source": "dane",
+        }
+    ]
 
 
-def test_parse_search_result_with_none_id():
-    geolocations = [{"_id": None}]
-
-    result = geo_parser.parse_search_result(geolocations)
-
-    assert result == [{"geoname": None}]
-
-
-def test_parse_search_result_with_numeric_id():
+def test_parse_search_result_city():
     geolocations = [
-        {"_id": 123},
-        {"_id": 456},
+        {
+            "_id": "11001",
+            "name": "Bogotá, D.c.",
+            "country": "Colombia",
+            "country_code": "CO",
+            "latitude": 4.649251,
+            "longitude": -74.106992,
+            "authors_count": 133557,
+            "groups_count": 2489,
+            "institutions_count": 428,
+            "products_count": 680841,
+            "citations_count": [
+                {
+                    "count": 3012900,
+                    "source": "openalex",
+                },
+                {
+                    "count": 3223321,
+                    "source": "scholar",
+                },
+            ],
+            "external_ids": [
+                {
+                    "id": "11001",
+                    "source": "dane",
+                }
+            ],
+            "state": {
+                "id": "11",
+                "name": "Bogotá, D.c.",
+            },
+        }
     ]
 
-    result = geo_parser.parse_search_result(geolocations)
+    result = search_parser.parse_geolocations_search(geolocations)
 
-    assert result == [
-        {"geoname": 123},
-        {"geoname": 456},
-    ]
+    assert len(result) == 1
+
+    city = result[0]
+
+    assert city["id"] == "11001"
+    assert city["name"] == "Bogotá, D.c."
+    assert city["country"] == "Colombia"
+    assert city["country_code"] == "CO"
+
+    assert city["latitude"] == 4.649251
+    assert city["longitude"] == -74.106992
+
+    assert city["state"] == {
+        "id": "11",
+        "name": "Bogotá, D.c.",
+    }
+
+    assert city["authors_count"] == 133557
+    assert city["groups_count"] == 2489
+    assert city["institutions_count"] == 428
+    assert city["products_count"] == 680841
 
 
 def test_parse_search_result_missing_id():
-    geolocations = [{"name": "Antioquia"}]
+    geolocations = [
+        {
+            "name": "Antioquia",
+        }
+    ]
 
     with pytest.raises(KeyError):
-        geo_parser.parse_search_result(geolocations)
+        search_parser.parse_geolocations_search(geolocations)
