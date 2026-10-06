@@ -129,6 +129,8 @@ def set_sort(sort: str | None, pipeline: list, collection: str | None = None) ->
                 {"$unset": ["names_order", "first_name"]},
             ]
             sort_field = "sort_name"
+        elif collection == "geo":
+            sort_field = "name_normalized"
         else:
             pipeline += [
                 {

@@ -373,11 +373,11 @@ def get_search_sources_filters() -> Response | Tuple[Response, int]:
 """
 
 
-@search_app_router.route("/geo/<location_type>", methods=["GET"])
-def search_geolocation(location_type: str) -> Response | Tuple[Response, int]:
+@search_app_router.route("/geo/<geo_type>", methods=["GET"])
+def search_geolocation(geo_type: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        data = search_service.search_geolocation(query_params, location_type)
+        data = search_service.search_geolocation(query_params, geo_type)
         return jsonify(data), 200
     except Exception as e:
         capture_exception(e)

@@ -12,7 +12,7 @@ work_api_router = Blueprint("work_api_router", __name__)
 """
 @api {get} /work/:work_id Get work by id
 @apiName GetWorkById
-@apiGroup Work
+@apiGroup API Expert
 @apiVersion 1.0.0
 @apiDescription Obtiene un producto bibliográfico por ID.
 

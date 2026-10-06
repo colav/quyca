@@ -31,3 +31,12 @@ AFFILIATION_CITY_MAPPING = {
     "Santiago de Cali": "Cali",
     "Santiago de Tolú": "Tolú",
 }
+
+GEO_SORT_FIELDS = {
+    "alphabetical": "name",
+    "products": "products_count",
+    "citations": "citations_count_openalex",
+}
+
+GEO_HEAVY_FIELDS = {"institutions": 0, "groups": 0, "cities": 0}
+GEO_RELATED_FIELDS = {"institutions": 1, "groups": 1, "cities": 1}

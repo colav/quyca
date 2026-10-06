@@ -9,6 +9,7 @@ from quyca.infrastructure.repositories import base_repository
 from quyca.infrastructure.mongo import database
 from quyca.domain.constants.institutions import institutions_list
 from quyca.domain.exceptions.not_entity_exception import NotEntityException
+from quyca.infrastructure.repositories.geo import geo_repository
 from quyca.infrastructure.repositories.search.search_work_filters_repository import set_product_filters
 
 
@@ -133,6 +134,24 @@ def get_works_by_source(source_id: str, query_params: QueryParams, pipeline_para
 
 def get_works_count_by_source(source_id: str, query_params: QueryParams) -> int:
     pipeline: list[dict[str, Any]] = [{"$match": {"source.id": ObjectId(source_id)}}]
+    set_product_filters(pipeline, query_params)
+    pipeline += [{"$count": "total"}]
+    return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)
+
+
+def get_works_by_geo(geo_type: str, geo_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:
+    pipeline = [geo_repository.build_works_geo_match(geo_type, geo_id)]
+    set_product_filters(pipeline, query_params)
+    if sort := query_params.sort:
+        base_repository.set_sort(sort, pipeline)
+    base_repository.set_pagination(pipeline, query_params)
+    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    cursor = database["works"].aggregate(pipeline)
+    return work_generator.get(cursor)
+
+
+def get_works_count_by_geo(geo_type: str, geo_id: str, query_params: QueryParams) -> int:
+    pipeline = [geo_repository.build_works_geo_match(geo_type, geo_id)]
     set_product_filters(pipeline, query_params)
     pipeline += [{"$count": "total"}]
     return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)

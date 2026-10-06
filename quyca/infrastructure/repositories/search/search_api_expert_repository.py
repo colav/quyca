@@ -1,6 +1,7 @@
 from typing import Any, Dict, Generator, List
 from quyca.infrastructure.generators import (
     affiliation_generator,
+    geo_generator,
     patent_generator,
     person_generator,
     project_generator,
@@ -38,7 +39,9 @@ def search_works_for_api_expert(
 ) -> Generator:
     if pipeline_params is None:
         pipeline_params = {}
-    pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    pipeline = list(pipeline) if pipeline else []
+    if query_params.keywords:
+        pipeline.insert(0, {"$match": {"$text": {"$search": query_params.keywords}}})
     work_repository.set_product_filters(pipeline, query_params)
     base_repository.set_match(pipeline, pipeline_params.get("match"))
     if sort := query_params.sort:
@@ -59,7 +62,7 @@ def search_affiliations_for_api_expert(
     types = institutions_list if affiliation_type == "institution" else [affiliation_type]
     pipeline: List[Dict[str, Any]] = []
     if query_params.keywords:
-        pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
+        pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}]
     pipeline.append({"$match": {"types.type": {"$in": types}}})
 
     search_affiliation_filters_repository.set_affiliation_filters(pipeline, query_params)
@@ -105,3 +108,16 @@ def search_sources_for_api_expert(query_params: QueryParams, pipeline_params: Di
 
     cursor = database["sources"].aggregate(pipeline)
     return source_generator.get(cursor)
+
+
+def search_geo_for_api_expert(query_params: QueryParams, geo_type: str) -> Generator:
+    pipeline: List[Dict[str, Any]] = [{"$match": {"type": geo_type}}]
+    if query_params.keywords:
+        pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
+    if sort := query_params.sort:
+        base_repository.set_sort(sort, pipeline)
+    if query_params.page and query_params.limit:
+        base_repository.set_pagination(pipeline, query_params)
+
+    cursor = database["geo"].aggregate(pipeline)
+    return geo_generator.get(cursor)

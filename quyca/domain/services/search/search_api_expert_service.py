@@ -47,3 +47,10 @@ def search_projects(query_params: QueryParams, current_url: str) -> Dict:
     projects = search_api_expert_repository.search_projects_for_api_expert(query_params)
     total_count = api_expert_repository.count_projects_for_api_expert(query_params)
     return build_metadata(projects, total_count, query_params, start_time, current_url)
+
+
+def search_geo(query_params: QueryParams, geo_type: str, current_url: str) -> Dict:
+    start_time = time.time()
+    projects = search_api_expert_repository.search_geo_for_api_expert(query_params, geo_type)
+    total_count = api_expert_repository.count_geo_for_api_expert(query_params, geo_type)
+    return build_metadata(projects, total_count, query_params, start_time, current_url)

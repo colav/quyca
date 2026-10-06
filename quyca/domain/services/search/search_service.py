@@ -5,6 +5,7 @@ from quyca.domain.parsers.work import work_parser
 from quyca.domain.parsers.affiliation import affiliation_parser
 from quyca.domain.parsers.search import search_parser
 from quyca.domain.parsers.source import source_parser
+from quyca.domain.services.geo.geo_service import build_geo_pipeline_params
 from quyca.infrastructure.repositories.search import (
     search_affiliation_filters_repository,
     search_repository,
@@ -94,8 +95,9 @@ def search_sources_available_filters(query_params: QueryParams) -> dict:
     return source_parser.parse_available_filters(available_filters)
 
 
-def search_geolocation(query_params: QueryParams, location_type: str) -> dict:
-    geolocations, total_geolocations = search_repository.search_geolocations(query_params, location_type)
+def search_geolocation(query_params: QueryParams, geo_type: str) -> dict:
+    pipeline_params = build_geo_pipeline_params()
+    geolocations, total_geolocations = search_repository.search_geolocations(query_params, geo_type, pipeline_params)
     geolocation_list = list(geolocations)
     data = search_parser.parse_geolocations_search(geolocation_list)
 

@@ -13,7 +13,7 @@ search_api_router = Blueprint("search_api_router", __name__)
 """
 @api {get} /person Buscar personas
 @apiName SearchPersons
-@apiGroup Search
+@apiGroup API Expert
 @apiDescription Redirige la búsqueda de personas al router principal.
 
 @apiParam (Query Params) {String} [keywords] Palabras clave de búsqueda (nombre o parte del nombre de la persona).
@@ -38,7 +38,7 @@ def search_persons() -> Response | Tuple[Response, int]:
 """
 @api {get} /works Buscar productos
 @apiName SearchWorks
-@apiGroup Search
+@apiGroup API Expert
 @apiDescription Busca productos en el sistema según los filtros y parámetros definidos.
 
 @apiParam (Query Params) {Number{1..250}} [limit] Límite máximo de resultados (alias: `max`).
@@ -69,7 +69,7 @@ def search_works() -> Response | Tuple[Response, int]:
 """
 @api {get} /affiliations/:affiliation_type Buscar afiliaciones
 @apiName SearchAffiliations
-@apiGroup Search
+@apiGroup API Expert
 @apiDescription Redirige la búsqueda de afiliaciones según el tipo especificado.
 
 @apiParam (Path) {String} affiliation_type Tipo de afiliación (por ejemplo: `institution`, `faculty`, `department`, `group`).
@@ -95,7 +95,7 @@ def search_affiliations(affiliation_type: str) -> Response | Tuple[Response, int
 """
 @api {get} /sources Buscar fuentes
 @apiName SearchSources
-@apiGroup Search
+@apiGroup API Expert
 @apiDescription Redirige la búsqueda de fuentes (journals, libros, conferencias, etc.) al router principal.
 
 @apiParam (Query Params) {String} [source_types] Tipo de fuente (por ejemplo: `journal`, `book`, `conference`).
@@ -122,7 +122,7 @@ def search_sources() -> Response | Tuple[Response, int]:
 """ 
 @api {get} /patents Buscar patentes
 @apiName SearchPatents
-@apiGroup Search
+@apiGroup API Expert
 @apiDescription Busca patentes en el sistema según los filtros y parámetros definidos.
 
 @apiParam (Query Params) {Number{1..250}} [limit] Límite máximo de resultados (alias: `max`).
@@ -146,7 +146,7 @@ def search_patents() -> Response | Tuple[Response, int]:
 """ 
 @api {get} /projects Buscar proyectos
 @apiName SearchProjects
-@apiGroup Search
+@apiGroup API Expert
 @apiDescription Busca proyectos en el sistema según los filtros y parámetros definidos.
 
 @apiParam (Query Params) {Number{1..250}} [limit] Límite máximo de resultados (alias: `max`).
@@ -161,6 +161,34 @@ def search_projects() -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
         data = search_api_expert_service.search_projects(query_params, request.url)
+        return jsonify(data)
+    except Exception as e:
+        capture_exception(e)
+        return jsonify({"error": str(e)}), 400
+
+
+"""
+@api {get} /geo/:geo_type Buscar entidades geográficas
+@apiName SearchGeo
+@apiGroup API Expert
+@apiDescription Busca entidades geográficas de Colombia según el tipo especificado.
+
+@apiParam (Path) {String} geo_type Tipo de entidad geográfica (por ejemplo: `states`, `city`).
+@apiParam (Query Params) {String} [keywords] Palabras clave de búsqueda.
+@apiParam (Query Params) {Number{1..250}} [limit] Límite máximo de resultados por página.
+@apiParam (Query Params) {Number} [page] Número de página a consultar.
+@apiParam (Query Params) {String} [sort] Criterio de ordenamiento (por ejemplo: `name:asc`).
+
+@apiSuccess (Success 200) {Object[]} data Lista de entidades geográficas encontradas.
+@apiError (400) {String} error Mensaje de error en caso de fallo o parámetros inválidos.
+"""
+
+
+@search_api_router.route("/geo/<geo_type>", methods=["GET"])
+def search_geo(geo_type: str) -> Response | Tuple[Response, int]:
+    try:
+        query_params = QueryParams(**request.args)
+        data = search_api_expert_service.search_geo(query_params, geo_type, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)

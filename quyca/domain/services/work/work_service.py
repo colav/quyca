@@ -86,3 +86,12 @@ def get_works_by_source(source_id: str, query_params: QueryParams) -> dict:
 def get_works_filters_by_source(source_id: str, query_params: QueryParams) -> dict:
     available_filters = work_repository.get_works_available_filters_by_source(source_id, query_params)
     return work_parser.parse_available_filters(available_filters)
+
+
+def get_works_by_geo(geo_type: str, geo_id: str, query_params: QueryParams) -> dict:
+    pipeline_params = build_work_pipeline_params()
+    works = work_repository.get_works_by_geo(geo_type, geo_id, query_params, pipeline_params)
+    works_data = get_entity_data(works)
+    data = work_parser.parse_works_by_entity(works_data)
+    total_results = work_repository.get_works_count_by_geo(geo_type, geo_id, query_params)
+    return {"data": data, "total_results": total_results}
