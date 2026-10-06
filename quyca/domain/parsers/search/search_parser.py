@@ -137,4 +137,4 @@ def parse_sources_search(sources: List) -> List:
 
 
 def parse_geolocations_search(geolocations: list) -> list:
-    return [Geo(**geolocation).model_dump(exclude_none=True, exclude={"type"}) for geolocation in geolocations]
+    return [Geo(**geolocation).model_dump(exclude_none=True, exclude={"_id"}) for geolocation in geolocations]
