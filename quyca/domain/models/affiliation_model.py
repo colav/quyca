@@ -62,7 +62,7 @@ class Status(BaseModel):
 
 class Affiliation(BaseModel):
     model_config = ConfigDict(json_encoders={ObjectId: str})
-    
+
     id: str = Field(alias="_id")
     abbreviations: list[str] | None = None
     addresses: list[Address] | Address | None = None

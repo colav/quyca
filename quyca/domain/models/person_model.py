@@ -18,7 +18,7 @@ from datetime import datetime, date
 
 class Affiliation(BaseModel):
     model_config = ConfigDict(json_encoders={ObjectId: str})
-    
+
     id: str | None = None
     name: str | None = None
     position: str | None = None
