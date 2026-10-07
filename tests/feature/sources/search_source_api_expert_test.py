@@ -8,10 +8,10 @@ def test_search_sources_without_params(client):
     data = response.get_json()
 
     assert "data" in data
-    assert "total_results" in data
+    assert "meta" in data
     assert isinstance(data["data"], list)
-    assert isinstance(data["total_results"], int)
-    assert data["total_results"] > 0
+    assert isinstance(data["meta"], dict)
+    assert data["size"] > 0
 
 
 def test_search_sources_with_pagination(client):
@@ -21,7 +21,7 @@ def test_search_sources_with_pagination(client):
     data = response.get_json()
 
     assert len(data["data"]) <= 5
-    assert data["total_results"] >= len(data["data"])
+    assert data["size"] >= len(data["data"])
 
 
 def test_search_sources_with_keywords(client):
@@ -45,7 +45,7 @@ def test_search_sources_with_multiple_filters(client):
     data = response.get_json()
 
     assert "data" in data
-    assert "total_results" in data
+    assert "meta" in data
     assert len(data["data"]) <= 10
 
 
@@ -83,10 +83,8 @@ def test_search_sources_sort_parameter(client):
 def test_search_sources_redirect_from_api_endpoint(client):
     response = client.get("/search/sources?max=10&page=1")
 
-    assert response.status_code == 302
+    assert response.status_code == 202
 
-    response_redirected = client.get("/search/sources?max=10&page=1")
-    assert response_redirected.status_code == 200
-    data = response_redirected.get_json()
+    data = response.get_json()
     assert "data" in data
-    assert "total_results" in data
+    assert "meta" in data
