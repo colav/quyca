@@ -1,6 +1,6 @@
 from typing import Any, Generator
 from datetime import datetime, timezone
-from pydantic import BaseModel, field_validator, Field, conint, model_validator
+from pydantic import BaseModel, ConfigDict, field_validator, Field, conint, model_validator
 from bson import ObjectId
 
 from quyca.domain.constants.clean_source import clean_nan
@@ -102,13 +102,12 @@ class Status(BaseModel):
 
 
 class SubjectContent(BaseModel):
+    model_config = ConfigDict(json_encoders={ObjectId: str})
+
     id: PyObjectId | None = None
     external_ids: list[ExternalId] | None = None
     level: int | str | None = None
     name: str | None
-
-    class Config:
-        json_encoders = {ObjectId: str}
 
 
 class Subject(BaseModel):
@@ -209,6 +208,8 @@ class Geography(BaseModel):
 
 
 class Affiliation(BaseModel):
+    model_config = ConfigDict(json_encoders={ObjectId: str})
+
     id: str | None = None
     name: str | None = None
     types: list[Type] | None = None
@@ -224,9 +225,6 @@ class Affiliation(BaseModel):
     h_index: int | None = None
     h5_index: int | None = None
 
-    class Config:
-        json_encoders = {ObjectId: str}
-
 
 class BirthPlace(BaseModel):
     city: str | None = None
@@ -235,6 +233,8 @@ class BirthPlace(BaseModel):
 
 
 class Author(BaseModel):
+    model_config = ConfigDict(json_encoders={ObjectId: str})
+
     id: PyObjectId | str | None = None
     affiliations: list[Affiliation] | None = Field(default_factory=list[Affiliation])
     full_name: str | None = None
@@ -290,20 +290,16 @@ class Author(BaseModel):
         self.birthdate = None
         return self
 
-    class Config:
-        json_encoders = {ObjectId: str}
-
 
 class Group(BaseModel):
+    model_config = ConfigDict(json_encoders={ObjectId: str})
+
     id: str | None = None
     name: str | None
     ranking: list[Ranking] | None = None
     citations_count: list[CitationsCount] | None = None
     h_index: int | None = None
     h5_index: int | None = None
-
-    class Config:
-        json_encoders = {ObjectId: str}
 
 
 class Title(BaseModel):

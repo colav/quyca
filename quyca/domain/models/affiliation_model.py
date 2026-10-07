@@ -1,6 +1,6 @@
 from typing import Any
 from bson import ObjectId
-from pydantic import BaseModel, Field, model_validator, field_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
 
 from quyca.domain.models.base_model import (
     Type,
@@ -61,6 +61,8 @@ class Status(BaseModel):
 
 
 class Affiliation(BaseModel):
+    model_config = ConfigDict(json_encoders={ObjectId: str})
+    
     id: str = Field(alias="_id")
     abbreviations: list[str] | None = None
     addresses: list[Address] | Address | None = None
@@ -108,6 +110,3 @@ class Affiliation(BaseModel):
         else:
             self.name = None
         return self
-
-    class Config:
-        json_encoders = {ObjectId: str}

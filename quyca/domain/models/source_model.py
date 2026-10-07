@@ -1,5 +1,5 @@
 from bson import ObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 
 
@@ -39,6 +39,8 @@ class Waiver(BaseModel):
 
 
 class Source(BaseModel):
+    model_config = ConfigDict(json_encoders={ObjectId: str})
+
     id: PyObjectId = Field(alias="_id")
     abbreviations: list[str] | None = None
     addresses: list | None = None
@@ -72,6 +74,3 @@ class Source(BaseModel):
     types: list[Type] | None = None
     updated: list[Updated] | None = None
     waiver: Waiver | None = None
-
-    class Config:
-        json_encoders = {ObjectId: str}
