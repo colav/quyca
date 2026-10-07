@@ -9,9 +9,11 @@ def test_search_sources_without_params(client):
 
     assert "data" in data
     assert "meta" in data
+
+    meta = data["meta"]
     assert isinstance(data["data"], list)
-    assert isinstance(data["meta"], dict)
-    assert data["size"] > 0
+    assert isinstance(meta, dict)
+    assert meta["size"] > 0
 
 
 def test_search_sources_with_pagination(client):
@@ -19,9 +21,10 @@ def test_search_sources_with_pagination(client):
 
     assert response.status_code == 200
     data = response.get_json()
+    meta = data["meta"]
 
     assert len(data["data"]) <= 5
-    assert data["size"] >= len(data["data"])
+    assert meta["size"] >= len(data["data"])
 
 
 def test_search_sources_with_keywords(client):
@@ -35,6 +38,7 @@ def test_search_sources_with_keywords(client):
         data = response.get_json()
 
         assert "data" in data
+        assert "meta" in data
         assert isinstance(data["data"], list)
 
 

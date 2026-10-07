@@ -1,6 +1,5 @@
 from quyca.infrastructure.mongo import database
 from unittest.mock import patch
-from quyca.domain.constants.institutions import institutions_list
 
 
 ENDPOINT = "/app/affiliation"

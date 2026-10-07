@@ -1,11 +1,8 @@
 import time
-from unittest.mock import patch
 
 import pytest
 
-from quyca.domain.models.base_model import QueryParams
 from quyca.infrastructure.repositories.search.search_source_filters_repository import (
-    search_sources_available_filters,
     set_scimago_quartiles,
     set_apc_range,
     set_open_access_routes,

@@ -63,7 +63,6 @@ def test_get_search_affiliations_filters_returns_service_result(affiliation_type
     assert antioquia["value"] == "Antioquia"
 
 
-
 @patch("quyca.domain.services.search.search_service.search_affiliations_available_filters")
 def test_get_search_affiliations_filters_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
@@ -85,7 +84,6 @@ def test_get_search_affiliations_filters_invalid_query_params_returns_400(mock_s
     assert "error" in data
     assert "Input should be a valid integer" in data["error"]
     mock_service.assert_not_called()
-
 
 
 @patch("quyca.domain.services.search.search_service.search_affiliations")

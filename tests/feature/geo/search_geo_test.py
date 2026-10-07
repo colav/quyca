@@ -4,6 +4,7 @@ from quyca.domain.parsers.search import search_parser
 
 ENDPOINT = "/app/search/geo"
 
+
 def assert_common_search_response(data):
     """Valida la estructura común de cualquier respuesta de búsqueda."""
     assert "data" in data
