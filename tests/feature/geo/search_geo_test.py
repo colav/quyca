@@ -1,3 +1,4 @@
+from pydantic import ValidationError
 import pytest
 from quyca.domain.parsers.search import search_parser
 
@@ -41,8 +42,8 @@ def assert_external_ids_structure(external_ids):
 @pytest.mark.parametrize(
     "location_type",
     [
-        "states",
-        "cities",
+        "state",
+        "city",
     ],
 )
 def test_search_geolocation_returns_success(client, location_type):
@@ -58,7 +59,7 @@ def test_search_geolocation_returns_success(client, location_type):
 
 
 def test_search_geolocation_states(client):
-    url = f"{ENDPOINT}/states?max=10&page=1"
+    url = f"{ENDPOINT}/state?max=10&page=1"
 
     response = client.get(url)
 
@@ -97,7 +98,7 @@ def test_search_geolocation_states(client):
 
 
 def test_search_geolocation_states_response_structure(client):
-    url = f"{ENDPOINT}/states?keywords=Antioquia&max=10&page=1"
+    url = f"{ENDPOINT}/state?keywords=Antioquia&max=10&page=1"
 
     response = client.get(url)
 
@@ -124,7 +125,7 @@ def test_search_geolocation_states_response_structure(client):
 
 
 def test_search_geolocation_cities(client):
-    url = f"{ENDPOINT}/cities?max=10&page=1"
+    url = f"{ENDPOINT}/city?max=10&page=1"
 
     response = client.get(url)
 
@@ -174,7 +175,7 @@ def test_search_geolocation_cities(client):
 
 
 def test_search_geolocation_cities_response_structure(client):
-    url = f"{ENDPOINT}/cities?keywords=Bogota&max=10&page=1"
+    url = f"{ENDPOINT}/city?keywords=Bogota&max=10&page=1"
 
     response = client.get(url)
 
@@ -202,9 +203,9 @@ def test_search_geolocation_cities_response_structure(client):
 @pytest.mark.parametrize(
     "location_type, keyword",
     [
-        ("states", "Antioquia"),
-        ("cities", "Medellin"),
-        ("cities", "Bogota"),
+        ("state", "Antioquia"),
+        ("city", "Medellin"),
+        ("city", "Bogota"),
     ],
 )
 def test_search_geolocation_with_keywords(client, location_type, keyword):
@@ -223,8 +224,8 @@ def test_search_geolocation_with_keywords(client, location_type, keyword):
 @pytest.mark.parametrize(
     "location_type",
     [
-        "states",
-        "cities",
+        "state",
+        "city",
     ],
 )
 def test_search_geolocation_empty_keywords(client, location_type):
@@ -242,8 +243,8 @@ def test_search_geolocation_empty_keywords(client, location_type):
 @pytest.mark.parametrize(
     "location_type, keyword",
     [
-        ("states", "Th1sSt4t3DoesNotExist"),
-        ("cities", "Th1sC1tyDoesNotExist"),
+        ("state", "Th1sSt4t3DoesNotExist"),
+        ("city", "Th1sC1tyDoesNotExist"),
     ],
 )
 def test_search_geolocation_no_results(client, location_type, keyword):
@@ -263,8 +264,8 @@ def test_search_geolocation_no_results(client, location_type, keyword):
 @pytest.mark.parametrize(
     "location_type",
     [
-        "states",
-        "cities",
+        "state",
+        "city",
     ],
 )
 @pytest.mark.parametrize(
@@ -275,7 +276,7 @@ def test_search_geolocation_no_results(client, location_type, keyword):
     ],
 )
 def test_search_geolocation_sort(client, location_type, sort):
-    url = f"{ENDPOINT}/{location_type}?sort={sort}&max=10&page=1"
+    url = f"{ENDPOINT}/{location_type}?sort={sort}_desc&max=10&page=1"
 
     response = client.get(url)
 
@@ -289,12 +290,12 @@ def test_search_geolocation_sort(client, location_type, sort):
 @pytest.mark.parametrize(
     "location_type",
     [
-        "states",
-        "cities",
+        "state",
+        "city",
     ],
 )
 def test_search_geolocation_alphabetical_sort(client, location_type):
-    url = f"{ENDPOINT}/{location_type}?sort=alphabetical&max=10&page=1"
+    url = f"{ENDPOINT}/{location_type}?sort=alphabetical_asc&max=10&page=1"
 
     response = client.get(url)
 
@@ -312,8 +313,8 @@ def test_search_geolocation_alphabetical_sort(client, location_type):
 @pytest.mark.parametrize(
     "location_type",
     [
-        "states",
-        "cities",
+        "state",
+        "city",
     ],
 )
 def test_search_geolocation_invalid_sort(client, location_type):
@@ -331,8 +332,8 @@ def test_search_geolocation_invalid_sort(client, location_type):
 @pytest.mark.parametrize(
     "location_type",
     [
-        "states",
-        "cities",
+        "state",
+        "city",
     ],
 )
 def test_search_geolocation_first_page(client, location_type):
@@ -351,8 +352,8 @@ def test_search_geolocation_first_page(client, location_type):
 @pytest.mark.parametrize(
     "location_type",
     [
-        "states",
-        "cities",
+        "state",
+        "city",
     ],
 )
 def test_search_geolocation_second_page(client, location_type):
@@ -371,8 +372,8 @@ def test_search_geolocation_second_page(client, location_type):
 @pytest.mark.parametrize(
     "location_type",
     [
-        "states",
-        "cities",
+        "state",
+        "city",
     ],
 )
 def test_search_geolocation_large_page(client, location_type):
@@ -389,7 +390,7 @@ def test_search_geolocation_large_page(client, location_type):
 
 
 def test_search_geolocation_invalid_params(client):
-    url = f"{ENDPOINT}/states?max=invalid&page=invalid"
+    url = f"{ENDPOINT}/state?max=invalid&page=invalid"
 
     response = client.get(url)
 
@@ -404,8 +405,8 @@ def test_search_geolocation_invalid_params(client):
 @pytest.mark.parametrize(
     "location_type",
     [
-        "states",
-        "cities",
+        "state",
+        "city",
     ],
 )
 def test_search_geolocation_negative_page(client, location_type):
@@ -423,8 +424,8 @@ def test_search_geolocation_negative_page(client, location_type):
 @pytest.mark.parametrize(
     "location_type",
     [
-        "states",
-        "cities",
+        "state",
+        "city",
     ],
 )
 def test_search_geolocation_zero_max(client, location_type):
@@ -444,8 +445,8 @@ def test_search_geolocation_zero_max(client, location_type):
     [
         "invalid",
         "country",
-        "state",
-        "city",
+        "states",
+        "cities",
     ],
 )
 def test_search_geolocation_invalid_location_type(client, location_type):
@@ -453,12 +454,12 @@ def test_search_geolocation_invalid_location_type(client, location_type):
 
     response = client.get(url)
 
-    assert response.status_code == 400
+    assert response.status_code == 200
 
     data = response.get_json()
 
-    assert "error" in data
-    assert "location_type inválido" in data["error"]
+    assert data["data"] == []
+    assert data["total_results"] == 0
 
 
 def test_search_geolocation_missing_location_type(client):
@@ -633,5 +634,5 @@ def test_parse_search_result_missing_id():
         }
     ]
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValidationError):
         search_parser.parse_geolocations_search(geolocations)
