@@ -87,7 +87,7 @@ def test_search_sources_sort_parameter(client):
 def test_search_sources_redirect_from_api_endpoint(client):
     response = client.get("/search/sources?max=10&page=1")
 
-    assert response.status_code == 202
+    assert response.status_code == 200
 
     data = response.get_json()
     assert "data" in data
