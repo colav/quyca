@@ -7,10 +7,9 @@ ENDPOINT = "/app/affiliation"
 
 
 def test_get_news_by_institution(client):
-    types = institutions_list
     random_institution_id = (
         database["affiliations"]
-        .aggregate([{"$match": {"types.type": types}}, {"$sample": {"size": 1}}, {"$project": {"_id": 1}}])
+        .aggregate([{"$match": {"types.type": "Education"}}, {"$sample": {"size": 1}}, {"$project": {"_id": 1}}])
         .next()["_id"]
     )
     response = client.get(f"{ENDPOINT}/institution/{random_institution_id}/research/news?max=100")
