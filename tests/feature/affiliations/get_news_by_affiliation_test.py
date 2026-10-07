@@ -6,11 +6,14 @@ ENDPOINT = "/app/affiliation"
 
 
 def test_get_news_by_institution(client):
-    random_institution_id = (
-        database["affiliations"]
-        .aggregate([{"$match": {"types.type": "Education"}}, {"$sample": {"size": 1}}, {"$project": {"_id": 1}}])
-        .next()["_id"]
+    cursor = database["affiliations"].aggregate(
+        [{"$match": {"types.type": "education"}}, {"$sample": {"size": 1}}, {"$project": {"_id": 1}}]
     )
+
+    doc = next(cursor, None)
+    assert doc is not None, "No educational institutions found in the database for testing."
+    random_institution_id = doc["_id"]
+
     response = client.get(f"{ENDPOINT}/institution/{random_institution_id}/research/news?max=100")
     assert response.status_code == 200
 
