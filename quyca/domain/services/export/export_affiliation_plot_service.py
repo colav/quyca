@@ -6,6 +6,7 @@ from quyca.domain.constants.articles_types import articles_types_list
 from quyca.domain.models.affiliation_model import Affiliation
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.models.calculations_model import Calculations
+from quyca.domain.normalizers.affiliation_names import get_affiliation_name
 from quyca.infrastructure.repositories import (
     calculations_repository,
 )
@@ -151,26 +152,21 @@ def export_h_index_by_affiliation(
         "h_index_by_research_group": "group",
     }[plot]
 
-    if affiliation_type == "institution":
-        return plot_repository.get_affiliations_works_citations_count_by_institution(
-            affiliation_id,
-            relation_type,
-            query_params,
-        )
+    if affiliation_type == "institution" or (affiliation_type == "faculty" and relation_type == "department"):
+        cursor = plot_repository.get_h_index_by_institution(affiliation_id, relation_type)
+    elif affiliation_type in {"faculty", "department"} and relation_type == "group":
+        cursor = plot_repository.get_h_index_by_faculty_or_department(affiliation_id)
+    else:
+        raise ValueError(f"El plot '{plot}' no está disponible para la afiliación '{affiliation_type}'.")
 
-    if affiliation_type == "faculty" and relation_type == "department":
-        return plot_repository.get_departments_works_citations_count_by_faculty(
-            affiliation_id,
-            query_params,
-        )
-
-    if affiliation_type in {"faculty", "department"} and relation_type == "group":
-        return plot_repository.get_groups_works_citations_count_by_faculty_or_department(
-            affiliation_id,
-            query_params,
-        )
-
-    raise ValueError(f"El plot '{query_params.plot}' no está disponible " f"para la afiliación '{affiliation_type}'.")
+    return (
+        {
+            "id": item["_id"],
+            "name": get_affiliation_name(item.get("names")),
+            "h_index": item.get("h_index") or 0,
+        }
+        for item in cursor
+    )
 
 
 def export_products_by_database(

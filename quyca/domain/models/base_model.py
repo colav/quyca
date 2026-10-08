@@ -170,6 +170,7 @@ class QueryParams(BaseModel):
     authors_ranking: str | None = None
     cities: str | None = None
     countries: str | None = None
+    fields: str | None = None
     groups_ranking: str | None = None
     keywords: str | None = None
     license_type: str | None = None

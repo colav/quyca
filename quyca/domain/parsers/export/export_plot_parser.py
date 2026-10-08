@@ -243,9 +243,11 @@ def parse_most_used_title_words(data: Calculations) -> Iterator[dict[str, Any]]:
 
 def parse_articles_by_publisher(works: Generator) -> Iterator[dict[str, Any]]:
     names = (
-        work.source.publisher.name
-        if work.source.publisher and isinstance(work.source.publisher.name, str)
-        else "Sin información"
+        (
+            work.source.publisher.name
+            if work.source.publisher and isinstance(work.source.publisher.name, str)
+            else "Sin información"
+        )
         for work in works
     )
     for publisher, count in Counter(names).items():

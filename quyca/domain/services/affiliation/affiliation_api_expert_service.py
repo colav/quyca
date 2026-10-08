@@ -1,7 +1,7 @@
 import time
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.parsers.api_expert_parser import build_metadata
+from quyca.domain.parsers.api_expert_parser import build_metadata, parse_fields
 from quyca.infrastructure.repositories import api_expert_repository
 
 
@@ -13,10 +13,13 @@ def get_works_by_affiliation(
     if affiliation_type == "institution":
         affiliation_type = "education"
 
+    fields = parse_fields(query_params.fields)
+    pipeline_params = {"project": fields} if fields else {}
+
     works = api_expert_repository.get_works_by_affiliation_for_api_expert(
-        affiliation_id, query_params, affiliation_type
+        affiliation_id, query_params, affiliation_type, pipeline_params
     )
     total_count = api_expert_repository.count_works_by_affiliation_for_api_expert(
         affiliation_id, query_params, affiliation_type
     )
-    return build_metadata(works, total_count, query_params, start_time, current_url)
+    return build_metadata(works, total_count, query_params, start_time, current_url, fields)

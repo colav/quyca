@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify, Response
 from sentry_sdk import capture_exception
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.services import api_expert_service, news_service
+from quyca.domain.services import news_service
 from quyca.domain.services.person import person_api_expert_service
 
 person_api_router = Blueprint("person_api_router", __name__)
@@ -25,7 +25,7 @@ person_api_router = Blueprint("person_api_router", __name__)
 def get_works_by_person_api_expert(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        data = api_expert_service.get_works_by_person(person_id, query_params, request.url)
+        data = person_api_expert_service.get_works_by_person(person_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)

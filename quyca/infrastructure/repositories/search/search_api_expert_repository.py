@@ -52,6 +52,7 @@ def search_works_for_api_expert(
 
     set_authors_filter_if_large(pipeline)
     work_repository.set_issn_to_pipeline(pipeline)
+    base_repository.set_project(pipeline, pipeline_params.get("project"))
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 

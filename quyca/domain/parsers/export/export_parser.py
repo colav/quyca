@@ -39,6 +39,7 @@ def build_export(work: Work, model_cls: type[WorkExportBase], person_id: str | N
     identifiers = compute_identifiers(work)
 
     fields = {
+        "id": work.id,
         "title": work.title,
         "language": work.language,
         "authors": compute_authors(work),

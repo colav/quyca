@@ -1,4 +1,4 @@
-FROM python:3.10-slim AS base
+FROM python:3.13-slim AS base
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ ENV \
 	POETRY_VIRTUALENVS_CREATE=false \ 
 	POETRY_VIRTUALENVS_IN_PROJECT=false \ 
 	POETRY_NO_INTERACTION=1 \ 
-	POETRY_VERSION=1.8.3 
+	POETRY_VERSION=1.8.4
 
 # install poetry 
 RUN pip install "poetry==$POETRY_VERSION" 
@@ -34,7 +34,7 @@ COPY . .
 RUN poetry install 
 
 # Install Node.js for apidoc generation - Development 
-FROM node:20-slim AS apidoc-builder-dev 
+FROM node:24-slim AS apidoc-builder-dev 
 
 # Install apidoc globally 
 RUN npm install -g apidoc 
@@ -46,7 +46,7 @@ COPY . .
 RUN apidoc -i ./quyca/application/ -o ./quyca/application/static/ -c quyca/application/docs/apidoc.dev.json 
 
 # Stage for apidoc generation - Production
-FROM node:20-slim AS apidoc-builder-prod
+FROM node:24-slim AS apidoc-builder-prod
 
 RUN npm install -g apidoc
 
