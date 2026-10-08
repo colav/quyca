@@ -1,7 +1,7 @@
 from typing import Any
 
 from bson import ObjectId
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from quyca.domain.models.base_model import (
     PyObjectId,
@@ -46,6 +46,8 @@ class CitationByYear(BaseModel):
 
 
 class Source(BaseModel):
+    model_config = ConfigDict(json_encoders={ObjectId: str})
+
     id: PyObjectId | str | None = None
     name: str | Any | None = None
 
@@ -62,9 +64,6 @@ class Source(BaseModel):
     publisher: Publisher | str | None = None
     apc: APC | None = None
     updated: list[Updated] | None = None
-
-    class Config:
-        json_encoders = {ObjectId: str}
 
 
 class Abstract(BaseModel):
@@ -84,6 +83,8 @@ class AuthorWork(Author):
 
 
 class Work(BaseModel):
+    model_config = ConfigDict(json_encoders={ObjectId: str})
+
     id: PyObjectId = Field(alias="_id")
     abstracts: list[Abstract] | None = None
     apc: APC | None = Field(default_factory=APC)
@@ -146,9 +147,6 @@ class Work(BaseModel):
     topics: list[Topic] | None = None
     primary_topic: Topic | None = None
     primary_topic_csv: str | None = None
-
-    class Config:
-        json_encoders = {ObjectId: str}
 
     @field_validator("date_published", mode="before")
     @classmethod

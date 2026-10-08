@@ -2,13 +2,6 @@ import pytest
 from typing import List
 from unittest.mock import patch
 
-"""
-These are unit tests for the search source endpoint. Using the AAA (Arrange, Act, Assert) pattern with pytest.
-
-Arrange: Set up the test client.
-Act: Send a request to the search source endpoint.
-Assert: Check the response from the search source endpoint.
-"""
 
 ENDPOINT = "/app/search/sources"
 
@@ -94,7 +87,7 @@ def test_search_sources_with_source_type_and_keywords(client):
     assert "total_results" in data
     for source in data["data"]:
         assert source.get("type") == "journal"
-        assert any("philosophy" in keyword.lower() for keyword in source.get("keywords", []))
+        assert any("philosophy" in name_dict.get("name", "").lower() for name_dict in source.get("names", []))
 
 
 def test_search_sources_available_filters(client):
@@ -139,7 +132,7 @@ def test_search_sources_available_filters_with_params(client, query):
     assert isinstance(data, dict)
 
 
-@patch("quyca.domain.services.source_service.get_search_sources_available_filters")
+@patch("quyca.domain.services.search.search_service.search_sources_available_filters")
 def test_get_search_sources_filters_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 

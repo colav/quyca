@@ -45,7 +45,7 @@ def test_get_related_affiliations_by_group(client):
     assert response.status_code == 200
 
 
-@patch("quyca.domain.services.affiliation_service.get_related_affiliations_by_affiliation")
+@patch("quyca.domain.services.affiliation.affiliation_service.get_related_affiliations_by_affiliation")
 def test_get_affiliation_affiliations_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 

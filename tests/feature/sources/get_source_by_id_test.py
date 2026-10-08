@@ -234,7 +234,7 @@ def test_get_source_by_id_with_all_fields(client: FlaskClient) -> None:
     source_with_data = database["sources"].find_one(
         {
             "names": {"$exists": True, "$ne": []},
-            "types": {"$exists": True, "$ne": []},
+            "type": {"$exists": True, "$ne": []},
             "external_ids": {"$exists": True, "$ne": []},
             "ranking": {"$exists": True, "$ne": []},
         }
@@ -249,6 +249,6 @@ def test_get_source_by_id_with_all_fields(client: FlaskClient) -> None:
 
         source_data = data["data"]
 
-        expected_fields = ["id", "names", "types", "external_ids"]
+        expected_fields = ["id", "names", "type", "external_ids"]
         for field in expected_fields:
             assert field in source_data

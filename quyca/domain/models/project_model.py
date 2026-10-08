@@ -1,5 +1,5 @@
 from bson import ObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from quyca.domain.models.base_model import (
     PyObjectId,
@@ -16,6 +16,8 @@ from quyca.domain.models.base_model import (
 
 
 class Project(BaseModel):
+    model_config = ConfigDict(json_encoders={ObjectId: str})
+
     id: PyObjectId = Field(alias="_id")
     abstract: str | None = None
     authors_count: int | None = Field(default_factory=int, alias="author_count")
@@ -37,6 +39,3 @@ class Project(BaseModel):
     language: str | None = None
     product_types: list[ProductType] | None = None
     title: str | None = None
-
-    class Config:
-        json_encoders = {ObjectId: str}

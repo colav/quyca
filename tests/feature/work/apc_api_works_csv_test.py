@@ -1,10 +1,6 @@
 import csv
 import io
 
-"""
-These are integration tests for the APC (Article Processing Charge) export endpoints.
-Using the AAA (Arrange, Act, Assert) pattern with pytest, same style as search_source_test.py.
-"""
 
 ENDPOINT = "/apc"
 

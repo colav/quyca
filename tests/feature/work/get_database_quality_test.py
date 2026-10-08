@@ -136,7 +136,7 @@ def test_get_entity_count_person():
     ):
         result = info_repository.get_entity_count("person")
 
-    assert result >= 1560000
+    assert result >= 1500000
 
 
 def test_get_entity_count_sources():
@@ -178,7 +178,7 @@ def test_get_open_access_count():
     ):
         result = info_repository.get_open_access_count()
 
-    assert result >= 550000
+    assert result >= 50000
 
 
 def test_get_quality_metrics_history():

@@ -10,7 +10,7 @@ def test_get_patents_by_person(client):
     assert response.status_code == 200
 
 
-@patch("quyca.domain.services.patent_service.get_patents_by_person")
+@patch("quyca.domain.services.patent.patent_service.get_patents_by_person")
 def test_get_person_research_patents_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 

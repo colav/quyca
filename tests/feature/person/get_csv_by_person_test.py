@@ -13,7 +13,7 @@ def test_get_works_csv_by_person(client):
     assert response.status_code == 200
 
 
-@patch("quyca.domain.services.csv_service.get_works_csv_by_person")
+@patch("quyca.domain.services.export.export_service.get_works_csv_by_person")
 def test_get_works_csv_by_person_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 
@@ -23,7 +23,7 @@ def test_get_works_csv_by_person_returns_400_on_error(mock_service, client):
     assert response.get_json() == {"error": "boom"}
 
 
-@patch("quyca.domain.services.csv_service.get_works_excel_by_person")
+@patch("quyca.domain.services.export.export_service.get_works_excel_by_person")
 def test_get_works_excel_by_person_success(mock_service, client):
     mock_service.return_value = io.BytesIO(b"fake-excel-bytes")
 
@@ -37,7 +37,7 @@ def test_get_works_excel_by_person_success(mock_service, client):
     assert args[0] == "123"
 
 
-@patch("quyca.domain.services.csv_service.get_works_excel_by_person")
+@patch("quyca.domain.services.export.export_service.get_works_excel_by_person")
 def test_get_works_excel_by_person_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 
@@ -47,7 +47,7 @@ def test_get_works_excel_by_person_returns_400_on_error(mock_service, client):
     assert response.get_json() == {"error": "boom"}
 
 
-@patch("quyca.domain.services.csv_service.get_works_excel_by_person")
+@patch("quyca.domain.services.export.export_service.get_works_excel_by_person")
 def test_get_works_excel_by_person_invalid_query_params_returns_400(mock_service, client):
     response = client.get(f"{ENDPOINT}/123/research/products/excel?max=invalid")
 

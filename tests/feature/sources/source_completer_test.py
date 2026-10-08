@@ -5,14 +5,6 @@ import pytest
 from quyca.config import settings
 from quyca.infrastructure.repositories.completers import source_completer
 
-"""
-Tests for the source completer. Using the AAA (Arrange, Act, Assert) pattern with pytest.
-
-- The completers.source_completer unit tests mock the Elasticsearch client.
-- The route tests hit GET /app/completer/sources/<text> through the Flask test client and mock
-  completers.source_completer, so the router's success/error handling is tested in isolation
-  from the Elasticsearch query logic (already covered above).
-"""
 
 ENDPOINT = "/app/completer/sources"
 

@@ -73,7 +73,7 @@ def test_get_source_products_csv_common_columns(client: FlaskClient) -> None:
 
     headers = rows[0]
 
-    common_columns = ["source_name", "title", "authors_csv", "openalex_citations_count", "doi"]
+    common_columns = ["source_name", "title", "authors", "openalex_citations_count", "doi"]
 
     for column in common_columns:
         matching = [h for h in headers if column.lower() in h.lower()]

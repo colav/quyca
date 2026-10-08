@@ -1,7 +1,6 @@
 import pytest
 
 from quyca.domain.parsers.source.source_parser import (
-    parse_search_result,
     parse_available_filters,
     parse_source_type_filter,
     parse_scimago_quartile_filter,
@@ -10,23 +9,6 @@ from quyca.domain.parsers.source.source_parser import (
     parse_license_types,
     parse_topic_filter,
 )
-
-"""
-Unit tests for source_parser.py. Using the AAA (Arrange, Act, Assert) pattern with pytest,
-same style used for the /app/search/sources endpoint tests.
-"""
-
-
-def test_parse_search_result_empty_list():
-    result = parse_search_result([])
-
-    assert result == []
-
-
-def test_parse_available_filters_empty_dict_returns_empty_dict():
-    result = parse_available_filters({})
-
-    assert result == {}
 
 
 def test_parse_available_filters_only_includes_present_keys():

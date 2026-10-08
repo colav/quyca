@@ -1,6 +1,6 @@
 from typing import Any, Optional
 from bson import ObjectId
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from quyca.domain.models.base_model import (
     PyObjectId,
     CitationsCount,
@@ -17,6 +17,8 @@ from datetime import datetime, date
 
 
 class Affiliation(BaseModel):
+    model_config = ConfigDict(json_encoders={ObjectId: str})
+
     id: str | None = None
     name: str | None = None
     position: str | None = None
@@ -41,9 +43,6 @@ class Affiliation(BaseModel):
             return -1
         else:
             return value
-
-    class Config:
-        json_encoders = {ObjectId: str}
 
 
 class Degree(BaseModel):
@@ -90,6 +89,8 @@ class RelatedWork(BaseModel):
 
 
 class Person(BaseModel):
+    model_config = ConfigDict(json_encoders={ObjectId: str})
+
     id: str | PyObjectId = Field(alias="_id")
     affiliations: list[Affiliation] | None = Field(default_factory=list)
     aliases: list[str] | None = Field(default_factory=list)
@@ -149,9 +150,6 @@ class Person(BaseModel):
                 self.age = None
         self.birthdate = None  # delete birthdate to avoid sensitive data exposure
         return self
-
-    class Config:
-        json_encoders = {ObjectId: str}
 
     @model_validator(mode="after")
     def get_logo(self) -> "Person":
