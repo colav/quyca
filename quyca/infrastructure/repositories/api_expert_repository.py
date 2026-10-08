@@ -36,7 +36,7 @@ def get_works_by_affiliation_for_api_expert(
 ) -> Generator:
     if pipeline_params is None:
         pipeline_params = {}
-    pipeline = [
+    pipeline: list[dict[str, Any]] = [
         {
             "$match": {
                 "authors": {
@@ -52,6 +52,7 @@ def get_works_by_affiliation_for_api_expert(
             }
         }
     ]
+
     return search_works_for_api_expert(query_params, pipeline_params, pipeline)
 
 
