@@ -70,7 +70,7 @@ def get_groups_by_faculty_or_department(affiliation_id: str) -> Generator[Affili
 
 
 def get_h_index_by_institution(institution_id: str, relation_type: str) -> CommandCursor:
-    pipeline = [
+    pipeline: list[dict[str, Any]] = [
         {"$match": {"relations.id": institution_id, "types.type": relation_type}},
         {"$project": {"_id": 1, "names": 1, "h_index": 1}},
     ]
@@ -78,7 +78,7 @@ def get_h_index_by_institution(institution_id: str, relation_type: str) -> Comma
 
 
 def get_h_index_by_ids(affiliation_ids: list[str]) -> CommandCursor:
-    pipeline = [
+    pipeline: list[dict[str, Any]] = [
         {"$match": {"_id": {"$in": affiliation_ids}}},
         {"$project": {"_id": 1, "names": 1, "h_index": 1}},
     ]
