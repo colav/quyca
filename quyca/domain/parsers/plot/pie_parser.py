@@ -10,8 +10,8 @@ from pymongo.command_cursor import CommandCursor
 from quyca.domain.constants.apc_currencies import available_currencies
 from quyca.domain.constants.open_access_status import open_access_status_dict
 from quyca.domain.models.affiliation_model import Affiliation
-from quyca.domain.helpers import get_works_h_index_by_scholar_citations
 from quyca.domain.models.calculations_model import Calculations
+from quyca.domain.normalizers.affiliation_names import get_affiliation_name
 
 
 def get_percentage(func: Callable[..., list]) -> Callable[..., dict]:
@@ -56,15 +56,14 @@ def parse_apc_expenses_by_affiliations(data: CommandCursor) -> list:
 
 @get_percentage
 def parse_h_index_by_affiliation(data: CommandCursor) -> list:
-    plot = []
-    for item in data:
-        plot.append(
-            {
-                "name": item.get("name"),
-                "value": get_works_h_index_by_scholar_citations(item.get("scholar_distribution")),
-            }
-        )
-    return sorted(plot, key=lambda x: x.get("value"), reverse=True)
+    plot = [
+        {
+            "name": get_affiliation_name(item.get("names")),
+            "value": item.get("h_index") or 0,
+        }
+        for item in data
+    ]
+    return sorted(plot, key=lambda x: x["value"], reverse=True)
 
 
 @get_percentage
