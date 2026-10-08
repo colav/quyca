@@ -4,6 +4,7 @@ from enum import Enum
 
 
 class WorkExportBase(BaseModel):
+    id: str | None = None
     title: str | None = None
     language: str | None = None
     authors: str | None = None
