@@ -1,82 +1,42 @@
 from flask import Blueprint
 
-from quyca.application.routes.app.affiliation_app_router import affiliation_app_router
-from quyca.application.routes.api.affiliation_api_router import affiliation_api_router
-from quyca.application.routes.api.apc_api_router import apc_api_router
-from quyca.application.routes.app.completer_app_router import completer_app_router
+from quyca.application.routes.affiliation_router import affiliation_router
+from quyca.application.routes.apc_router import apc_router
+from quyca.application.routes.completer_router import completer_router
 from quyca.application.routes.docs_router import router as docs_router
-from quyca.application.routes.app.geo_app_router import geo_app_router
-from quyca.application.routes.api.geo_api_router import geo_api_router
-from quyca.application.routes.app.info_app_router import info_app_router
-from quyca.application.routes.app.patent_app_router import patent_app_router
-from quyca.application.routes.app.person_app_router import person_app_router
-from quyca.application.routes.api.person_api_router import person_api_router
+from quyca.application.routes.geo_router import geo_router
+from quyca.application.routes.info_router import info_router
+from quyca.application.routes.patent_router import patent_router
+from quyca.application.routes.person_router import person_router
 from quyca.application.routes.ping_router import ping_router
-from quyca.application.routes.app.project_app_router import project_app_router
-from quyca.application.routes.app.search_app_router import search_app_router
-from quyca.application.routes.api.search_api_router import search_api_router
-from quyca.application.routes.app.source_app_router import source_app_router
-from quyca.application.routes.api.source_api_router import source_api_router
-from quyca.application.routes.app.submit_app_router import submit_app_router
-from quyca.application.routes.app.user_auth_app_router import user_auth_app_router
-from quyca.application.routes.app.user_crud_app_router import user_crud_app_router
-from quyca.application.routes.app.work_app_router import work_app_router
-from quyca.application.routes.api.work_api_router import work_api_router
-from quyca.application.routes.app.me_app_router import me_app_router
+from quyca.application.routes.project_router import project_router
+from quyca.application.routes.search_router import search_router
+from quyca.application.routes.source_router import source_router
+from quyca.application.routes.submit_router import submit_router
+from quyca.application.routes.user_auth_router import user_auth_router
+from quyca.application.routes.user_crud_router import user_crud_router
+from quyca.application.routes.work_router import work_router
+from quyca.application.routes.me_router import me_router
 
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from quyca.config import settings
-
-limiter = Limiter(get_remote_address, storage_uri=str(settings.MONGO_URI), strategy="fixed-window", default_limits=[])
-
-for limit in settings.API_LIMITS.split(","):
-    limiter.limit(limit)(affiliation_api_router)
-    limiter.limit(limit)(geo_api_router)
-    limiter.limit(limit)(person_api_router)
-    limiter.limit(limit)(search_api_router)
-    limiter.limit(limit)(source_api_router)
-    limiter.limit(limit)(apc_api_router)
-    limiter.limit(limit)(ping_router)
-    limiter.limit(limit)(docs_router)
 
 router = Blueprint("router", __name__)
 
-router.register_blueprint(ping_router)
-router.register_blueprint(docs_router)
+router.register_blueprint(search_router, url_prefix=f"{settings.API_URL_PREFIX}/search")
+router.register_blueprint(affiliation_router, url_prefix=f"{settings.API_URL_PREFIX}/affiliation")
+router.register_blueprint(person_router, url_prefix=f"{settings.API_URL_PREFIX}/person")
+router.register_blueprint(source_router, url_prefix=f"{settings.API_URL_PREFIX}/source")
+router.register_blueprint(work_router, url_prefix=f"{settings.API_URL_PREFIX}/work")
+router.register_blueprint(patent_router, url_prefix=f"{settings.API_URL_PREFIX}/patent")
+router.register_blueprint(project_router, url_prefix=f"{settings.API_URL_PREFIX}/project")
+router.register_blueprint(geo_router, url_prefix=f"{settings.API_URL_PREFIX}/geo")
+router.register_blueprint(apc_router, url_prefix=f"{settings.API_URL_PREFIX}/apc")
+router.register_blueprint(completer_router, url_prefix=f"{settings.API_URL_PREFIX}/completer")
+router.register_blueprint(user_auth_router, url_prefix=f"{settings.API_URL_PREFIX}")
+router.register_blueprint(me_router, url_prefix=f"{settings.API_URL_PREFIX}")
+router.register_blueprint(user_crud_router, url_prefix=f"{settings.API_URL_PREFIX}")
+router.register_blueprint(submit_router, url_prefix=f"{settings.API_URL_PREFIX}/submit")
 
-router.register_blueprint(info_app_router, url_prefix=f"{settings.APP_URL_PREFIX}")
-
-router.register_blueprint(search_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/search")
-router.register_blueprint(search_api_router, url_prefix=f"{settings.API_URL_PREFIX}/search")
-
-router.register_blueprint(affiliation_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/affiliation")
-router.register_blueprint(affiliation_api_router, url_prefix=f"{settings.API_URL_PREFIX}/affiliation")
-
-router.register_blueprint(person_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/person")
-router.register_blueprint(person_api_router, url_prefix=f"{settings.API_URL_PREFIX}/person")
-
-router.register_blueprint(source_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/source")
-router.register_blueprint(source_api_router, url_prefix=f"{settings.API_URL_PREFIX}/source")
-
-router.register_blueprint(work_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/work")
-router.register_blueprint(work_api_router, url_prefix=f"{settings.API_URL_PREFIX}/work")
-
-router.register_blueprint(patent_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/patent")
-
-router.register_blueprint(project_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/project")
-
-router.register_blueprint(geo_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/geo")
-router.register_blueprint(geo_api_router, url_prefix=f"{settings.API_URL_PREFIX}/geo")
-
-router.register_blueprint(apc_api_router, url_prefix=f"{settings.API_URL_PREFIX}/apc")
-
-router.register_blueprint(completer_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/completer")
-
-router.register_blueprint(user_auth_app_router, url_prefix=f"{settings.APP_URL_PREFIX}")
-
-router.register_blueprint(me_app_router, url_prefix=f"{settings.APP_URL_PREFIX}")
-
-router.register_blueprint(user_crud_app_router, url_prefix=f"{settings.APP_URL_PREFIX}")
-
-router.register_blueprint(submit_app_router, url_prefix=f"{settings.APP_URL_PREFIX}/submit")
+router.register_blueprint(info_router, url_prefix=f"{settings.API_URL_PREFIX}")
+router.register_blueprint(ping_router, url_prefix=f"{settings.API_URL_PREFIX}")
+router.register_blueprint(docs_router, url_prefix=f"{settings.API_URL_PREFIX}")
