@@ -1,7 +1,7 @@
 from quyca.infrastructure.mongo import database
 from unittest.mock import patch
 
-ENDPOINT = "/app/affiliation"
+ENDPOINT = "/affiliation"
 
 
 def test_get_works_by_institution(client):

@@ -159,6 +159,7 @@ def test_get_works_by_source_doi(client: FlaskClient) -> None:
     if not random_source_id:
         pytest.skip("No hay fuentes con productos en la base de datos")
 
+    print(f"Testing source ID: {random_source_id}")
     response = client.get(f"/source/{random_source_id}/products?max=10&page=1")
 
     assert response.status_code == 200

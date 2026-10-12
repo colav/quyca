@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from quyca.infrastructure.repositories import info_repository
 
-ENDPOINT = "/app/info/quality"
+ENDPOINT = "/info/quality"
 
 
 def test_quality_metrics(client):

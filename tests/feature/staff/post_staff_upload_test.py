@@ -41,7 +41,7 @@ def test_staff_upload_invalid_token(client: FlaskClient) -> None:
     client.set_cookie("access_token_cookie", "invalid_token")
 
     response = client.post(
-        "/app/submit/staff",
+        "/submit/staff",
         data={"file": (io.BytesIO(b"excel-content"), "staff.xlsx")},
         content_type="multipart/form-data",
     )
@@ -67,7 +67,7 @@ def test_staff_upload_with_invalid_columns(client: FlaskClient) -> None:
         )
 
         response = client.post(
-            "/app/submit/staff",
+            "/submit/staff",
             data={"file": (io.BytesIO(b"excel-content"), "staff.xlsx")},
             content_type="multipart/form-data",
         )
@@ -88,7 +88,7 @@ def test_staff_upload_empty_file(client: FlaskClient) -> None:
         )
 
         response = client.post(
-            "/app/submit/staff",
+            "/submit/staff",
             data={"file": (io.BytesIO(b""), "staff.xlsx")},
             content_type="multipart/form-data",
         )
@@ -108,7 +108,7 @@ def test_staff_upload_success(client: FlaskClient) -> None:
         )
 
         response = client.post(
-            "/app/submit/staff",
+            "/submit/staff",
             data={"file": (io.BytesIO(b"excel-content"), "staff.xlsx")},
             content_type="multipart/form-data",
         )
@@ -231,7 +231,7 @@ def test_staff_upload_storage_failure_returns_500(client: FlaskClient) -> None:
         )
 
         response = client.post(
-            "/app/submit/staff",
+            "/submit/staff",
             data={"file": (io.BytesIO(b"excel-content"), "staff.xlsx")},
             content_type="multipart/form-data",
         )
@@ -578,7 +578,7 @@ def test_pdf_report_includes_normalization_section() -> None:
 def test_staff_upload_no_file(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    response = client.post("/app/submit/staff", data={})
+    response = client.post("/submit/staff", data={})
 
     assert response.status_code == 400
     json_data = cast(dict[str, Any], response.json)
@@ -596,7 +596,7 @@ def test_staff_upload_with_errors(client: FlaskClient) -> None:
         )
 
         response = client.post(
-            "/app/submit/staff",
+            "/submit/staff",
             data={"file": (io.BytesIO(b"excel-content"), "staff.xlsx")},
             content_type="multipart/form-data",
         )
@@ -617,7 +617,7 @@ def test_staff_upload_with_duplicates(client: FlaskClient) -> None:
         )
 
         response = client.post(
-            "/app/submit/staff",
+            "/submit/staff",
             data={"file": (io.BytesIO(b"excel-with-duplicates"), "staff.xlsx")},
             content_type="multipart/form-data",
         )
@@ -634,7 +634,7 @@ def test_staff_upload_email_failed(client: FlaskClient) -> None:
         mock_service.side_effect = Exception("Email service down")
 
         response = client.post(
-            "/app/submit/staff",
+            "/submit/staff",
             data={"file": (io.BytesIO(b"excel-content"), "staff.xlsx")},
             content_type="multipart/form-data",
         )

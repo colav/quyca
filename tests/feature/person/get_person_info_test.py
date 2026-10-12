@@ -1,4 +1,4 @@
-ENDPOINT = "/app/info"
+ENDPOINT = "/info"
 
 
 def test_info_person_and_news(client):

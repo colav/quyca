@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 
-ENDPOINT = "/app/search/patents"
+ENDPOINT = "/search/patents"
 
 
 def test_search_patents(client) -> None:

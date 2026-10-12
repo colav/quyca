@@ -8,7 +8,7 @@ def test_it_can_plot_h_index_by_research_group_by_institution(client):
         .next()["_id"]
     )
     response = client.get(
-        f"/app/affiliation/institution/{random_institution_id}/research/products?plot=h_index_by_research_group"
+        f"/affiliation/institution/{random_institution_id}/research/products?plot=h_index_by_research_group"
     )
     assert response.status_code == 200
 
@@ -19,10 +19,10 @@ def test_it_can_plot_h_index_by_research_group_by_faculty(client):
         .aggregate([{"$match": {"types.type": "faculty"}}, {"$sample": {"size": 1}}])
         .next()["_id"]
     )
-    response = client.get(f"/app/affiliation/faculty/{random_faculty_id}/research/products")
+    response = client.get(f"/affiliation/faculty/{random_faculty_id}/research/products")
     assert response.status_code == 200
     response = client.get(
-        f"/app/affiliation/faculty/{random_faculty_id}/research/products?plot=h_index_by_research_group"
+        f"/affiliation/faculty/{random_faculty_id}/research/products?plot=h_index_by_research_group"
     )
     assert response.status_code == 200
 
@@ -34,6 +34,6 @@ def test_it_can_plot_h_index_by_research_group_by_department(client):
         .next()["_id"]
     )
     response = client.get(
-        f"/app/affiliation/department/{random_department_id}/research/products?plot=h_index_by_research_group"
+        f"/affiliation/department/{random_department_id}/research/products?plot=h_index_by_research_group"
     )
     assert response.status_code == 200
