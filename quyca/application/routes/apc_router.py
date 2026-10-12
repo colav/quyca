@@ -9,10 +9,10 @@ from sentry_sdk import capture_exception
 from quyca.domain.models.base_model import QueryParams
 from quyca.infrastructure.mongo import database
 
-apc_api_router = Blueprint("apc_api_router", __name__)
+apc_router = Blueprint("apc_api_router", __name__)
 
 
-@apc_api_router.route("/search", methods=["GET"])
+@apc_router.route("/search", methods=["GET"])
 def apc_search() -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
@@ -57,7 +57,7 @@ def apc_search() -> Response | Tuple[Response, int]:
         return jsonify({"error": str(e)}), 400
 
 
-@apc_api_router.route("/person/<person_id>", methods=["GET"])
+@apc_router.route("/person/<person_id>", methods=["GET"])
 def apc_person(person_id: str) -> Response | Tuple[Response, int]:
     try:
         pipeline: Sequence[Mapping[str, Any]] = [
@@ -109,7 +109,7 @@ def apc_person(person_id: str) -> Response | Tuple[Response, int]:
         return jsonify({"error": str(e)}), 400
 
 
-@apc_api_router.route("/affiliation/<affiliation_id>", methods=["GET"])
+@apc_router.route("/affiliation/<affiliation_id>", methods=["GET"])
 def apc_affiliation(affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
         pipeline: Sequence[Mapping[str, Any]] = [

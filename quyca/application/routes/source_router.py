@@ -8,7 +8,7 @@ from quyca.domain.services.export import export_service
 from quyca.domain.services.source import source_plot_service, source_service
 
 
-source_app_router = Blueprint("source_app_router", __name__)
+source_router = Blueprint("source_app_router", __name__)
 
 """
 @api {get} /source/:source_id Get Source by ID
@@ -29,7 +29,7 @@ HTTP/1.1 404 Not Found
 """
 
 
-@source_app_router.route("/<source_id>", methods=["GET"])
+@source_router.route("/<source_id>", methods=["GET"])
 def get_source_by_id(source_id: str) -> Response | Tuple[Response, int]:
     try:
         data = source_service.get_source_by_id(source_id)
@@ -40,7 +40,7 @@ def get_source_by_id(source_id: str) -> Response | Tuple[Response, int]:
 
 
 """
-@api {get} /app/source/:source_id/products Get works by source
+@api {get} /source/:source_id/products Get works by source
 @apiName GetSourceProducts
 @apiGroup Source
 @apiVersion 1.0.0
@@ -54,14 +54,14 @@ def get_source_by_id(source_id: str) -> Response | Tuple[Response, int]:
 """
 
 
-@source_app_router.route("/<source_id>/products", methods=["GET"])
+@source_router.route("/<source_id>/products", methods=["GET"])
 def get_source_products(source_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
         if query_params.plot:
             data = source_plot_service.get_source_products_plot(source_id, query_params)
             return jsonify(data)
-        data = work_service.get_works_by_source(source_id, query_params)
+        data = work_service.get_works_by_source(source_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
@@ -69,7 +69,7 @@ def get_source_products(source_id: str) -> Response | Tuple[Response, int]:
 
 
 """
-@api {get} /app/source/:source_id/products/filters Get works filters by source
+@api {get} /source/:source_id/products/filters Get works filters by source
 @apiName GetSourceProductsFilters
 @apiGroup Source
 @apiVersion 1.0.0
@@ -83,7 +83,7 @@ def get_source_products(source_id: str) -> Response | Tuple[Response, int]:
 """
 
 
-@source_app_router.route("/<source_id>/products/filters", methods=["GET"])
+@source_router.route("/<source_id>/products/filters", methods=["GET"])
 def get_source_products_filters(source_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
@@ -95,7 +95,7 @@ def get_source_products_filters(source_id: str) -> Response | Tuple[Response, in
 
 
 """
-@api {get} /app/source/:source_id/products/csv Get works csv by Source
+@api {get} /source/:source_id/products/csv Get works csv by Source
 @apiName GetSourceProductsCSV
 @apiGroup Source
 @apiVersion 1.0.0
@@ -110,7 +110,7 @@ Content-Disposition: attachment; filename=source.csv
 """
 
 
-@source_app_router.route("/<source_id>/products/csv", methods=["GET"])
+@source_router.route("/<source_id>/products/csv", methods=["GET"])
 def get_works_csv_by_source(source_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
@@ -124,7 +124,7 @@ def get_works_csv_by_source(source_id: str) -> Response | Tuple[Response, int]:
 
 
 """
-@api {get} /app/source/:source_id/products/excel Get works excel by Source
+@api {get} /source/:source_id/products/excel Get works excel by Source
 @apiName GetSourceProductsExcel
 @apiGroup Source
 @apiVersion 1.0.0
@@ -139,7 +139,7 @@ Content-Disposition: attachment; filename=source_works.xlsx
 """
 
 
-@source_app_router.route("/<source_id>/products/excel", methods=["GET"])
+@source_router.route("/<source_id>/products/excel", methods=["GET"])
 def get_works_excel_by_source(source_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)

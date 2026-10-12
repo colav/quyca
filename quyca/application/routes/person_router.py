@@ -13,10 +13,10 @@ from quyca.domain.services.person import person_plot_service, person_service
 from quyca.domain.services.project import project_service
 from quyca.domain.services.work import work_service
 
-person_app_router = Blueprint("person_app_router", __name__)
+person_router = Blueprint("person_app_router", __name__)
 
 """
-@api {get} /app/person/:person_id Get person by id
+@api {get} /person/:person_id Get person by id
 @apiName GetPersonById
 @apiGroup Person
 @apiVersion 1.0.0
@@ -26,7 +26,7 @@ person_app_router = Blueprint("person_app_router", __name__)
 """
 
 
-@person_app_router.route("/<person_id>", methods=["GET"])
+@person_router.route("/<person_id>", methods=["GET"])
 def get_person_by_id(person_id: str) -> Response | Tuple[Response, int]:
     try:
         data = person_service.get_person_by_id(person_id)
@@ -37,7 +37,7 @@ def get_person_by_id(person_id: str) -> Response | Tuple[Response, int]:
 
 
 """
-@api {get} /app/person/:person_id/research/products Get person research products
+@api {get} /person/:person_id/research/products Get person research products
 @apiName GetPersonResearchProducts
 @apiGroup Person
 @apiVersion 1.0.0
@@ -47,14 +47,14 @@ def get_person_by_id(person_id: str) -> Response | Tuple[Response, int]:
 """
 
 
-@person_app_router.route("/<person_id>/research/products", methods=["GET"])
+@person_router.route("/<person_id>/research/products", methods=["GET"])
 def get_person_research_products(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
         if query_params.plot:
             data = person_plot_service.get_person_plot(person_id, query_params)
             return jsonify(data)
-        data = work_service.get_works_by_person(person_id, query_params)
+        data = work_service.get_works_by_person(person_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
@@ -62,7 +62,7 @@ def get_person_research_products(person_id: str) -> Response | Tuple[Response, i
 
 
 """
-@api {get} /app/person/:person_id/research/products/filters Get person research products filters
+@api {get} /person/:person_id/research/products/filters Get person research products filters
 @apiName GetPersonResearchProductsFilters
 @apiGroup Person
 @apiVersion 1.0.0
@@ -72,7 +72,7 @@ def get_person_research_products(person_id: str) -> Response | Tuple[Response, i
 """
 
 
-@person_app_router.route("/<person_id>/research/products/filters", methods=["GET"])
+@person_router.route("/<person_id>/research/products/filters", methods=["GET"])
 def get_person_research_products_filters(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
@@ -84,7 +84,7 @@ def get_person_research_products_filters(person_id: str) -> Response | Tuple[Res
 
 
 """
-@api {get} /app/person/:person_id/research/products/csv Get person research products csv
+@api {get} /person/:person_id/research/products/csv Get person research products csv
 @apiName GetPersonResearchProductsCsv
 @apiGroup Person
 @apiVersion 1.0.0
@@ -94,7 +94,7 @@ def get_person_research_products_filters(person_id: str) -> Response | Tuple[Res
 """
 
 
-@person_app_router.route("/<person_id>/research/products/csv", methods=["GET"])
+@person_router.route("/<person_id>/research/products/csv", methods=["GET"])
 def get_works_csv_by_person(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
@@ -108,7 +108,7 @@ def get_works_csv_by_person(person_id: str) -> Response | Tuple[Response, int]:
 
 
 """
-@api {get} /app/person/:person_id/research/products/excel Get person research products excel
+@api {get} /person/:person_id/research/products/excel Get person research products excel
 @apiName GetPersonResearchProductsExcel
 @apiGroup Person
 @apiVersion 1.0.0
@@ -118,7 +118,7 @@ def get_works_csv_by_person(person_id: str) -> Response | Tuple[Response, int]:
 """
 
 
-@person_app_router.route("/<person_id>/research/products/excel", methods=["GET"])
+@person_router.route("/<person_id>/research/products/excel", methods=["GET"])
 def get_works_excel_by_person(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
@@ -135,7 +135,7 @@ def get_works_excel_by_person(person_id: str) -> Response | Tuple[Response, int]
 
 
 """
-@api {get} /app/person/:person_id/research/patents Get person research patents
+@api {get} /person/:person_id/research/patents Get person research patents
 @apiName GetPersonResearchPatents
 @apiGroup Person
 @apiVersion 1.0.0
@@ -145,11 +145,11 @@ def get_works_excel_by_person(person_id: str) -> Response | Tuple[Response, int]
 """
 
 
-@person_app_router.route("/<person_id>/research/patents", methods=["GET"])
+@person_router.route("/<person_id>/research/patents", methods=["GET"])
 def get_person_research_patents(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        data = patent_service.get_patents_by_person(person_id, query_params)
+        data = patent_service.get_patents_by_person(person_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
@@ -157,7 +157,7 @@ def get_person_research_patents(person_id: str) -> Response | Tuple[Response, in
 
 
 """
-@api {get} /app/person/:person_id/research/projects Get person research projects
+@api {get} /person/:person_id/research/projects Get person research projects
 @apiName GetPersonResearchProjects
 @apiGroup Person
 @apiVersion 1.0.0
@@ -167,11 +167,11 @@ def get_person_research_patents(person_id: str) -> Response | Tuple[Response, in
 """
 
 
-@person_app_router.route("/<person_id>/research/projects", methods=["GET"])
+@person_router.route("/<person_id>/research/projects", methods=["GET"])
 def get_person_research_projects(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        data = project_service.get_projects_by_person(person_id, query_params)
+        data = project_service.get_projects_by_person(person_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
@@ -179,7 +179,7 @@ def get_person_research_projects(person_id: str) -> Response | Tuple[Response, i
 
 
 """
-@api {get} /app/person/:person_id/research/news Get person research news
+@api {get} /person/:person_id/research/news Get person research news
 @apiName GetPersonResearchNews
 @apiGroup Person
 @apiVersion 1.0.0
@@ -188,11 +188,11 @@ def get_person_research_projects(person_id: str) -> Response | Tuple[Response, i
 """
 
 
-@person_app_router.route("/<person_id>/research/news")
+@person_router.route("/<person_id>/research/news")
 def news_for_person_app(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams(**request.args)
-        data = news_service.get_news_by_person(person_id, query_params)
+        data = news_service.get_news_by_person(person_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)

@@ -7,10 +7,10 @@ from quyca.domain.services import (
     info_service,
 )
 
-info_app_router = Blueprint("info_app_router", __name__)
+info_router = Blueprint("info_router", __name__)
 
 
-@info_app_router.route("/info", methods=["GET"])
+@info_router.route("/info", methods=["GET"])
 def get_info() -> Response | Tuple[Response, int]:
     try:
         data = info_service.get_info()
@@ -20,7 +20,7 @@ def get_info() -> Response | Tuple[Response, int]:
         return jsonify({"error": str(e)}), 400
 
 
-@info_app_router.route("/info/quality", methods=["GET"])
+@info_router.route("/info/quality", methods=["GET"])
 def get_quality_metrics() -> Response | Tuple[Response, int]:
     try:
         data = info_service.get_quality_metrics()

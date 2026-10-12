@@ -9,7 +9,7 @@ from quyca.domain.exceptions.not_entity_exception import NotEntityException
 HTTP routes for admin user management (JWT-protected).
 """
 
-user_crud_app_router = Blueprint("user_crud_app_router", __name__)
+user_crud_router = Blueprint("user_crud_app_router", __name__)
 usecase = UserCrudUseCase()
 
 
@@ -37,7 +37,7 @@ def check_admin_permission() -> tuple[dict[str, Any] | None, int | None]:
 
 
 """
-@api {post} /app/admin/users/:email Create user (admin only)
+@api {post} /admin/users/:email Create user (admin only)
 @apiName CreateUser
 @apiGroup Users
 @apiVersion 1.0.0
@@ -78,7 +78,7 @@ Authentication uses HttpOnly cookie `access_token_cookie` (token is not sent in 
 """
 
 
-@user_crud_app_router.route("/admin/users/<email>", methods=["POST"])
+@user_crud_router.route("/admin/users/<email>", methods=["POST"])
 def create_user(email: str) -> tuple[Any, int]:
     """Creates a user (admin-only)."""
     error_response, status = check_admin_permission()
@@ -106,7 +106,7 @@ def create_user(email: str) -> tuple[Any, int]:
 
 
 """
-@api {get} /app/admin/users List users (admin only)
+@api {get} /admin/users List users (admin only)
 @apiName ListUsers
 @apiGroup Users
 @apiVersion 1.0.0
@@ -133,7 +133,7 @@ Authentication uses HttpOnly cookie `access_token_cookie`.
 """
 
 
-@user_crud_app_router.route("/admin/users", methods=["GET"])
+@user_crud_router.route("/admin/users", methods=["GET"])
 def list_users() -> tuple[Any, int]:
     """Lists users (admin-only, excludes admins)."""
     error_response, status = check_admin_permission()
@@ -149,7 +149,7 @@ def list_users() -> tuple[Any, int]:
 
 
 """
-@api {delete} /app/admin/users/:email Deactivate user
+@api {delete} /admin/users/:email Deactivate user
 @apiName DeactivateUser
 @apiGroup Users
 @apiVersion 1.0.0
@@ -172,7 +172,7 @@ Deactivates a user account by setting is_active to false.
 """
 
 
-@user_crud_app_router.route("/admin/users/<email>", methods=["DELETE"])
+@user_crud_router.route("/admin/users/<email>", methods=["DELETE"])
 def deactivate_user(email: str) -> tuple[Any, int]:
     error_response, status = check_admin_permission()
     if error_response is not None and status is not None:
@@ -191,7 +191,7 @@ def deactivate_user(email: str) -> tuple[Any, int]:
 
 
 """
-@api {patch} /app/admin/users/:email/restore Activate user
+@api {patch} /admin/users/:email/restore Activate user
 @apiName ActivateUser
 @apiGroup Users
 @apiVersion 1.0.0
@@ -211,7 +211,7 @@ Reactivates a deactivated user by setting is_active to true.
 """
 
 
-@user_crud_app_router.route("/admin/users/<email>/restore", methods=["PATCH"])
+@user_crud_router.route("/admin/users/<email>/restore", methods=["PATCH"])
 def activate_user(email: str) -> tuple[Any, int]:
     error_response, status = check_admin_permission()
     if error_response is not None and status is not None:
@@ -230,7 +230,7 @@ def activate_user(email: str) -> tuple[Any, int]:
 
 
 """
-@api {patch} /app/admin/users/:email Reset user password
+@api {patch} /admin/users/:email Reset user password
 @apiName ResetPassword
 @apiGroup Users
 @apiVersion 1.0.0
@@ -250,7 +250,7 @@ Resets the user password and sends the new credentials via email.
 """
 
 
-@user_crud_app_router.route("/admin/users/<email>", methods=["PATCH"])
+@user_crud_router.route("/admin/users/<email>", methods=["PATCH"])
 def update_password(email: str) -> tuple[Any, int]:
     """Resets password and emails credentials (admin-only)."""
     error_response, status = check_admin_permission()
@@ -270,7 +270,7 @@ def update_password(email: str) -> tuple[Any, int]:
 
 
 """
-@api {put} /app/admin/users/:email Edit user email or role
+@api {put} /admin/users/:email Edit user email or role
 @apiName EditUser
 @apiGroup Users
 @apiVersion 1.0.0
@@ -299,7 +299,7 @@ Edits the email and/or role of a user. It is not allowed to assign admin role or
 """
 
 
-@user_crud_app_router.route("/admin/users/<email>", methods=["PUT"])
+@user_crud_router.route("/admin/users/<email>", methods=["PUT"])
 def edit_user(email: str) -> tuple[Any, int]:
     """Edits email and/or role (admin-only) with admin-safety rules."""
     error_response, status = check_admin_permission()
@@ -328,7 +328,7 @@ def edit_user(email: str) -> tuple[Any, int]:
 
 
 """
-@api {post} /app/users/:email/apikey Generate or regenerate API Key
+@api {post} /users/:email/apikey Generate or regenerate API Key
 @apiName RegenerateApiKey
 @apiGroup ApiKey
 @apiVersion 1.0.0
@@ -358,7 +358,7 @@ Generates a new API Key for the authenticated user. If an API Key exists, it is 
 """
 
 
-@user_crud_app_router.route("/users/<email>/apikey", methods=["POST"])
+@user_crud_router.route("/users/<email>/apikey", methods=["POST"])
 def regenerate_apikey(email: str) -> tuple[Any, int]:
     try:
         verify_jwt_in_request()
@@ -391,7 +391,7 @@ def regenerate_apikey(email: str) -> tuple[Any, int]:
 
 
 """
-@api {patch} /app/users/:email/apikey Update API Key expiration
+@api {patch} /users/:email/apikey Update API Key expiration
 @apiName UpdateApiKeyExpiration
 @apiGroup ApiKey
 @apiVersion 1.0.0
@@ -419,7 +419,7 @@ Updates the expiration timestamp of the user's existing API Key.
 """
 
 
-@user_crud_app_router.route("/users/<email>/apikey", methods=["PATCH"])
+@user_crud_router.route("/users/<email>/apikey", methods=["PATCH"])
 def update_apikey_expiration(email: str) -> tuple[Any, int]:
     try:
         verify_jwt_in_request()
@@ -452,7 +452,7 @@ def update_apikey_expiration(email: str) -> tuple[Any, int]:
 
 
 """
-@api {delete} /app/users/:email/apikey Delete API Key
+@api {delete} /users/:email/apikey Delete API Key
 @apiName DeleteApiKey
 @apiGroup ApiKey
 @apiVersion 1.0.0
@@ -478,7 +478,7 @@ Deletes the API Key associated with the authenticated user.
 """
 
 
-@user_crud_app_router.route("/users/<email>/apikey", methods=["DELETE"])
+@user_crud_router.route("/users/<email>/apikey", methods=["DELETE"])
 def delete_apikey(email: str) -> tuple[Any, int]:
     try:
         verify_jwt_in_request()
