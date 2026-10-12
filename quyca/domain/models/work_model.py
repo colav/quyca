@@ -89,7 +89,6 @@ class Work(BaseModel):
     abstracts: list[Abstract] | None = None
     apc: APC | None = Field(default_factory=APC)
     authors_count: int | None = Field(default_factory=int, alias="author_count")
-    authors: list[AuthorWork] = Field(default_factory=list)
     authors_csv: str | None = None
     bibliographic_info: BiblioGraphicInfo | None = None
     citations_by_year: list[CitationByYear] | None = None
@@ -113,7 +112,7 @@ class Work(BaseModel):
     updated: list[Updated] | None = None
     year_published: int | None = None
     abstract: dict | None = None
-    authors_data: list[Author] | None = None
+    authors: list[Author] | None = None
     affiliations_data: list[Affiliation] | None = None
     countries: str | None = None
     openalex_citations_count: str | int | None = None

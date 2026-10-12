@@ -42,11 +42,7 @@ def get_works_by_affiliation(
         },
     ]
     set_product_filters(pipeline, query_params)
-    base_repository.set_match(pipeline, pipeline_params.get("match"))
-    if sort := query_params.sort:
-        base_repository.set_sort(sort, pipeline)
-    base_repository.set_pagination(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
@@ -60,8 +56,7 @@ def get_works_with_source_by_affiliation(
         {"$match": {"authors.affiliations.id": affiliation_id}},
     ]
     set_product_filters(pipeline, query_params)
-    base_repository.set_match(pipeline, pipeline_params.get("match"))
-    base_repository.set_project(pipeline, pipeline_params.get("work_project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
@@ -86,11 +81,7 @@ def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_para
         {"$match": {"authors.id": person_id}},
     ]
     set_product_filters(pipeline, query_params)
-    base_repository.set_match(pipeline, pipeline_params.get("match"))
-    if sort := query_params.sort:
-        base_repository.set_sort(sort, pipeline)
-    base_repository.set_pagination(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
@@ -104,8 +95,7 @@ def get_works_with_source_by_person(
         {"$match": {"authors.id": person_id}},
     ]
     set_product_filters(pipeline, query_params)
-    base_repository.set_match(pipeline, pipeline_params.get("match"))
-    base_repository.set_project(pipeline, pipeline_params.get("work_project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
@@ -117,17 +107,12 @@ def get_works_count_by_person(person_id: str, query_params: QueryParams) -> int:
     return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)
 
 
-def get_works_by_source(source_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:
+def get_works_by_source(source_id: str, query_params: QueryParams, pipeline_params: dict | None = None) -> Generator:
     if pipeline_params is None:
         pipeline_params = {}
-
     pipeline = [{"$match": {"source.id": ObjectId(source_id)}}]
     set_product_filters(pipeline, query_params)
-    base_repository.set_match(pipeline, pipeline_params.get("match"))
-    if sort := query_params.sort:
-        base_repository.set_sort(sort, pipeline)
-    base_repository.set_pagination(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
@@ -139,13 +124,14 @@ def get_works_count_by_source(source_id: str, query_params: QueryParams) -> int:
     return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)
 
 
-def get_works_by_geo(geo_type: str, geo_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:
+def get_works_by_geo(
+    geo_type: str, geo_id: str, query_params: QueryParams, pipeline_params: dict | None = None
+) -> Generator:
+    if pipeline_params is None:
+        pipeline_params = {}
     pipeline = [geo_repository.build_works_geo_match(geo_type, geo_id)]
     set_product_filters(pipeline, query_params)
-    if sort := query_params.sort:
-        base_repository.set_sort(sort, pipeline)
-    base_repository.set_pagination(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
