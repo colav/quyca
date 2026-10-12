@@ -7,14 +7,35 @@ from quyca.domain.models.base_model import QueryParams
 from quyca.domain.parsers.work import work_parser
 
 
+ALLOWED_FIELDS = {
+    "id",
+    "authors",
+    "titles",
+    "keywords",
+    "topics",
+    "subjects",
+    "source",
+    "types",
+    "year_published",
+    "citations_by_year",
+    "citations_count",
+    "updated",
+}
+
+
 def build_metadata(
-    works: Generator, total_count: int, query_params: QueryParams, start_time: float, current_url: str
+    works: Generator,
+    total_count: int,
+    query_params: QueryParams,
+    start_time: float,
+    current_url: str,
+    fields: list[str] | None = None,
 ) -> dict:
     """
     This function builds the metadata for the API expert response.
     """
     db_response_time_ms = int((time.time() - start_time) * 1000)
-    data = process_works(works)
+    data = process_works(works, fields)
     page = query_params.page or 1
     limit = query_params.limit or len(data)
 
@@ -63,7 +84,19 @@ def build_cursor(page: int, total_count: int, limit: int, current_url: str) -> d
     return {"next": next_url, "previous": previous_url}
 
 
-def process_works(works: Generator) -> list:
+def process_works(works: Generator, fields: list[str] | None = None) -> list:
     works_list = list(works)
-    data = work_parser.parse_api_expert(works_list)
+    data = work_parser.parse_api_expert(works_list, fields)
     return data
+
+
+def parse_fields(fields: str | None) -> list[str] | None:
+    if not fields:
+        return None
+    requested = [field.strip() for field in fields.split(",") if field.strip()]
+    invalid = sorted(set(requested) - ALLOWED_FIELDS)
+    if invalid:
+        raise ValueError(
+            f"Campos no permitidos: {', '.join(invalid)}. Campos disponibles: {', '.join(sorted(ALLOWED_FIELDS))}."
+        )
+    return list(dict.fromkeys(requested))

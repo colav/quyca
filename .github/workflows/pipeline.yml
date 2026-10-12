@@ -15,9 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.13"
       - name: Install Poetry
@@ -40,6 +40,8 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     steps:
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
       - name: Deploy
         run: sshpass -p "${{secrets.SSH_PASS}}" ssh -o StrictHostKeyChecking=no backend_dev@colav.co /home/backend_dev/deploy-dev.sh
 
@@ -48,5 +50,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
       - name: Deploy
         run: sshpass -p "${{secrets.SSH_PASS}}" ssh -o StrictHostKeyChecking=no backend_dev@colav.co /home/backend_dev/deploy-prod.sh

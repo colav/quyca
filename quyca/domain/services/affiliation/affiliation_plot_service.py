@@ -113,14 +113,10 @@ def plot_h_index_by_affiliation(
     affiliation_id: str, affiliation_type: str, relation_type: str, query_params: QueryParams
 ) -> dict:
     data: CommandCursor | None = None
-    if affiliation_type == "institution":
-        data = plot_repository.get_affiliations_works_citations_count_by_institution(
-            affiliation_id, relation_type, query_params
-        )
-    elif affiliation_type == "faculty" and relation_type == "department":
-        data = plot_repository.get_departments_works_citations_count_by_faculty(affiliation_id, query_params)
+    if affiliation_type == "institution" or (affiliation_type == "faculty" and relation_type == "department"):
+        data = plot_repository.get_h_index_by_institution(affiliation_id, relation_type)
     elif affiliation_type in ["faculty", "department"] and relation_type == "group":
-        data = plot_repository.get_groups_works_citations_count_by_faculty_or_department(affiliation_id, query_params)
+        data = plot_repository.get_h_index_by_faculty_or_department(affiliation_id)
     return pie_parser.parse_h_index_by_affiliation(data)
 
 

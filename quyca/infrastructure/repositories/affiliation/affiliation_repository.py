@@ -1,5 +1,7 @@
 from typing import Any, Generator, Mapping
 
+from pymongo.command_cursor import CommandCursor
+
 from quyca.domain.models.affiliation_model import Affiliation
 from quyca.infrastructure.mongo import database
 from quyca.infrastructure.repositories.base_repository import set_project
@@ -65,3 +67,19 @@ def get_groups_by_faculty_or_department(affiliation_id: str) -> Generator[Affili
     ]
     groups = database["person"].aggregate(pipeline)
     return affiliation_generator.get(groups)
+
+
+def get_h_index_by_institution(institution_id: str, relation_type: str) -> CommandCursor:
+    pipeline: list[dict[str, Any]] = [
+        {"$match": {"relations.id": institution_id, "types.type": relation_type}},
+        {"$project": {"_id": 1, "names": 1, "h_index": 1}},
+    ]
+    return database["affiliations"].aggregate(pipeline)
+
+
+def get_h_index_by_ids(affiliation_ids: list[str]) -> CommandCursor:
+    pipeline: list[dict[str, Any]] = [
+        {"$match": {"_id": {"$in": affiliation_ids}}},
+        {"$project": {"_id": 1, "names": 1, "h_index": 1}},
+    ]
+    return database["affiliations"].aggregate(pipeline)

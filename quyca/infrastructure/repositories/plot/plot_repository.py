@@ -226,69 +226,13 @@ def get_groups_apc_expenses_by_faculty_or_department(affiliation_id: str, query_
     return database["works"].aggregate(pipeline)
 
 
-def get_affiliations_works_citations_count_by_institution(
-    institution_id: str, relation_type: str, query_params: QueryParams
-) -> CommandCursor:
-    affiliation_ids = affiliation_ids_for_institution(institution_id, relation_type)
-    static_fields = [
-        "authors.affiliations.id",
-        "authors.affiliations.name",
-        "citations_count",
-    ]
-    pipeline: List[Dict[str, Any]] = [build_project_stage(static_fields)]
-    work_repository.set_product_filters(pipeline, query_params)
-    pipeline += [
-        {"$match": {"authors.affiliations.id": {"$in": affiliation_ids}}},
-        {"$unwind": "$authors"},
-        {"$unwind": "$authors.affiliations"},
-        {"$match": {"authors.affiliations.id": {"$in": affiliation_ids}}},
-        {"$match": {"citations_count": {"$exists": True, "$ne": []}}},
-        {"$unwind": "$citations_count"},
-        {"$match": {"citations_count.source": "scholar"}},
-        {
-            "$group": {
-                "_id": "$authors.affiliations.id",
-                "name": {"$first": "$authors.affiliations.name"},
-                "scholar_distribution": {"$push": "$citations_count.count"},
-            }
-        },
-        {"$project": {"_id": 0, "name": 1, "scholar_distribution": 1}},
-    ]
-    return database["works"].aggregate(pipeline)
+def get_h_index_by_institution(institution_id: str, relation_type: str) -> CommandCursor:
+    return affiliation_repository.get_h_index_by_institution(institution_id, relation_type)
 
 
-def get_departments_works_citations_count_by_faculty(affiliation_id: str, query_params: QueryParams) -> CommandCursor:
-    return get_affiliations_works_citations_count_by_institution(affiliation_id, "department", query_params)
-
-
-def get_groups_works_citations_count_by_faculty_or_department(
-    affiliation_id: str, query_params: QueryParams
-) -> CommandCursor:
+def get_h_index_by_faculty_or_department(affiliation_id: str) -> CommandCursor:
     group_ids = group_ids_for_faculty_or_department(affiliation_id)
-    static_fields = [
-        "citations_count",
-        "groups.id",
-        "groups.name",
-    ]
-    pipeline: List[Dict[str, Any]] = [build_project_stage(static_fields)]
-    work_repository.set_product_filters(pipeline, query_params)
-    pipeline += [
-        {"$match": {"groups.id": {"$in": group_ids}}},
-        {"$match": {"citations_count": {"$exists": True, "$ne": []}}},
-        {"$unwind": "$groups"},
-        {"$match": {"groups.id": {"$in": group_ids}}},
-        {"$unwind": "$citations_count"},
-        {"$match": {"citations_count.source": "scholar"}},
-        {
-            "$group": {
-                "_id": "$groups.id",
-                "name": {"$first": "$groups.name"},
-                "scholar_distribution": {"$push": "$citations_count.count"},
-            }
-        },
-        {"$project": {"_id": 0, "name": 1, "scholar_distribution": 1}},
-    ]
-    return database["works"].aggregate(pipeline)
+    return affiliation_repository.get_h_index_by_ids(group_ids)
 
 
 def get_active_authors_by_sex(affiliation_id: str, query_params: QueryParams) -> CommandCursor:

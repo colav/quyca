@@ -29,9 +29,10 @@ def parse_work(work: Work) -> dict:
     return dict(work.model_dump(exclude=fields_exclude, exclude_none=True))
 
 
-def parse_api_expert(works: list) -> list:
-    fields_exclude = {"abstracts"}
-    return [work.model_dump(exclude=fields_exclude, exclude_none=True) for work in works]
+def parse_api_expert(works: list, fields: list[str] | None = None) -> list:
+    exclude = {"abstracts"}
+    include = {"id", *fields} if fields else None
+    return [work.model_dump(include=include, exclude=exclude, exclude_none=True) for work in works]
 
 
 def parse_available_filters(filters: dict) -> dict:
