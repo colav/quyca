@@ -19,9 +19,7 @@ def test_it_can_plot_articles_by_access_route_by_faculty(client):
         .aggregate([{"$match": {"types.type": "faculty"}}, {"$sample": {"size": 1}}])
         .next()["_id"]
     )
-    response = client.get(
-        f"/affiliation/faculty/{random_faculty_id}/research/products?plot=articles_by_access_route"
-    )
+    response = client.get(f"/affiliation/faculty/{random_faculty_id}/research/products?plot=articles_by_access_route")
     assert response.status_code == 200
 
 

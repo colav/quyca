@@ -21,9 +21,7 @@ def test_it_can_plot_h_index_by_research_group_by_faculty(client):
     )
     response = client.get(f"/affiliation/faculty/{random_faculty_id}/research/products")
     assert response.status_code == 200
-    response = client.get(
-        f"/affiliation/faculty/{random_faculty_id}/research/products?plot=h_index_by_research_group"
-    )
+    response = client.get(f"/affiliation/faculty/{random_faculty_id}/research/products?plot=h_index_by_research_group")
     assert response.status_code == 200
 
 

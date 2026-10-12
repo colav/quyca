@@ -1,5 +1,4 @@
 from quyca.infrastructure.mongo import database
-from unittest.mock import patch
 
 
 def test_get_other_news_by_person_id(client):

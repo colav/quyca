@@ -43,7 +43,5 @@ def test_it_can_plot_articles_by_scienti_category_by_group(client):
         .aggregate([{"$match": {"types.type": "group"}}, {"$sample": {"size": 1}}])
         .next()["_id"]
     )
-    response = client.get(
-        f"/affiliation/group/{random_group_id}/research/products?plot=articles_by_scienti_category"
-    )
+    response = client.get(f"/affiliation/group/{random_group_id}/research/products?plot=articles_by_scienti_category")
     assert response.status_code == 200

@@ -99,10 +99,7 @@ def test_search_sources_with_source_type_and_keywords(client):
 
     for source in data["data"]:
         assert source.get("type") == "journal"
-        assert any(
-            "philosophy" in name_dict.get("name", "").lower()
-            for name_dict in source.get("names", [])
-        )
+        assert any("philosophy" in name_dict.get("name", "").lower() for name_dict in source.get("names", []))
 
 
 def test_search_sources_available_filters(client):

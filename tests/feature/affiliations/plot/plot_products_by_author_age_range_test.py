@@ -43,7 +43,5 @@ def test_it_can_plot_active_authors_by_age_range_by_group(client):
         .aggregate([{"$match": {"types.type": "group"}}, {"$sample": {"size": 1}}])
         .next()["_id"]
     )
-    response = client.get(
-        f"/affiliation/group/{random_group_id}/research/products?plot=active_authors_by_age_range"
-    )
+    response = client.get(f"/affiliation/group/{random_group_id}/research/products?plot=active_authors_by_age_range")
     assert response.status_code == 200

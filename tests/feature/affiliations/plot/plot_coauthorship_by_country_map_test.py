@@ -43,7 +43,5 @@ def test_it_can_plot_coauthorship_by_country_map_by_group(client):
         .aggregate([{"$match": {"types.type": "group"}}, {"$sample": {"size": 1}}])
         .next()["_id"]
     )
-    response = client.get(
-        f"/affiliation/group/{random_group_id}/research/products?plot=coauthorship_by_country_map"
-    )
+    response = client.get(f"/affiliation/group/{random_group_id}/research/products?plot=coauthorship_by_country_map")
     assert response.status_code == 200

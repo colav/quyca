@@ -29,9 +29,7 @@ def test_it_can_plot_products_by_subject_by_department(client):
         .aggregate([{"$match": {"types.type": "department"}}, {"$sample": {"size": 1}}])
         .next()["_id"]
     )
-    response = client.get(
-        f"/affiliation/department/{random_department_id}/research/products?plot=products_by_subject"
-    )
+    response = client.get(f"/affiliation/department/{random_department_id}/research/products?plot=products_by_subject")
     assert response.status_code == 200
 
 

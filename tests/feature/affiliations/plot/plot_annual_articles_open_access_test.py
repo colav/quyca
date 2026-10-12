@@ -43,8 +43,6 @@ def test_it_can_plot_annual_articles_open_access_by_group(client):
         .aggregate([{"$match": {"types.type": "group"}}, {"$sample": {"size": 1}}])
         .next()["_id"]
     )
-    response = client.get(
-        f"/affiliation/group/{random_group_id}/research/products?plot=annual_articles_open_access"
-    )
+    response = client.get(f"/affiliation/group/{random_group_id}/research/products?plot=annual_articles_open_access")
 
     assert response.status_code == 200
