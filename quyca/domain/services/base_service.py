@@ -18,6 +18,7 @@ def get_entity_data(documents: Generator) -> list:
         limit_authors(doc)
         set_title_and_language(doc)
         set_product_types(doc)
+        set_authors_affiliation_years(doc)
         data.append(doc)
     return data
 
@@ -260,6 +261,18 @@ def set_scimago_quartile(work: Work, source: WorkSource) -> None:
                 break
 
 
+def set_authors_affiliation_years(docs: list | Work | Patent | Project) -> None:
+    if not isinstance(docs, list):
+        docs = [docs]
+    person_ids = {a.id for d in docs for a in (d.authors or []) if a.id}
+    years_by_person = person_repository.get_affiliation_years(person_ids)
+    for doc in docs:
+        for author in doc.authors or []:
+            author_years = years_by_person.get(author.id, {})
+            for aff in author.affiliations or []:
+                aff.years = author_years.get(aff.id, [])
+
+
 def build_work_pipeline_params() -> dict:
     pipeline_params = {
         "project": [
@@ -339,7 +352,6 @@ def build_patents_pipeline_params() -> dict:
             "subjects",
             "external_ids",
             "external_urls",
-            "authors_data",
         ]
     }
     return pipeline_params
@@ -358,7 +370,6 @@ def build_projects_pipeline_params() -> dict:
             "year_end",
             "external_ids",
             "external_urls",
-            "authors_data",
         ]
     }
     return pipeline_params
