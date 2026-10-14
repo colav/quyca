@@ -68,13 +68,13 @@ def plot_affiliations_by_product_type(
 ) -> dict[str, Any] | None:
     data: CommandCursor[Any] | None = None
     if affiliation_type == "institution":
-        data = plot_repository.get_affiliations_scienti_works_count_by_institution(
+        data = plot_repository.get_affiliations_impactu_works_count_by_institution(
             affiliation_id, relation_type, query_params
         )
     elif affiliation_type == "faculty" and relation_type == "department":
         data = plot_repository.get_departments_scienti_works_count_by_faculty(affiliation_id, query_params)
     elif affiliation_type in ["faculty", "department"] and relation_type == "group":
-        data = plot_repository.get_groups_scienti_works_count_by_faculty_or_department(affiliation_id, query_params)
+        data = plot_repository.get_groups_impactu_works_count_by_faculty_or_department(affiliation_id, query_params)
 
     if data is None:
         return None
@@ -120,10 +120,10 @@ def plot_h_index_by_affiliation(
     return pie_parser.parse_h_index_by_affiliation(data)
 
 
-def plot_annual_evolution_by_scienti_classification(affiliation_id: str, query_params: QueryParams) -> dict:
+def plot_annual_evolution_by_impactu_classification(affiliation_id: str, query_params: QueryParams) -> dict:
     pipeline_params = {"project": ["year_published", "types"]}
     works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
-    return bar_parser.parse_annual_evolution_by_scienti_classification(works)
+    return bar_parser.parse_annual_evolution_by_impactu_classification(works)
 
 
 def plot_annual_citation_count(affiliation_id: str, query_params: QueryParams) -> dict:

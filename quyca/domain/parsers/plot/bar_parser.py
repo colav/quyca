@@ -7,7 +7,7 @@ from pymongo.command_cursor import CommandCursor
 from quyca.domain.constants.apc_currencies import available_currencies
 
 
-def parse_annual_evolution_by_scienti_classification(works: Generator) -> dict:
+def parse_annual_evolution_by_impactu_classification(works: Generator) -> dict:
     data: defaultdict = defaultdict(lambda: defaultdict(int))
 
     for work in works:
@@ -15,7 +15,7 @@ def parse_annual_evolution_by_scienti_classification(works: Generator) -> dict:
             continue
 
         for work_type in work.types:
-            if work_type.source == "scienti" and work_type.level == 2:
+            if work_type.source == "impactu":
                 data[work.year_published][work_type.type] += 1
 
     plot = [
