@@ -21,6 +21,7 @@ from quyca.infrastructure.repositories.affiliation import affiliation_repository
 
 SUMMARY_AUTHORS_LIMIT = 10
 
+
 def get_entity_data(documents: Generator, view: str = "full") -> list:
     authors_limit = SUMMARY_AUTHORS_LIMIT if view == "summary" else None
     data = []
@@ -93,7 +94,6 @@ def set_authors_external_ids(workable: Union[Work, Patent, Project], filter_sens
             if filter_sensitive:
                 external_ids = [eid for eid in external_ids if eid.source not in SENSITIVE_ID_SOURCES]
             author.external_ids = external_ids
-
 
 
 def limit_authors(workable: Union[Work, Patent, Project], limit: int | None = None) -> None:

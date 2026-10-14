@@ -347,4 +347,3 @@ def set_authors_count_filter(pipeline: list, authors_count: str | None) -> None:
     if count_range.max is not None:
         conditions["$lte"] = count_range.max
     pipeline.append({"$match": {"author_count": conditions}})
-    
