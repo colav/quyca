@@ -1,9 +1,10 @@
-from typing import Any, Generator
+from typing import Any, Generator, Literal
 from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, field_validator, Field, conint, model_validator
 from bson import ObjectId
 
 from quyca.domain.constants.clean_source import clean_nan
+from quyca.domain.normalizers.authors_count import parse_authors_count
 
 
 class PyObjectId(ObjectId):
@@ -163,14 +164,20 @@ class APC(BaseModel):
     paid: Paid | None = None
 
 
+class Filter(BaseModel):
+    fields: str | None = None
+
+
 class QueryParams(BaseModel):
     limit: conint(ge=1, le=250) | None = Field(default=None, alias="max")  # type: ignore
     page: conint(ge=1) | None = None  # type: ignore
     apc_range: str | None = None
+    authors_count: str | None = None
     authors_ranking: str | None = None
     cities: str | None = None
     countries: str | None = None
-    fields: str | None = None
+    filter: Filter | None = None
+    view: Literal["full", "summary"] = "full"
     groups_ranking: str | None = None
     keywords: str | None = None
     license_type: str | None = None
@@ -185,6 +192,14 @@ class QueryParams(BaseModel):
     subjects: str | None = None
     topics: str | None = None
     years: str | None = None
+
+    @field_validator("authors_count")
+    @classmethod
+    def validate_authors_count(cls, value: str | None) -> str | None:
+        if value is None or value.strip() == "":
+            return None
+        parse_authors_count(value)
+        return value.strip()
 
     @model_validator(mode="after")
     def validate_pagination_and_sort(self) -> "QueryParams":

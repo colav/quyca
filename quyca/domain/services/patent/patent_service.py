@@ -4,6 +4,7 @@ from quyca.domain.models.base_model import QueryParams
 from quyca.domain.parsers.base_parser import build_metadata
 from quyca.infrastructure.repositories.patent import patent_repository
 from quyca.domain.services.base_service import (
+    build_patents_pipeline_params,
     get_entity_data,
     set_authors_affiliation_years,
     set_external_ids,
@@ -39,8 +40,11 @@ def get_patents_by_affiliation(
     affiliation_id: str, affiliation_type: str, query_params: QueryParams, current_url: str
 ) -> dict:
     start_time = time.time()
-    patents = patent_repository.get_patents_by_affiliation(affiliation_id, affiliation_type, query_params)
-    patents_data = get_entity_data(patents)
+    pipeline_params = build_patents_pipeline_params(query_params.view)
+    patents = patent_repository.get_patents_by_affiliation(
+        affiliation_id, affiliation_type, query_params, pipeline_params
+    )
+    patents_data = get_entity_data(patents, query_params.view)
     total_results = patent_repository.get_patents_count_by_affiliation(affiliation_id)
     return build_metadata(
         patents_data,
@@ -54,8 +58,9 @@ def get_patents_by_affiliation(
 
 def get_patents_by_person(person_id: str, query_params: QueryParams, current_url: str) -> dict:
     start_time = time.time()
-    patents = patent_repository.get_patents_by_person(person_id, query_params)
-    patents_data = get_entity_data(patents)
+    pipeline_params = build_patents_pipeline_params(query_params.view)
+    patents = patent_repository.get_patents_by_person(person_id, query_params, pipeline_params)
+    patents_data = get_entity_data(patents, query_params.view)
     total_results = patent_repository.get_patents_count_by_person(person_id)
     return build_metadata(
         patents_data,

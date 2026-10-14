@@ -29,6 +29,8 @@ def parse_available_filters(filters: dict) -> dict:
         available_filters["groups_ranking"] = parse_groups_ranking_filter(groups_ranking)
     if authors_ranking := filters.get("authors_ranking"):
         available_filters["authors_ranking"] = parse_authors_ranking_filter(authors_ranking)
+    if authors_count := filters.get("authors_count"):
+        available_filters["authors_count"] = authors_count
     return available_filters
 
 

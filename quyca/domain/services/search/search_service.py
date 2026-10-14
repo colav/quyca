@@ -7,7 +7,15 @@ from quyca.domain.parsers.base_parser import build_metadata
 from quyca.domain.parsers.search import search_parser
 from quyca.domain.parsers.source import source_parser
 from quyca.domain.parsers.work import work_parser
-from quyca.domain.services.base_service import get_entity_data
+from quyca.domain.services.base_service import (
+    build_affiliation_pipeline_params,
+    build_patents_pipeline_params,
+    build_person_pipeline_params,
+    build_projects_pipeline_params,
+    build_sources_pipeline_params,
+    build_work_pipeline_params,
+    get_entity_data,
+)
 from quyca.infrastructure.repositories.search import (
     search_affiliation_filters_repository,
     search_repository,
@@ -18,7 +26,8 @@ from quyca.infrastructure.repositories.search import (
 
 def search_persons(query_params: QueryParams, current_url: str) -> Dict:
     start_time = time.time()
-    persons = search_repository.search_persons(query_params)
+    pipeline_params = build_person_pipeline_params(query_params.view)
+    persons = search_repository.search_persons(query_params, pipeline_params)
     total_count = search_repository.search_count_persons(query_params)
     return build_metadata(
         persons,
@@ -32,8 +41,9 @@ def search_persons(query_params: QueryParams, current_url: str) -> Dict:
 
 def search_works(query_params: QueryParams, current_url: str) -> Dict:
     start_time = time.time()
-    works = search_repository.search_works(query_params)
-    works_data = get_entity_data(works)
+    pipeline_params = build_work_pipeline_params(query_params.view)
+    works = search_repository.search_works(query_params, pipeline_params)
+    works_data = get_entity_data(works, query_params.view)
     total_count = search_repository.search_count_works(query_params)
     return build_metadata(
         works_data,
@@ -47,7 +57,8 @@ def search_works(query_params: QueryParams, current_url: str) -> Dict:
 
 def search_affiliations(query_params: QueryParams, affiliation_type: str, current_url) -> Dict:
     start_time = time.time()
-    affiliations = search_repository.search_affiliations(affiliation_type, query_params)
+    pipeline_params = build_affiliation_pipeline_params(query_params.view)
+    affiliations = search_repository.search_affiliations(affiliation_type, query_params, pipeline_params)
     total_count = search_repository.search_count_affiliations(query_params, affiliation_type)
     return build_metadata(
         affiliations,
@@ -61,7 +72,8 @@ def search_affiliations(query_params: QueryParams, affiliation_type: str, curren
 
 def search_sources(query_params: QueryParams, current_url: str) -> Dict:
     start_time = time.time()
-    sources = search_repository.search_sources(query_params)
+    pipeline_params = build_sources_pipeline_params(query_params.view)
+    sources = search_repository.search_sources(query_params, pipeline_params)
     total_count = search_repository.search_count_sources(query_params)
     return build_metadata(
         sources,
@@ -75,8 +87,9 @@ def search_sources(query_params: QueryParams, current_url: str) -> Dict:
 
 def search_patents(query_params: QueryParams, current_url: str) -> Dict:
     start_time = time.time()
-    patents = search_repository.search_patents(query_params)
-    patents_data = get_entity_data(patents)
+    pipeline_params = build_patents_pipeline_params(query_params.view)
+    patents = search_repository.search_patents(query_params, pipeline_params)
+    patents_data = get_entity_data(patents, query_params.view)
     total_count = search_repository.search_count_patents(query_params)
     return build_metadata(
         patents_data,
@@ -90,8 +103,9 @@ def search_patents(query_params: QueryParams, current_url: str) -> Dict:
 
 def search_projects(query_params: QueryParams, current_url: str) -> Dict:
     start_time = time.time()
-    projects = search_repository.search_projects(query_params)
-    projects_data = get_entity_data(projects)
+    pipeline_params = build_projects_pipeline_params(query_params.view)
+    projects = search_repository.search_projects(query_params, pipeline_params)
+    projects_data = get_entity_data(projects, query_params.view)
     total_count = search_repository.search_count_projects(query_params)
     return build_metadata(
         projects_data,
