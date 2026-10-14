@@ -157,7 +157,7 @@ def get_works_available_filters_by_person(person_id: str, query_params: QueryPar
         if key == "years":
             cursor = collection.aggregate(pipe)
             result = next(cursor, {"min_year": None, "max_year": None})
-        if key == "authors_count":
+        elif key == "authors_count":
             cursor = collection.aggregate(pipe)
             result = next(cursor, {"min_authors_count": None, "max_authors_count": None})
         else:
@@ -185,7 +185,7 @@ def get_works_available_filters_by_affiliation(
         if key == "years":
             cursor = collection.aggregate(pipe)
             result = next(cursor, {"min_year": None, "max_year": None})
-        if key == "authors_count":
+        elif key == "authors_count":
             cursor = collection.aggregate(pipe)
             result = next(cursor, {"min_authors_count": None, "max_authors_count": None})
         else:
@@ -207,7 +207,7 @@ def get_works_available_filters_by_source(source_id: str, query_params: QueryPar
         if key == "years":
             cursor = collection.aggregate(pipe)
             result = next(cursor, {"min_year": None, "max_year": None})
-        if key == "authors_count":
+        elif key == "authors_count":
             cursor = collection.aggregate(pipe)
             result = next(cursor, {"min_authors_count": None, "max_authors_count": None})
         else:
