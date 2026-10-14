@@ -50,7 +50,7 @@ def get_person_by_id(person_id: str) -> Response | Tuple[Response, int]:
 @person_router.route("/<person_id>/research/products", methods=["GET"])
 def get_person_research_products(person_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         if query_params.plot:
             data = person_plot_service.get_person_plot(person_id, query_params)
             return jsonify(data)
@@ -75,7 +75,7 @@ def get_person_research_products(person_id: str) -> Response | Tuple[Response, i
 @person_router.route("/<person_id>/research/products/filters", methods=["GET"])
 def get_person_research_products_filters(person_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = work_service.get_works_filters_by_person(person_id, query_params)
         return jsonify(data)
     except Exception as e:
@@ -97,7 +97,7 @@ def get_person_research_products_filters(person_id: str) -> Response | Tuple[Res
 @person_router.route("/<person_id>/research/products/csv", methods=["GET"])
 def get_works_csv_by_person(person_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = export_service.get_works_csv_by_person(person_id, query_params)
         response = Response(stream_with_context(data), content_type="text/csv")
         response.headers["Content-Disposition"] = "attachment; filename=person_works.csv"
@@ -121,7 +121,7 @@ def get_works_csv_by_person(person_id: str) -> Response | Tuple[Response, int]:
 @person_router.route("/<person_id>/research/products/excel", methods=["GET"])
 def get_works_excel_by_person(person_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = export_service.get_works_excel_by_person(person_id, query_params)
         response = Response(
             data.getvalue(),
@@ -148,7 +148,7 @@ def get_works_excel_by_person(person_id: str) -> Response | Tuple[Response, int]
 @person_router.route("/<person_id>/research/patents", methods=["GET"])
 def get_person_research_patents(person_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = patent_service.get_patents_by_person(person_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
@@ -170,7 +170,7 @@ def get_person_research_patents(person_id: str) -> Response | Tuple[Response, in
 @person_router.route("/<person_id>/research/projects", methods=["GET"])
 def get_person_research_projects(person_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = project_service.get_projects_by_person(person_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
@@ -191,7 +191,7 @@ def get_person_research_projects(person_id: str) -> Response | Tuple[Response, i
 @person_router.route("/<person_id>/research/news")
 def news_for_person_app(person_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = news_service.get_news_by_person(person_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:

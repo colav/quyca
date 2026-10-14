@@ -76,7 +76,7 @@ def get_affiliation_affiliations(affiliation_type: str, affiliation_id: str) -> 
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/products", methods=["GET"])
 def get_affiliation_research_products(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         if query_params.plot:
             data = affiliation_plot_service.get_affiliation_plot(affiliation_id, affiliation_type, query_params)
             return jsonify(data)
@@ -104,7 +104,7 @@ def get_affiliation_research_products_filters(
     affiliation_type: str, affiliation_id: str
 ) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = work_service.get_works_filters_by_affiliation(affiliation_id, affiliation_type, query_params)
         return jsonify(data)
     except Exception as e:
@@ -127,7 +127,7 @@ def get_affiliation_research_products_filters(
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/products/csv", methods=["GET"])
 def get_works_csv_by_affiliation(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         if query_params.plot:
             data = export_affiliation_plot_service.get_plot_csv(affiliation_id, affiliation_type, query_params)
             response = Response(data, content_type="text/csv; charset=utf-8")
@@ -157,7 +157,7 @@ def get_works_csv_by_affiliation(affiliation_type: str, affiliation_id: str) -> 
 )
 def get_works_excel_by_affiliation(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = export_service.get_works_excel_by_affiliation(
             affiliation_id,
             affiliation_type,
@@ -189,7 +189,7 @@ def get_works_excel_by_affiliation(affiliation_type: str, affiliation_id: str) -
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/patents", methods=["GET"])
 def get_affiliation_research_patents(affiliation_id: str, affiliation_type: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = patent_service.get_patents_by_affiliation(affiliation_id, affiliation_type, query_params, request.url)
         return jsonify(data)
     except Exception as e:
@@ -212,7 +212,7 @@ def get_affiliation_research_patents(affiliation_id: str, affiliation_type: str)
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/projects", methods=["GET"])
 def get_affiliation_research_projects(affiliation_id: str, affiliation_type: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = project_service.get_projects_by_affiliation(affiliation_id, affiliation_type, query_params, request.url)
         return jsonify(data)
     except Exception as e:
@@ -234,7 +234,7 @@ def get_affiliation_research_projects(affiliation_id: str, affiliation_type: str
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/news")
 def get_affiliation_research_news(affiliation_id: str, affiliation_type: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = news_service.get_news_by_affiliation(affiliation_id, affiliation_type, query_params, request.url)
         return jsonify(data)
     except Exception as e:

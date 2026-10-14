@@ -57,7 +57,7 @@ def get_source_by_id(source_id: str) -> Response | Tuple[Response, int]:
 @source_router.route("/<source_id>/products", methods=["GET"])
 def get_source_products(source_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         if query_params.plot:
             data = source_plot_service.get_source_products_plot(source_id, query_params)
             return jsonify(data)
@@ -86,7 +86,7 @@ def get_source_products(source_id: str) -> Response | Tuple[Response, int]:
 @source_router.route("/<source_id>/products/filters", methods=["GET"])
 def get_source_products_filters(source_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = work_service.get_works_filters_by_source(source_id, query_params)
         return jsonify(data)
     except Exception as e:
@@ -113,7 +113,7 @@ Content-Disposition: attachment; filename=source.csv
 @source_router.route("/<source_id>/products/csv", methods=["GET"])
 def get_works_csv_by_source(source_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = export_service.get_works_csv_by_source(source_id, query_params)
         response = Response(data, content_type="text/csv")
         response.headers["Content-Disposition"] = "attachment; filename=source_works.csv"
@@ -142,7 +142,7 @@ Content-Disposition: attachment; filename=source_works.xlsx
 @source_router.route("/<source_id>/products/excel", methods=["GET"])
 def get_works_excel_by_source(source_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = export_service.get_works_excel_by_source(source_id, query_params)
         response = Response(
             data.getvalue(),

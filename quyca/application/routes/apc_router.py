@@ -15,7 +15,7 @@ apc_router = Blueprint("apc_api_router", __name__)
 @apc_router.route("/search", methods=["GET"])
 def apc_search() -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         pipeline: list[dict[str, Any]] = []
         if query_params.keywords:
             pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}]

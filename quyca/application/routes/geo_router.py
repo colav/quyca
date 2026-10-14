@@ -126,7 +126,7 @@ def get_affiliation_affiliations(geo_type: str, geo_id: str) -> Response | Tuple
 @geo_router.route("/<geo_type>/<geo_id>/research/products", methods=["GET"])
 def get_geo_products(geo_type: str, geo_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = work_service.get_works_by_geo(geo_type, geo_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
