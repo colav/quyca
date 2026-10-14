@@ -170,7 +170,7 @@ def plot_articles_by_publishing_institution(person_id: str, query_params: QueryP
             ):
                 institution = affiliation_repository.get_affiliation_by_id(str(affiliation.id))
                 break
-    pipeline_params = {
+    pipeline_params: dict[str, Any] = {
         "work_project": ["source.id", "source.name", "source.publisher.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }

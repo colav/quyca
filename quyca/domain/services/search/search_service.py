@@ -55,7 +55,7 @@ def search_works(query_params: QueryParams, current_url: str) -> Dict:
     )
 
 
-def search_affiliations(query_params: QueryParams, affiliation_type: str, current_url) -> Dict:
+def search_affiliations(query_params: QueryParams, affiliation_type: str, current_url: str) -> Dict:
     start_time = time.time()
     pipeline_params = build_affiliation_pipeline_params(query_params.view)
     affiliations = search_repository.search_affiliations(affiliation_type, query_params, pipeline_params)
