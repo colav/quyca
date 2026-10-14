@@ -31,10 +31,7 @@ def get_projects_by_affiliation(
         {"$match": {"authors.affiliations.id": affiliation_id}},
         {"$match": {"authors.affiliations.types.type": {"$in": types}}},
     ]
-    if sort := query_params.sort:
-        base_repository.set_sort(sort, pipeline)
-    base_repository.set_pagination(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["projects"].aggregate(pipeline)
     return project_generator.get(cursor)
 
@@ -50,10 +47,7 @@ def get_projects_by_person(person_id: str, query_params: QueryParams, pipeline_p
     pipeline = [
         {"$match": {"authors.id": person_id}},
     ]
-    if sort := query_params.sort:
-        base_repository.set_sort(sort, pipeline)
-    base_repository.set_pagination(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["projects"].aggregate(pipeline)
     return project_generator.get(cursor)
 

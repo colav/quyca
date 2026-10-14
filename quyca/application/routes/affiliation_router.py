@@ -14,10 +14,10 @@ from quyca.domain.services.patent import patent_service
 from quyca.domain.services.project import project_service
 from quyca.domain.services.work import work_service
 
-affiliation_app_router = Blueprint("affiliation_app_router", __name__)
+affiliation_router = Blueprint("affiliation_app_router", __name__)
 
 """
-@api {get} /app/affiliations/:affiliation_type/:affiliation_id Get affiliation by id
+@api {get} /affiliations/:affiliation_type/:affiliation_id Get affiliation by id
 @apiName GetAffiliationById
 @apiGroup Affiliation
 @apiVersion 1.0.0
@@ -28,7 +28,7 @@ affiliation_app_router = Blueprint("affiliation_app_router", __name__)
 """
 
 
-@affiliation_app_router.route("/<affiliation_type>/<affiliation_id>", methods=["GET"])
+@affiliation_router.route("/<affiliation_type>/<affiliation_id>", methods=["GET"])
 def get_affiliation_by_id(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
         data = affiliation_service.get_affiliation_by_id(affiliation_id, affiliation_type)
@@ -39,7 +39,7 @@ def get_affiliation_by_id(affiliation_type: str, affiliation_id: str) -> Respons
 
 
 """
-@api {get} /app/affiliations/:affiliation_type/:affiliation_id/affiliations Get related affiliations
+@api {get} /affiliations/:affiliation_type/:affiliation_id/affiliations Get related affiliations
 @apiName GetAffiliationAffiliations
 @apiGroup Affiliation
 @apiVersion 1.0.0
@@ -50,7 +50,7 @@ def get_affiliation_by_id(affiliation_type: str, affiliation_id: str) -> Respons
 """
 
 
-@affiliation_app_router.route("/<affiliation_type>/<affiliation_id>/affiliations", methods=["GET"])
+@affiliation_router.route("/<affiliation_type>/<affiliation_id>/affiliations", methods=["GET"])
 def get_affiliation_affiliations(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
         data = affiliation_service.get_related_affiliations_by_affiliation(affiliation_id, affiliation_type)
@@ -62,7 +62,7 @@ def get_affiliation_affiliations(affiliation_type: str, affiliation_id: str) -> 
 
 
 """
-@api {get} /app/affiliations/:affiliation_type/:affiliation_id/research/products Get works by affiliation
+@api {get} /affiliations/:affiliation_type/:affiliation_id/research/products Get works by affiliation
 @apiName GetAffiliationResearchProducts
 @apiGroup Affiliation
 @apiVersion 1.0.0
@@ -73,14 +73,14 @@ def get_affiliation_affiliations(affiliation_type: str, affiliation_id: str) -> 
 """
 
 
-@affiliation_app_router.route("/<affiliation_type>/<affiliation_id>/research/products", methods=["GET"])
+@affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/products", methods=["GET"])
 def get_affiliation_research_products(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         if query_params.plot:
             data = affiliation_plot_service.get_affiliation_plot(affiliation_id, affiliation_type, query_params)
             return jsonify(data)
-        data = work_service.get_works_by_affiliation(affiliation_id, query_params)
+        data = work_service.get_works_by_affiliation(affiliation_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
@@ -88,7 +88,7 @@ def get_affiliation_research_products(affiliation_type: str, affiliation_id: str
 
 
 """
-@api {get} /app/affiliations/:affiliation_type/:affiliation_id/research/products/filters Get works filters by affiliation
+@api {get} /affiliations/:affiliation_type/:affiliation_id/research/products/filters Get works filters by affiliation
 @apiName GetAffiliationResearchProductsFilters
 @apiGroup Affiliation
 @apiVersion 1.0.0
@@ -99,12 +99,12 @@ def get_affiliation_research_products(affiliation_type: str, affiliation_id: str
 """
 
 
-@affiliation_app_router.route("/<affiliation_type>/<affiliation_id>/research/products/filters", methods=["GET"])
+@affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/products/filters", methods=["GET"])
 def get_affiliation_research_products_filters(
     affiliation_type: str, affiliation_id: str
 ) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = work_service.get_works_filters_by_affiliation(affiliation_id, affiliation_type, query_params)
         return jsonify(data)
     except Exception as e:
@@ -113,7 +113,7 @@ def get_affiliation_research_products_filters(
 
 
 """
-@api {get} /app/affiliations/:affiliation_type/:affiliation_id/research/products/csv Get works csv by affiliation
+@api {get} /affiliations/:affiliation_type/:affiliation_id/research/products/csv Get works csv by affiliation
 @apiName GetAffiliationResearchProductsCSV
 @apiGroup Affiliation
 @apiVersion 1.0.0
@@ -124,10 +124,10 @@ def get_affiliation_research_products_filters(
 """
 
 
-@affiliation_app_router.route("/<affiliation_type>/<affiliation_id>/research/products/csv", methods=["GET"])
+@affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/products/csv", methods=["GET"])
 def get_works_csv_by_affiliation(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         if query_params.plot:
             data = export_affiliation_plot_service.get_plot_csv(affiliation_id, affiliation_type, query_params)
             response = Response(data, content_type="text/csv; charset=utf-8")
@@ -143,7 +143,7 @@ def get_works_csv_by_affiliation(affiliation_type: str, affiliation_id: str) -> 
 
 
 """ 
-@api {get} /app/affiliations/:affiliation_type/:affiliation_id/research/products/excel Get works excel by affiliation
+@api {get} /affiliations/:affiliation_type/:affiliation_id/research/products/excel Get works excel by affiliation
 @apiName GetAffiliationResearchProductsExcel
 @apiGroup Affiliation
 @apiVersion 1.0.0
@@ -151,13 +151,13 @@ def get_works_csv_by_affiliation(affiliation_type: str, affiliation_id: str) -> 
 """
 
 
-@affiliation_app_router.route(
+@affiliation_router.route(
     "/<affiliation_type>/<affiliation_id>/research/products/excel",
     methods=["GET"],
 )
 def get_works_excel_by_affiliation(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
+        query_params = QueryParams.model_validate(request.args.to_dict())
         data = export_service.get_works_excel_by_affiliation(
             affiliation_id,
             affiliation_type,
@@ -175,7 +175,7 @@ def get_works_excel_by_affiliation(affiliation_type: str, affiliation_id: str) -
 
 
 """
-@api {get} /app/affiliations/:affiliation_type/:affiliation_id/research/patents Get patents by affiliation
+@api {get} /affiliations/:affiliation_type/:affiliation_id/research/patents Get patents by affiliation
 @apiName GetAffiliationPatents
 @apiGroup Affiliation
 @apiVersion 1.0.0
@@ -186,11 +186,11 @@ def get_works_excel_by_affiliation(affiliation_type: str, affiliation_id: str) -
 """
 
 
-@affiliation_app_router.route("/<affiliation_type>/<affiliation_id>/research/patents", methods=["GET"])
+@affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/patents", methods=["GET"])
 def get_affiliation_research_patents(affiliation_id: str, affiliation_type: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
-        data = patent_service.get_patents_by_affiliation(affiliation_id, affiliation_type, query_params)
+        query_params = QueryParams.model_validate(request.args.to_dict())
+        data = patent_service.get_patents_by_affiliation(affiliation_id, affiliation_type, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
@@ -198,7 +198,7 @@ def get_affiliation_research_patents(affiliation_id: str, affiliation_type: str)
 
 
 """
-@api {get} /app/affiliations/:affiliation_type/:affiliation_id/research/projects Get projects by affiliation
+@api {get} /affiliations/:affiliation_type/:affiliation_id/research/projects Get projects by affiliation
 @apiName GetAffiliationProjects
 @apiGroup Affiliation
 @apiVersion 1.0.0
@@ -209,11 +209,11 @@ def get_affiliation_research_patents(affiliation_id: str, affiliation_type: str)
 """
 
 
-@affiliation_app_router.route("/<affiliation_type>/<affiliation_id>/research/projects", methods=["GET"])
+@affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/projects", methods=["GET"])
 def get_affiliation_research_projects(affiliation_id: str, affiliation_type: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
-        data = project_service.get_projects_by_affiliation(affiliation_id, affiliation_type, query_params)
+        query_params = QueryParams.model_validate(request.args.to_dict())
+        data = project_service.get_projects_by_affiliation(affiliation_id, affiliation_type, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
@@ -221,7 +221,7 @@ def get_affiliation_research_projects(affiliation_id: str, affiliation_type: str
 
 
 """
-@api {get} /app/affiliations/:affiliation_type/:affiliation_id/research/news Get news by affiliation
+@api {get} /affiliations/:affiliation_type/:affiliation_id/research/news Get news by affiliation
 @apiName GetAffiliationNews
 @apiGroup Affiliation
 @apiVersion 1.0.0
@@ -231,11 +231,11 @@ def get_affiliation_research_projects(affiliation_id: str, affiliation_type: str
 """
 
 
-@affiliation_app_router.route("/<affiliation_type>/<affiliation_id>/research/news")
+@affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/news")
 def get_affiliation_research_news(affiliation_id: str, affiliation_type: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
-        data = news_service.get_news_by_affiliation(affiliation_id, affiliation_type, query_params)
+        query_params = QueryParams.model_validate(request.args.to_dict())
+        data = news_service.get_news_by_affiliation(affiliation_id, affiliation_type, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)

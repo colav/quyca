@@ -35,7 +35,6 @@ class Project(BaseModel):
     year_init: int | str | None = None
     year_end: int | str | None = None
 
-    authors_data: list[Author] | None = None
     language: str | None = None
     product_types: list[ProductType] | None = None
     title: str | None = None

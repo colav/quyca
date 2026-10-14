@@ -14,10 +14,10 @@ from quyca.domain.services.submit.scienti_service import ScientiService
 from quyca.domain.services.submit import submit_project_file_service
 from quyca.infrastructure.container import build_ciarp_service, build_scienti_service, build_staff_service
 
-submit_app_router = Blueprint("submit_app_router", __name__)
+submit_router = Blueprint("submit_app_router", __name__)
 
 """
-@api {post} /app/submit/staff Subir archivo Staff (.xlsx)
+@api {post} /submit/staff Subir archivo Staff (.xlsx)
 @apiName SubmitStaff
 @apiGroup Staff
 @apiVersion 1.0.0
@@ -46,7 +46,7 @@ Auth por cookie HttpOnly `access_token_cookie`.
 """
 
 
-@submit_app_router.route("/staff", methods=["POST"])
+@submit_router.route("/staff", methods=["POST"])
 def submit_staff() -> Tuple[Response, int]:
     try:
         try:
@@ -86,7 +86,7 @@ def submit_staff() -> Tuple[Response, int]:
 
 
 """
-@api {post} /app/submit/ciarp Subir archivo CIARP (.xlsx)
+@api {post} /submit/ciarp Subir archivo CIARP (.xlsx)
 @apiName SubmitCiarp
 @apiGroup CIARP
 @apiVersion 1.0.0
@@ -115,7 +115,7 @@ La autenticación se maneja con cookie HttpOnly `access_token_cookie` (no se env
 """
 
 
-@submit_app_router.route("/ciarp", methods=["POST"])
+@submit_router.route("/ciarp", methods=["POST"])
 def submit_ciarp() -> tuple[Any, int]:
     try:
         try:
@@ -142,7 +142,7 @@ def submit_ciarp() -> tuple[Any, int]:
 
 
 """
-@api {post} /app/submit/scienti Subir comprimido SCIENTI
+@api {post} /submit/scienti Subir comprimido SCIENTI
 @apiName SubmitScienti
 @apiGroup SCIENTI
 @apiVersion 1.0.0
@@ -170,7 +170,7 @@ Auth por cookie HttpOnly `access_token_cookie`.
 """
 
 
-@submit_app_router.route("/scienti", methods=["POST"])
+@submit_router.route("/scienti", methods=["POST"])
 def submit_scienti() -> Tuple[Response, int]:
     try:
         try:
@@ -196,7 +196,7 @@ def submit_scienti() -> Tuple[Response, int]:
 
 
 """
-@api {post} /app/project/validate Validate projects file
+@api {post} /project/validate Validate projects file
 @apiName ValidateProjectFile
 @apiGroup Project
 @apiVersion 1.0.0
@@ -206,7 +206,7 @@ def submit_scienti() -> Tuple[Response, int]:
 """
 
 
-@submit_app_router.route("/project", methods=["POST"])
+@submit_router.route("/project", methods=["POST"])
 def validate_project_file() -> Response | Tuple[Response, int]:
     try:
         file = request.files.get("file")

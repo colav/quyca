@@ -3,11 +3,11 @@ from flask import Blueprint, jsonify
 from sentry_sdk import capture_exception
 from quyca.infrastructure.container import build_get_me_usecase
 
-me_app_router = Blueprint("me_app_router", __name__)
+me_router = Blueprint("me_app_router", __name__)
 
 
 """
-@api {get} /app/me Estado de sesión
+@api {get} /me Estado de sesión
 @apiName GetMe
 @apiGroup Authentication
 @apiVersion 1.0.0
@@ -34,7 +34,7 @@ Retorna el estado de la sesión actual leyendo el JWT desde cookie HttpOnly `acc
 """
 
 
-@me_app_router.route("/me", methods=["GET"])
+@me_router.route("/me", methods=["GET"])
 def me() -> tuple[Any, int]:
     try:
         usecase = build_get_me_usecase()

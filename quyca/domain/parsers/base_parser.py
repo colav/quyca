@@ -1,10 +1,9 @@
 from math import ceil
 import time
-from typing import Generator
+from typing import Callable, Iterable
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from quyca.domain.models.base_model import QueryParams
-from quyca.domain.parsers.work import work_parser
 
 
 ALLOWED_FIELDS = {
@@ -23,19 +22,20 @@ ALLOWED_FIELDS = {
 }
 
 
+Parser = Callable[[list], list]
+
+
 def build_metadata(
-    works: Generator,
+    entities: Iterable,
     total_count: int,
     query_params: QueryParams,
     start_time: float,
     current_url: str,
-    fields: list[str] | None = None,
+    parser: Parser,
 ) -> dict:
-    """
-    This function builds the metadata for the API expert response.
-    """
+    entity_list = list(entities)
     db_response_time_ms = int((time.time() - start_time) * 1000)
-    data = process_works(works, fields)
+    data = parser(entity_list)
     page = query_params.page or 1
     limit = query_params.limit or len(data)
 
@@ -44,14 +44,8 @@ def build_metadata(
         "db_response_time_ms": db_response_time_ms,
         "page": page,
         "size": limit,
-        "cursor": build_cursor(
-            page,
-            total_count,
-            limit,
-            current_url,
-        ),
+        "cursor": build_cursor(page, total_count, limit, current_url),
     }
-
     return {"meta": meta, "data": data}
 
 
@@ -82,12 +76,6 @@ def build_cursor(page: int, total_count: int, limit: int, current_url: str) -> d
     previous_url = build_url(page - 1) if page > 1 else None
 
     return {"next": next_url, "previous": previous_url}
-
-
-def process_works(works: Generator, fields: list[str] | None = None) -> list:
-    works_list = list(works)
-    data = work_parser.parse_api_expert(works_list, fields)
-    return data
 
 
 def parse_fields(fields: str | None) -> list[str] | None:

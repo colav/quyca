@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-ENDPOINT = "/app/search/projects"
+ENDPOINT = "/search/projects"
 
 
 def test_search_projects(client) -> None:

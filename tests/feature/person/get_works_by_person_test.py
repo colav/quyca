@@ -2,7 +2,7 @@ from quyca.infrastructure.mongo import database
 from unittest.mock import patch
 
 
-ENDPOINT = "/app/person"
+ENDPOINT = "/person"
 
 
 def test_get_works_by_person(client):

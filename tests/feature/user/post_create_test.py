@@ -18,7 +18,7 @@ def auth_cookie(client: FlaskClient, role: str = "admin") -> None:
 
 def test_create_user_no_token(client: FlaskClient) -> None:
     resp = client.post(
-        "/app/admin/users/test@udea.edu.co",
+        "/admin/users/test@udea.edu.co",
         json={"institution": "UdeA", "ror_id": "R001", "role": "staff"},
     )
     assert resp.status_code == 401
@@ -30,7 +30,7 @@ def test_create_user_non_admin(client: FlaskClient) -> None:
     auth_cookie(client, role="staff")
 
     resp = client.post(
-        "/app/admin/users/staff@udea.edu.co",
+        "/admin/users/staff@udea.edu.co",
         json={"institution": "UdeA", "ror_id": "R001", "role": "staff"},
     )
 
@@ -47,7 +47,7 @@ def test_create_user_success(client: FlaskClient) -> None:
 
     with patch(f"{ROUTER_MOD}.usecase", usecase_mock):
         resp = client.post(
-            "/app/admin/users/ok@udea.edu.co",
+            "/admin/users/ok@udea.edu.co",
             json={"institution": "UdeA", "ror_id": "R100", "role": "staff"},
         )
 
@@ -69,7 +69,7 @@ def test_create_user_conflict(client: FlaskClient) -> None:
 
     with patch(f"{ROUTER_MOD}.usecase", usecase_mock):
         resp = client.post(
-            "/app/admin/users/dup@udea.edu.co",
+            "/admin/users/dup@udea.edu.co",
             json={"institution": "UdeA", "ror_id": "R001", "role": "staff"},
         )
 

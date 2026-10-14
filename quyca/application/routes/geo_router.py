@@ -9,10 +9,10 @@ from quyca.domain.services.geo import geo_service
 from quyca.domain.services.work import work_service
 
 
-geo_app_router = Blueprint("geo_app_router", __name__)
+geo_router = Blueprint("geo_app_router", __name__)
 
 """
-@api {get} /app/geo/:geo_type/:geo_id Get geographic entity by id
+@api {get} /geo/:geo_type/:geo_id Get geographic entity by id
 @apiName GetGeoById
 @apiGroup Geo
 
@@ -34,7 +34,7 @@ geo_app_router = Blueprint("geo_app_router", __name__)
 """
 
 
-@geo_app_router.route("/<geo_type>/<geo_id>", methods=["GET"])
+@geo_router.route("/<geo_type>/<geo_id>", methods=["GET"])
 def get_geo_by_id(geo_type: str, geo_id: str) -> Response | Tuple[Response, int]:
     try:
         data = geo_service.geo_by_id(geo_type, geo_id)
@@ -45,7 +45,7 @@ def get_geo_by_id(geo_type: str, geo_id: str) -> Response | Tuple[Response, int]
 
 
 """
-@api {get} /app/geo/:geo_type/:geo_id/affiliations Get affiliations by geographic entity
+@api {get} /geo/:geo_type/:geo_id/affiliations Get affiliations by geographic entity
 @apiName GetAffiliationAffiliations
 @apiGroup Geo
 @apiVersion 1.0.0
@@ -80,7 +80,7 @@ def get_geo_by_id(geo_type: str, geo_id: str) -> Response | Tuple[Response, int]
 """
 
 
-@geo_app_router.route("/<geo_type>/<geo_id>/affiliations", methods=["GET"])
+@geo_router.route("/<geo_type>/<geo_id>/affiliations", methods=["GET"])
 def get_affiliation_affiliations(geo_type: str, geo_id: str) -> Response | Tuple[Response, int]:
     try:
         data = geo_service.related_affiliations_by_geo(geo_type, geo_id)
@@ -92,7 +92,7 @@ def get_affiliation_affiliations(geo_type: str, geo_id: str) -> Response | Tuple
 
 
 """
-@api {get} /app/geo/:geo_type/:geo_id/research/products Get research products by geographic entity
+@api {get} /geo/:geo_type/:geo_id/research/products Get research products by geographic entity
 @apiName GetGeoProducts
 @apiGroup Geo
 @apiVersion 1.0.0
@@ -123,11 +123,11 @@ def get_affiliation_affiliations(geo_type: str, geo_id: str) -> Response | Tuple
 """
 
 
-@geo_app_router.route("/<geo_type>/<geo_id>/research/products", methods=["GET"])
+@geo_router.route("/<geo_type>/<geo_id>/research/products", methods=["GET"])
 def get_geo_products(geo_type: str, geo_id: str) -> Response | Tuple[Response, int]:
     try:
-        query_params = QueryParams(**request.args)
-        data = work_service.get_works_by_geo(geo_type, geo_id, query_params)
+        query_params = QueryParams.model_validate(request.args.to_dict())
+        data = work_service.get_works_by_geo(geo_type, geo_id, query_params, request.url)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)

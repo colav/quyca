@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, List, Tuple
 
 from quyca.domain.models.base_model import QueryParams
+from quyca.domain.normalizers.authors_count import parse_authors_count
 from quyca.infrastructure.mongo import database
 
 # Cache for global filters (no entity filter, no query params applied).
@@ -79,6 +80,19 @@ def get_works_available_filters(query_params: QueryParams) -> Dict:
             {"$match": {"year_published": {"$type": "number"}}},
             {"$group": {"_id": None, "min_year": {"$min": "$year_published"}, "max_year": {"$max": "$year_published"}}},
             {"$project": {"_id": 0, "min_year": 1, "max_year": 1}},
+        ],
+        "authors_count": pipeline.copy()
+        + [
+            {"$project": {"author_count": 1}},
+            {"$match": {"author_count": {"$type": "number"}}},
+            {
+                "$group": {
+                    "_id": None,
+                    "min_authors": {"$min": "$author_count"},
+                    "max_authors": {"$max": "$author_count"},
+                }
+            },
+            {"$project": {"_id": 0, "min_authors": 1, "max_authors": 1}},
         ],
         "status": pipeline.copy()
         + [
@@ -178,6 +192,9 @@ def get_works_available_filters(query_params: QueryParams) -> Dict:
         if key == "years":
             cursor = collection.aggregate(pipe)
             return key, next(cursor, {"min_year": None, "max_year": None})
+        elif key == "authors_count":
+            cursor = collection.aggregate(pipe)
+            return key, next(cursor, {"max_authors": None, "min_authors": None})
         else:
             return key, list(collection.aggregate(pipe))
 
@@ -202,6 +219,7 @@ def set_product_filters(pipeline: list, query_params: QueryParams) -> None:
     set_country_filters(pipeline, query_params.countries)
     set_groups_ranking_filters(pipeline, query_params.groups_ranking)
     set_authors_ranking_filters(pipeline, query_params.authors_ranking)
+    set_authors_count_filter(pipeline, query_params.authors_count)
 
 
 def set_product_type_filters(pipeline: list, type_filters: str | None) -> None:
@@ -317,3 +335,15 @@ def set_authors_filter_if_large(pipeline: list) -> None:
             }
         }
     )
+
+
+def set_authors_count_filter(pipeline: list, authors_count: str | None) -> None:
+    if not authors_count:
+        return
+    count_range = parse_authors_count(authors_count)
+    conditions: dict[str, int] = {}
+    if count_range.min is not None:
+        conditions["$gte"] = count_range.min
+    if count_range.max is not None:
+        conditions["$lte"] = count_range.max
+    pipeline.append({"$match": {"author_count": conditions}})

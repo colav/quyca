@@ -6,33 +6,11 @@ from quyca.domain.constants.product_types import source_titles
 
 
 def parse_works_by_entity(works: list) -> list:
-    include = [
-        "id",
-        "authors",
-        "authors_count",
-        "open_access",
-        "citations_count",
-        "product_types",
-        "year_published",
-        "title",
-        "subjects",
-        "source",
-        "external_ids",
-        "ranking",
-        "topics",
-    ]
-    return [work.model_dump(include=include, exclude_none=True) for work in works]
+    return [work.model_dump(exclude_none=True) for work in works]
 
 
 def parse_work(work: Work) -> dict:
-    fields_exclude = {"abstracts"}
-    return dict(work.model_dump(exclude=fields_exclude, exclude_none=True))
-
-
-def parse_api_expert(works: list, fields: list[str] | None = None) -> list:
-    exclude = {"abstracts"}
-    include = {"id", *fields} if fields else None
-    return [work.model_dump(include=include, exclude=exclude, exclude_none=True) for work in works]
+    return dict(work.model_dump())
 
 
 def parse_available_filters(filters: dict) -> dict:
@@ -51,6 +29,8 @@ def parse_available_filters(filters: dict) -> dict:
         available_filters["groups_ranking"] = parse_groups_ranking_filter(groups_ranking)
     if authors_ranking := filters.get("authors_ranking"):
         available_filters["authors_ranking"] = parse_authors_ranking_filter(authors_ranking)
+    if authors_count := filters.get("authors_count"):
+        available_filters["authors_count"] = authors_count
     return available_filters
 
 

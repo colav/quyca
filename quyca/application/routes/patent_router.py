@@ -5,10 +5,10 @@ from sentry_sdk import capture_exception
 
 from quyca.domain.services.patent import patent_service
 
-patent_app_router = Blueprint("patent_app_router", __name__)
+patent_router = Blueprint("patent_app_router", __name__)
 
 """
-@api {get} /app/patent/:patent_id Get patent by id
+@api {get} /patent/:patent_id Get patent by id
 @apiName GetPatentById
 @apiGroup Patent
 @apiVersion 1.0.0
@@ -18,7 +18,7 @@ patent_app_router = Blueprint("patent_app_router", __name__)
 """
 
 
-@patent_app_router.route("/<patent_id>", methods=["GET"])
+@patent_router.route("/<patent_id>", methods=["GET"])
 def get_patent_by_id(patent_id: str) -> Response | Tuple[Response, int]:
     try:
         data = patent_service.get_patent_by_id(patent_id)
@@ -29,7 +29,7 @@ def get_patent_by_id(patent_id: str) -> Response | Tuple[Response, int]:
 
 
 """
-@api {get} /app/patent/:patent_id/authors Get patent authors
+@api {get} /patent/:patent_id/authors Get patent authors
 @apiName GetPatentAuthors
 @apiGroup Patent
 @apiVersion 1.0.0
@@ -39,7 +39,7 @@ def get_patent_by_id(patent_id: str) -> Response | Tuple[Response, int]:
 """
 
 
-@patent_app_router.route("/<patent_id>/authors", methods=["GET"])
+@patent_router.route("/<patent_id>/authors", methods=["GET"])
 def get_patent_authors(patent_id: str) -> Response | Tuple[Response, int]:
     try:
         data = patent_service.get_patent_authors(patent_id)

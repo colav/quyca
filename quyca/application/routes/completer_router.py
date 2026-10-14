@@ -5,10 +5,10 @@ from sentry_sdk import capture_exception
 
 from quyca.infrastructure.repositories import completers
 
-completer_app_router = Blueprint("completer_app_router", __name__)
+completer_router = Blueprint("completer_app_router", __name__)
 
 """
-@api {get} /app/completer/person/:text Get completion suggestions
+@api {get} /completer/person/:text Get completion suggestions
 @apiName GetPersonCompleter
 @apiGroup Completer
 @apiVersion 1.0.0
@@ -18,7 +18,7 @@ completer_app_router = Blueprint("completer_app_router", __name__)
 """
 
 
-@completer_app_router.route("/person/<text>", methods=["GET"])
+@completer_router.route("/person/<text>", methods=["GET"])
 def get_person_completion(text: str) -> Response | Tuple[Response, int]:
     try:
         data = completers.person_completer(text)
@@ -29,7 +29,7 @@ def get_person_completion(text: str) -> Response | Tuple[Response, int]:
 
 
 """
-@api {get} /app/completer/affiliations/institution/:text Get completion suggestions
+@api {get} /completer/affiliations/institution/:text Get completion suggestions
 @apiName GetInstitutionCompleter
 @apiGroup Completer
 @apiVersion 1.0.0
@@ -39,7 +39,7 @@ def get_person_completion(text: str) -> Response | Tuple[Response, int]:
 """
 
 
-@completer_app_router.route("/affiliations/institution/<text>", methods=["GET"])
+@completer_router.route("/affiliations/institution/<text>", methods=["GET"])
 def get_institution_completion(text: str) -> Response | Tuple[Response, int]:
     try:
         data = completers.affiliations_completer("institution", text)
@@ -50,7 +50,7 @@ def get_institution_completion(text: str) -> Response | Tuple[Response, int]:
 
 
 """
-@api {get} /app/completer/affiliations/group/:text Get completion suggestions
+@api {get} /completer/affiliations/group/:text Get completion suggestions
 @apiName GetGroupCompleter
 @apiGroup Completer
 @apiVersion 1.0.0
@@ -60,7 +60,7 @@ def get_institution_completion(text: str) -> Response | Tuple[Response, int]:
 """
 
 
-@completer_app_router.route("/affiliations/group/<text>", methods=["GET"])
+@completer_router.route("/affiliations/group/<text>", methods=["GET"])
 def get_group_completion(text: str) -> Response | Tuple[Response, int]:
     try:
         data = completers.affiliations_completer("group", text)
@@ -71,7 +71,7 @@ def get_group_completion(text: str) -> Response | Tuple[Response, int]:
 
 
 """
-@api {get} /app/completer/affiliations/department/:text Get completion suggestions
+@api {get} /completer/affiliations/department/:text Get completion suggestions
 @apiName GetDepartmentCompleter
 @apiGroup Completer
 @apiVersion 1.0.0
@@ -81,7 +81,7 @@ def get_group_completion(text: str) -> Response | Tuple[Response, int]:
 """
 
 
-@completer_app_router.route("/affiliations/department/<text>", methods=["GET"])
+@completer_router.route("/affiliations/department/<text>", methods=["GET"])
 def get_department_completion(text: str) -> Response | Tuple[Response, int]:
     try:
         data = completers.affiliations_completer("department", text)
@@ -92,7 +92,7 @@ def get_department_completion(text: str) -> Response | Tuple[Response, int]:
 
 
 """
-@api {get} /app/completer/affiliations/faculty/:text Get completion suggestions
+@api {get} /completer/affiliations/faculty/:text Get completion suggestions
 @apiName GetFacultyCompleter
 @apiGroup Completer
 @apiVersion 1.0.0
@@ -102,7 +102,7 @@ def get_department_completion(text: str) -> Response | Tuple[Response, int]:
 """
 
 
-@completer_app_router.route("/affiliations/faculty/<text>", methods=["GET"])
+@completer_router.route("/affiliations/faculty/<text>", methods=["GET"])
 def get_faculty_completion(text: str) -> Response | Tuple[Response, int]:
     try:
         data = completers.affiliations_completer("faculty", text)
@@ -113,7 +113,7 @@ def get_faculty_completion(text: str) -> Response | Tuple[Response, int]:
 
 
 """
-@api {get} /app/completer/source/:text Get source completion suggestions
+@api {get} /completer/source/:text Get source completion suggestions
 @apiName GetSourceCompleter
 @apiGroup Completer
 @apiVersion 1.0.0
@@ -154,7 +154,7 @@ def get_faculty_completion(text: str) -> Response | Tuple[Response, int]:
 """
 
 
-@completer_app_router.route("/sources/<text>", methods=["GET"])
+@completer_router.route("/sources/<text>", methods=["GET"])
 def get_source_completion(text: str) -> Response | Tuple[Response, int]:
     try:
         data = completers.source_completer(text)

@@ -9,10 +9,10 @@ from quyca.infrastructure.repositories.user_repository import UserRepositoryMong
 from quyca.infrastructure.security.jwt_token_service import JwtTokenService
 from quyca.application.usecases.login_user import LoginUserUseCase
 
-user_auth_app_router = Blueprint("user_auth_app_router", __name__)
+user_auth_router = Blueprint("user_auth_app_router", __name__)
 
 """
-@api {post} /app/login Iniciar sesión
+@api {post} /login Iniciar sesión
 @apiName PostLoginUser
 @apiGroup Authentication
 @apiVersion 1.0.0
@@ -49,7 +49,7 @@ Autentica con email y contraseña. Si es válido:
 """
 
 
-@user_auth_app_router.route("/login", methods=["POST"])
+@user_auth_router.route("/login", methods=["POST"])
 def login() -> Tuple[Response, int]:
     try:
         data = request.get_json(force=True) or {}
@@ -94,7 +94,7 @@ def login() -> Tuple[Response, int]:
 
 
 """
-@api {post} /app/logout Cerrar sesión
+@api {post} /logout Cerrar sesión
 @apiName PostLogoutUser
 @apiGroup Authentication
 @apiVersion 1.0.0
@@ -111,7 +111,7 @@ No requiere enviar token en el body.
 """
 
 
-@user_auth_app_router.route("/logout", methods=["POST"])
+@user_auth_router.route("/logout", methods=["POST"])
 def logout() -> Tuple[Response, int]:
     try:
         response = jsonify({"success": True, "msg": "Sesión cerrada correctamente"})

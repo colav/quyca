@@ -15,7 +15,7 @@ Using the AAA (Arrange, Act, Assert) pattern with pytest.
   is tested in isolation from the Elasticsearch query logic (already covered above).
 """
 
-ENDPOINT = "/app/completer/affiliations"
+ENDPOINT = "/completer/affiliations"
 
 AFFILIATION_TYPES = [
     ("institution", "ES_INSTITUTION_COMPLETER_INDEX"),

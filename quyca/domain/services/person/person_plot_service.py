@@ -2,7 +2,6 @@ from typing import Any
 from quyca.domain.constants.articles_types import articles_types_list
 from quyca.domain.models.base_model import QueryParams
 from quyca.domain.parsers.plot import bar_parser, map_parser, network_parser, pie_parser
-from quyca.domain.services.base_service import build_person_pipeline_params
 from quyca.infrastructure.repositories import (
     calculations_repository,
 )
@@ -32,10 +31,10 @@ def get_person_plot(person_id: str, query_params: QueryParams) -> dict[str, Any]
     return result
 
 
-def plot_annual_evolution_by_scienti_classification(person_id: str, query_params: QueryParams) -> dict:
+def plot_annual_evolution_by_impactu_classification(person_id: str, query_params: QueryParams) -> dict:
     pipeline_params = {"project": ["year_published", "types"]}
     works = work_repository.get_works_by_person(person_id, query_params, pipeline_params)
-    return bar_parser.parse_annual_evolution_by_scienti_classification(works)
+    return bar_parser.parse_annual_evolution_by_impactu_classification(works)
 
 
 def plot_annual_citation_count(person_id: str, query_params: QueryParams) -> dict:
@@ -146,7 +145,20 @@ def plot_articles_by_scimago_quartile(person_id: str, query_params: QueryParams)
 
 
 def plot_articles_by_publishing_institution(person_id: str, query_params: QueryParams) -> dict:
-    pipeline_params = build_person_pipeline_params()
+    pipeline_params = {
+        "project": [
+            "_id",
+            "full_name",
+            "affiliations",
+            "external_ids",
+            "citations_count",
+            "products_count",
+            "affiliations_data",
+            "logo",
+            "h_index",
+            "h5_index",
+        ]
+    }
     person = person_repository.get_person_by_id(person_id, pipeline_params)
     institution = None
 
@@ -158,7 +170,7 @@ def plot_articles_by_publishing_institution(person_id: str, query_params: QueryP
             ):
                 institution = affiliation_repository.get_affiliation_by_id(str(affiliation.id))
                 break
-    pipeline_params = {
+    pipeline_params: dict[str, Any] = {
         "work_project": ["source.id", "source.name", "source.publisher.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }

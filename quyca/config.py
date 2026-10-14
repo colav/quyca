@@ -28,7 +28,6 @@ class Settings(BaseSettings):
     APP_PORT: str | int
     APP_DOMAIN: str
 
-    APP_URL_PREFIX: str
     API_URL_PREFIX: str
 
     MONGO_SERVER: str

@@ -3,7 +3,7 @@ from typing import List
 from unittest.mock import patch
 
 
-ENDPOINT = "/app/search/sources"
+ENDPOINT = "/search/sources"
 
 
 @pytest.mark.parametrize(
@@ -22,7 +22,9 @@ def test_search_sources_parametrize(client, query, status_code):
     assert response.status_code == status_code
     data = response.get_json()
     assert "data" in data
-    assert "total_results" in data
+    assert "meta" in data
+    assert "count" in data["meta"]
+    assert isinstance(data["meta"]["count"], int)
     assert isinstance(data["data"], List)
 
 
@@ -35,8 +37,10 @@ def test_search_sources_empty(client):
     data = response.get_json()
     assert "data" in data
     assert len(data["data"]) == 0
-    assert "total_results" in data
-    assert data["total_results"] == 0
+    assert "meta" in data
+    assert "count" in data["meta"]
+    assert isinstance(data["meta"]["count"], int)
+    assert data["meta"]["count"] == 0
 
 
 def test_search_sources_invalid_params(client):
@@ -59,7 +63,9 @@ def test_search_source_with_valid_source_type(client):
     data = response.get_json()
     assert "data" in data
     assert isinstance(data["data"], List)
-    assert "total_results" in data
+    assert "meta" in data
+    assert "count" in data["meta"]
+    assert isinstance(data["meta"]["count"], int)
     assert all((type.get("type") == "repository" for type in source.get("types", [])) for source in data["data"])
 
 
@@ -72,7 +78,9 @@ def test_search_sources_with_multiple_source_types(client):
     data = response.get_json()
     assert "data" in data
     assert isinstance(data["data"], List)
-    assert "total_results" in data
+    assert "meta" in data
+    assert "count" in data["meta"]
+    assert isinstance(data["meta"]["count"], int)
     assert all(source.get("type") in ["journal", "repository"] for source in data["data"])
 
 
@@ -84,7 +92,11 @@ def test_search_sources_with_source_type_and_keywords(client):
     assert response.status_code == 200
     data = response.get_json()
     assert "data" in data
-    assert "total_results" in data
+    assert "meta" in data
+    assert "count" in data["meta"]
+    assert isinstance(data["meta"]["count"], int)
+    assert data["meta"]["count"] >= 0
+
     for source in data["data"]:
         assert source.get("type") == "journal"
         assert any("philosophy" in name_dict.get("name", "").lower() for name_dict in source.get("names", []))

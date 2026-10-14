@@ -167,7 +167,7 @@ def compute_bibliographic_info(work: Work) -> dict[str, Any]:
 
 
 def compute_authors(work: Work) -> str | None:
-    names = {author.full_name for author in work.authors if author.full_name}
+    names = {author.full_name for author in (work.authors or []) if author.full_name}
     return " | ".join(sorted(names)) or None
 
 

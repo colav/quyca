@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 
-ENDPOINT = "/app/search/person"
+ENDPOINT = "/search/person"
 
 
 def test_search_person(client):

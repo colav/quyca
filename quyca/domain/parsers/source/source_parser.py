@@ -9,38 +9,7 @@ from quyca.domain.models.source_model import Source
 
 
 def parse_source(source: Source) -> dict[str, Any]:
-    include: set = {
-        "id",
-        "abbreviations",
-        "addresses",
-        "apc",
-        "citations_count",
-        "copyright",
-        "external_ids",
-        "external_urls",
-        "global_citations_count",
-        "global_products_count",
-        "keywords",
-        "languages",
-        "licenses",
-        "names",
-        "open_access_start_year",
-        "open_access_status",
-        "plagiarism_detection",
-        "publication_time_weeks",
-        "products_count",
-        "publisher",
-        "ranking",
-        "relations",
-        "review_process",
-        "subjects",
-        "scimago_best_quartile",
-        "topics",
-        "type",
-        "updated",
-        "waiver",
-    }
-    return dict(source.model_dump(include=include, exclude_none=True))
+    return dict(source.model_dump(exclude_none=True))
 
 
 def parse_available_filters(filters: Dict) -> Dict:

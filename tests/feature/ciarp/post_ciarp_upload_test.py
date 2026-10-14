@@ -28,7 +28,7 @@ def test_ciarp_upload_invalid_token(client: FlaskClient) -> None:
     client.set_cookie("access_token_cookie", "invalid_token")
 
     response = client.post(
-        "/app/submit/ciarp",
+        "/submit/ciarp",
         data={"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")},
         content_type="multipart/form-data",
     )
@@ -54,7 +54,7 @@ def test_ciarp_upload_with_invalid_columns(client: FlaskClient) -> None:
         )
 
         response = client.post(
-            "/app/submit/ciarp",
+            "/submit/ciarp",
             data={"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")},
             content_type="multipart/form-data",
         )
@@ -75,7 +75,7 @@ def test_ciarp_upload_empty_file(client: FlaskClient) -> None:
         )
 
         response = client.post(
-            "/app/submit/ciarp",
+            "/submit/ciarp",
             data={"file": (io.BytesIO(b""), "ciarp.xlsx")},
             content_type="multipart/form-data",
         )
@@ -95,7 +95,7 @@ def test_ciarp_upload_success(client: FlaskClient) -> None:
         )
 
         response = client.post(
-            "/app/submit/ciarp",
+            "/submit/ciarp",
             data={"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")},
             content_type="multipart/form-data",
         )
@@ -108,7 +108,7 @@ def test_ciarp_upload_success(client: FlaskClient) -> None:
 def test_ciarp_upload_no_file(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    response = client.post("/app/submit/ciarp", data={})
+    response = client.post("/submit/ciarp", data={})
 
     assert response.status_code == 400
     json_data = cast(dict[str, Any], response.json)
@@ -126,7 +126,7 @@ def test_ciarp_upload_with_errors(client: FlaskClient) -> None:
         )
 
         response = client.post(
-            "/app/submit/ciarp",
+            "/submit/ciarp",
             data={"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")},
             content_type="multipart/form-data",
         )
@@ -147,7 +147,7 @@ def test_ciarp_upload_with_duplicates(client: FlaskClient) -> None:
         )
 
         response = client.post(
-            "/app/submit/ciarp",
+            "/submit/ciarp",
             data={"file": (io.BytesIO(b"excel-with-duplicates"), "ciarp.xlsx")},
             content_type="multipart/form-data",
         )
@@ -164,7 +164,7 @@ def test_ciarp_upload_email_failed(client: FlaskClient) -> None:
         mock_service.return_value = ({"success": False, "msg": "Fallo al enviar correo"}, 500)
 
         response = client.post(
-            "/app/submit/ciarp",
+            "/submit/ciarp",
             data={"file": (io.BytesIO(b"excel-content"), "ciarp.xlsx")},
             content_type="multipart/form-data",
         )
