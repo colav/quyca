@@ -31,7 +31,9 @@ def search_persons(query_params: QueryParams, pipeline_params: Dict | None = Non
 def search_count_persons(query_params: QueryParams, pipeline_params: Dict | None = None) -> int:
     if pipeline_params is None:
         pipeline_params = {}
-    count_pipeline: list[dict[str, Any]] = [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    count_pipeline: list[dict[str, Any]] = (
+        [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
+    )
     count_pipeline += [{"$count": "total_results"}]
     result = next(database["person"].aggregate(count_pipeline), {"total_results": 0})
     return int(result.get("total_results", 0))
