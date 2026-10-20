@@ -52,7 +52,7 @@ def get_work_by_doi() -> Response | Tuple[Response, int]:
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 404
-    
+
 
 """
 @api {get} /works/:work_id/authors Get work authors
