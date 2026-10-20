@@ -31,6 +31,30 @@ def get_work_by_id(work_id: str) -> Response | Tuple[Response, int]:
 
 
 """
+@api {get} /work/:work_doi Get work by doi
+@apiName GetWorkByDoi
+@apiGroup Work
+@apiVersion 1.0.0
+@apiDescription Obtiene un producto bibliográfico por DOI.
+
+@apiParam {String} work_doi DOI del producto bibliográfico.
+"""
+
+
+@work_router.route("", methods=["GET"])
+def get_work_by_doi() -> Response | Tuple[Response, int]:
+    doi = request.args.get("doi")
+    if not doi:
+        return jsonify({"error": "Missing required parameter: doi"}), 401
+    try:
+        query_params = QueryParams.model_validate(request.args.to_dict())
+        data = work_service.get_work_by_doi(doi, query_params, request.url)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 404
+    
+
+"""
 @api {get} /works/:work_id/authors Get work authors
 @apiName GetWorkAuthors
 @apiGroup Work

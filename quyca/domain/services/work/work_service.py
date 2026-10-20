@@ -33,6 +33,19 @@ def get_work_by_id(work_id: str, query_params: QueryParams) -> dict:
     return {"data": data}
 
 
+def get_work_by_doi(work_doi: str, query_params: QueryParams, current_url: str) -> dict:
+    start_time = time.time()
+    work = work_repository.get_work_by_doi(work_doi)
+    return build_metadata(
+        work,
+        1,
+        query_params,
+        start_time,
+        current_url,
+        work_parser.parse_works,
+    )
+
+
 def set_abstract(work: Work) -> None:
     def order(abstract: Abstract) -> float:
         hierarchy = ["openalex", "scholar", "scienti"]
@@ -53,7 +66,6 @@ def get_work_authors(work_id: str) -> dict:
 def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams, current_url: str) -> dict:
     start_time = time.time()
     works = work_repository.get_works_by_affiliation(affiliation_id, query_params)
-
     works_data = get_entity_data(works, query_params.view)
     total_results = work_repository.get_works_count_by_affiliation(affiliation_id, query_params)
     return build_metadata(
@@ -62,7 +74,7 @@ def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams, cur
         query_params,
         start_time,
         current_url,
-        parser=work_parser.parse_works_by_entity,
+        work_parser.parse_works,
     )
 
 
@@ -85,7 +97,7 @@ def get_works_by_person(person_id: str, query_params: QueryParams, current_url: 
         query_params,
         start_time,
         current_url,
-        parser=work_parser.parse_works_by_entity,
+        parser=work_parser.parse_works,
     )
 
 
@@ -106,7 +118,7 @@ def get_works_by_source(source_id: str, query_params: QueryParams, current_url: 
         query_params,
         start_time,
         current_url,
-        parser=work_parser.parse_works_by_entity,
+        parser=work_parser.parse_works,
     )
 
 
@@ -128,5 +140,5 @@ def get_works_by_geo(geo_type: str, geo_id: str, query_params: QueryParams, curr
         query_params,
         start_time,
         current_url,
-        parser=work_parser.parse_works_by_entity,
+        parser=work_parser.parse_works,
     )

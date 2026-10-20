@@ -27,6 +27,12 @@ def get_work_by_id(work_id: str) -> Work:
     return Work(**work)
 
 
+def get_work_by_doi(work_doi: str) -> Generator:
+    pipeline = [{"$match": {"doi": work_doi}}]
+    cursor = database["works"].aggregate(pipeline)
+    return work_generator.get(cursor)
+
+
 def get_works_by_affiliation(
     affiliation_id: str,
     query_params: QueryParams,

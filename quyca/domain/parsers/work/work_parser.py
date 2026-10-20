@@ -5,7 +5,7 @@ from quyca.domain.constants.open_access_status import open_access_status_dict
 from quyca.domain.constants.product_types import source_titles
 
 
-def parse_works_by_entity(works: list) -> list:
+def parse_works(works: list) -> list:
     return [work.model_dump(exclude_none=True) for work in works]
 
 
