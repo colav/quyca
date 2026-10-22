@@ -175,9 +175,7 @@ def plot_articles_by_publishing_institution(
                 affiliation_type.type not in ["faculty", "department", "group"]
                 for affiliation_type in affiliation.types
             ):
-                institution = affiliation_repository.get_affiliation_by_id(
-                    str(affiliation.id)
-                )
+                institution = affiliation_repository.get_affiliation_by_id(str(affiliation.id))
                 break
 
     work_pipeline_params: dict[str, Any] = {
