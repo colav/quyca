@@ -144,8 +144,11 @@ def plot_articles_by_scimago_quartile(person_id: str, query_params: QueryParams)
     return pie_parser.parse_articles_by_scimago_quartile(works)
 
 
-def plot_articles_by_publishing_institution(person_id: str, query_params: QueryParams) -> dict:
-    pipeline_params = {
+def plot_articles_by_publishing_institution(
+    person_id: str,
+    query_params: QueryParams,
+) -> dict:
+    person_pipeline_params = {
         "project": [
             "_id",
             "full_name",
@@ -159,7 +162,11 @@ def plot_articles_by_publishing_institution(person_id: str, query_params: QueryP
             "h5_index",
         ]
     }
-    person = person_repository.get_person_by_id(person_id, pipeline_params)
+
+    person = person_repository.get_person_by_id(
+        person_id,
+        person_pipeline_params,
+    )
     institution = None
 
     if person.affiliations:
@@ -168,14 +175,26 @@ def plot_articles_by_publishing_institution(person_id: str, query_params: QueryP
                 affiliation_type.type not in ["faculty", "department", "group"]
                 for affiliation_type in affiliation.types
             ):
-                institution = affiliation_repository.get_affiliation_by_id(str(affiliation.id))
+                institution = affiliation_repository.get_affiliation_by_id(
+                    str(affiliation.id)
+                )
                 break
-    pipeline_params: dict[str, Any] = {
+
+    work_pipeline_params: dict[str, Any] = {
         "work_project": ["source.id", "source.name", "source.publisher.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
-    works = work_repository.get_works_with_source_by_person(person_id, query_params, pipeline_params)
-    return pie_parser.parse_articles_by_publishing_institution(works, institution)
+
+    works = work_repository.get_works_with_source_by_person(
+        person_id,
+        query_params,
+        work_pipeline_params,
+    )
+
+    return pie_parser.parse_articles_by_publishing_institution(
+        works,
+        institution,
+    )
 
 
 def plot_coauthorship_by_country_map(person_id: str, query_params: QueryParams) -> dict:
