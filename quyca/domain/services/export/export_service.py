@@ -52,7 +52,7 @@ def get_works_excel_by_source(source_id: str, query_params: QueryParams) -> Byte
 
 def build_export_pipeline_params() -> dict:
     pipeline_params = {
-        "$project": {
+        "project": {
             "_id": 1,
             "authors.id": 1,
             "author_count": 1,
