@@ -57,7 +57,7 @@ def build_cursor(page: int, total_count: int, limit: int, current_url: str) -> d
         return {"next": None, "previous": None}
 
     total_pages = ceil(total_count / limit)
-    parsed_url = urlparse(current_url)
+    parsed_url = urlparse(current_url)._replace(scheme="https")
     query_params = parse_qs(parsed_url.query)
 
     def build_url(target_page: int) -> str:
