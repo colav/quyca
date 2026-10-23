@@ -62,7 +62,7 @@ class Source(BaseModel):
     external_ids: list[ExternalId] | None = None
     ranking: list[Ranking] | None = None
     publisher: Publisher | str | None = None
-    apc: APC | None = None
+    apc: APC | str | None = None
     updated: list[Updated] | None = None
 
 
@@ -86,19 +86,17 @@ class Work(BaseModel):
     model_config = ConfigDict(json_encoders={ObjectId: str})
 
     id: PyObjectId = Field(alias="_id")
+    abstract: dict | None = None
     abstracts: list[Abstract] | None = None
     apc: APC | None = Field(default_factory=APC)
     authors_count: int | None = Field(default_factory=int, alias="author_count")
-    authors_csv: str | None = None
     bibliographic_info: BiblioGraphicInfo | None = None
     citations_by_year: list[CitationByYear] | None = None
     citations_count: list[CitationsCount] | str | None = None
-    contract_type: str | None = None
     date_published: int | None = None
     external_ids: list[ExternalId] | None = None
     external_urls: list[ExternalUrl] | None = None
     groups: list[Group] | None = None
-    groups_csv: str | None = None
     keywords: list | None = None
     open_access: OpenAccess | None = Field(default_factory=OpenAccess)
     ranking: list[Ranking] | str | None = None
@@ -111,41 +109,20 @@ class Work(BaseModel):
     types: list[Type] | None = None
     updated: list[Updated] | None = None
     year_published: int | None = None
-    abstract: dict | None = None
     authors: list[Author] | None = None
     affiliations_data: list[Affiliation] | None = None
-    countries: str | None = None
-    openalex_citations_count: str | int | None = None
-    scholar_citations_count: str | int | None = None
-    institutions: str | None = None
-    departments: str | None = None
-    faculties: str | None = None
-    groups_ranking: str | None = None
     pages: str | int | None = None
     start_page: str | int | None = None
     end_page: str | int | None = None
     bibtex: str | None = None
     doi: str | None = None
-    issue: str | int | None = None
     language: str | None = None
-    minciencias_id: str | None = None
-    open_access_status: str | None = None
     product_types: list[ProductType] | None = None
     publisher: str | None = None
-    openalex_types: str | None = None
-    scienti_types: str | None = None
-    impactu_types: str | None = None
-    scienti_id: str | None = None
-    scimago_quartile: str | None = None
-    source_apc: str | None = None
-    source_data: Source | list[Source] | None = None
-    source_name: str | None = None
-    source_urls: str | None = None
     title: str | None = None
     volume: str | int | None = None
     topics: list[Topic] | None = None
     primary_topic: Topic | None = None
-    primary_topic_csv: str | None = None
 
     @field_validator("date_published", mode="before")
     @classmethod

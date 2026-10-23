@@ -11,10 +11,10 @@ from quyca.domain.constants.summary_rules import (
 )
 from quyca.domain.models.affiliation_model import Affiliation, Relation
 from quyca.domain.constants.external_urls import external_urls_dict
-from quyca.domain.models.base_model import Title, ProductType, ExternalUrl, Type
+from quyca.domain.models.base_model import APC, Title, ProductType, ExternalUrl, Type
 from quyca.domain.models.patent_model import Patent
 from quyca.domain.models.project_model import Project
-from quyca.domain.models.work_model import Work, Source as WorkSource
+from quyca.domain.models.work_model import Work
 from quyca.infrastructure.repositories.person import person_repository
 from quyca.domain.constants.sensitive_data import SENSITIVE_ID_SOURCES
 from quyca.infrastructure.repositories.affiliation import affiliation_repository
@@ -234,44 +234,50 @@ def set_logo(affiliation: Affiliation, relation: Relation) -> None:
             affiliation.logo = str(logo_url)
 
 
-def update_csv_work_source(work: Work) -> None:
-    if not work.source:
-        return
-
+def get_source_export_fields(work: Work) -> dict:
     source = work.source
-    work.source_name = str(source.name) if source.name else None
-    if source.apc and source.apc.charges and source.apc.currency:
-        work.source_apc = f"{source.apc.charges} / {source.apc.currency}"
-    else:
-        work.source_apc = None
 
-    set_source_urls(work, source)
-    set_scimago_quartile(work, source)
+    if not source:
+        return {
+            "source_name": None,
+            "source_apc": None,
+            "source_urls": None,
+            "scimago_quartile": None,
+        }
 
+    source_name = str(source.name) if source.name else None
 
-def set_source_urls(work: Work, source: WorkSource) -> None:
-    if source.external_urls:
-        urls = {str(url.url) for url in source.external_urls if url.url}
-        work.source_urls = " | ".join(urls) if urls else None
-    else:
-        work.source_urls = None
+    source_apc = None
+    if isinstance(source.apc, APC):
+        if source.apc.charges and source.apc.currency:
+            source_apc = f"{source.apc.charges} / {source.apc.currency}"
+    elif isinstance(source.apc, str):
+        source_apc = source.apc or None
 
+    urls = {str(url.url) for url in (source.external_urls or []) if url.url}
+    source_urls = " | ".join(urls) if urls else None
 
-def set_scimago_quartile(work: Work, source: WorkSource) -> None:
-    work.scimago_quartile = None
-    if source.ranking and work.date_published:
+    scimago_quartile = None
+
+    if source.ranking and work.date_published is not None:
         for ranking in source.ranking:
-            condition = (
+            if (
                 ranking.source == "scimago Best Quartile"
                 and ranking.rank
                 and ranking.rank != "-"
                 and isinstance(ranking.from_date, int)
                 and isinstance(ranking.to_date, int)
                 and ranking.from_date <= work.date_published <= ranking.to_date
-            )
-            if condition:
-                work.scimago_quartile = str(ranking.rank)
+            ):
+                scimago_quartile = str(ranking.rank)
                 break
+
+    return {
+        "source_name": source_name,
+        "source_apc": source_apc,
+        "source_urls": source_urls,
+        "scimago_quartile": scimago_quartile,
+    }
 
 
 def set_authors_affiliation_years(docs: list | Work | Patent | Project) -> None:
