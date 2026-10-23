@@ -1,3 +1,4 @@
+from quyca.domain.constants.institutions import INSTITUTION_TYPE_LABELS
 from quyca.domain.models.work_model import Work
 
 from quyca.domain.constants import countries_iso
@@ -17,6 +18,8 @@ def parse_available_filters(filters: dict) -> dict:
     available_filters: dict = {}
     if product_types := filters.get("product_types"):
         available_filters["product_types"] = parse_product_type_filter(product_types)
+    if institutions_type := filters.get("institutions_type"):
+        available_filters["institutions_type"] = parse_institutions_type_filter(institutions_type)
     if years := filters.get("years"):
         available_filters["years"] = years
     if status := filters.get("status"):
@@ -84,16 +87,31 @@ def parse_groups_ranking_filter(groups_ranking: list) -> list:
 
 
 def parse_topic_filter(topics: list) -> list:
-    parsed_topics = []
+    tree: dict = {}
     for topic in topics:
-        parsed_topics.append(
-            {
-                "value": topic.get("id"),
-                "label": topic.get("display_name"),
-                "count": topic.get("count"),
-            }
-        )
-    return parsed_topics
+        levels = [topic.get("domain"), topic.get("field"), topic.get("subfield"), topic]
+        if any(not (level or {}).get("id") for level in levels):
+            continue
+        count = topic.get("count") or 0
+        nodes = tree
+        for level in levels:
+            node = nodes.setdefault(
+                level["id"],
+                {"value": level["id"], "title": level.get("display_name"), "count": 0, "children": {}},
+            )
+            node["count"] += count
+            nodes = node["children"]
+    return topic_tree_to_list(tree)
+
+
+def topic_tree_to_list(nodes: dict) -> list:
+    result = []
+    for node in sorted(nodes.values(), key=lambda n: n["count"], reverse=True):
+        item = {"value": node["value"], "title": node["title"], "count": node["count"]}
+        if children := topic_tree_to_list(node["children"]):
+            item["children"] = children
+        result.append(item)
+    return result
 
 
 def parse_country_filter(countries: list) -> list:
@@ -229,3 +247,12 @@ def parse_product_type_filter(product_types: list) -> list:
         )
     types.sort(key=lambda x: x["title"] != "Colav")
     return types
+
+
+def parse_institutions_type_filter(institutions_type: list) -> list:
+    counts = {item.get("_id"): item.get("count", 0) for item in institutions_type if item.get("_id")}
+    return [
+        {"value": value, "label": label, "count": counts[value]}
+        for value, label in INSTITUTION_TYPE_LABELS.items()
+        if value in counts
+    ]

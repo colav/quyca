@@ -177,8 +177,8 @@ class QueryParams(BaseModel):
     cities: str | None = None
     countries: str | None = None
     filter: Filter | None = None
-    view: Literal["full", "summary"] = "full"
     groups_ranking: str | None = None
+    institutions_type: str | None = None
     keywords: str | None = None
     license_type: str | None = None
     plot: str | None = None
@@ -191,6 +191,7 @@ class QueryParams(BaseModel):
     source_types: str | None = None
     subjects: str | None = None
     topics: str | None = None
+    view: Literal["full", "summary"] = "full"
     years: str | None = None
 
     @field_validator("authors_count")
