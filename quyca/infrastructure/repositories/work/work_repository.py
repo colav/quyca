@@ -263,6 +263,52 @@ def build_pipelines_filters(pipeline: list) -> dict[str, list[dict]]:
                 }
             },
         ],
+        "institutions_type": pipeline.copy()
+        + [
+            {
+                "$project": {
+                    "_id": 0,
+                    "institutions_type": {
+                        "$reduce": {
+                            "input": {"$ifNull": ["$authors", []]},
+                            "initialValue": [],
+                            "in": {
+                                "$setUnion": [
+                                    "$$value",
+                                    {
+                                        "$reduce": {
+                                            "input": {"$ifNull": ["$$this.affiliations", []]},
+                                            "initialValue": [],
+                                            "in": {
+                                                "$setUnion": [
+                                                    "$$value",
+                                                    {
+                                                        "$map": {
+                                                            "input": {
+                                                                "$filter": {
+                                                                    "input": {"$ifNull": ["$$this.types", []]},
+                                                                    "as": "t",
+                                                                    "cond": {"$eq": ["$$t.source", "ror"]},
+                                                                }
+                                                            },
+                                                            "as": "t",
+                                                            "in": "$$t.type",
+                                                        }
+                                                    },
+                                                ]
+                                            },
+                                        }
+                                    },
+                                ]
+                            },
+                        }
+                    },
+                }
+            },
+            {"$unwind": "$institutions_type"},
+            {"$group": {"_id": "$institutions_type", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+        ],
         "years": pipeline.copy()
         + [
             {"$project": {"year_published": 1}},
@@ -364,15 +410,39 @@ def build_pipelines_filters(pipeline: list) -> dict[str, list[dict]]:
         ],
         "topics": pipeline.copy()
         + [
-            {"$project": {"primary_topic.id": 1, "primary_topic.display_name": 1}},
+            {
+                "$project": {
+                    "primary_topic.id": 1,
+                    "primary_topic.display_name": 1,
+                    "primary_topic.subfield": 1,
+                    "primary_topic.field": 1,
+                    "primary_topic.domain": 1,
+                }
+            },
             {"$match": {"primary_topic.id": {"$ne": None}}},
             {
                 "$group": {
-                    "_id": {"id": "$primary_topic.id", "display_name": "$primary_topic.display_name"},
+                    "_id": {
+                        "id": "$primary_topic.id",
+                        "display_name": "$primary_topic.display_name",
+                        "subfield": "$primary_topic.subfield",
+                        "field": "$primary_topic.field",
+                        "domain": "$primary_topic.domain",
+                    },
                     "count": {"$sum": 1},
                 }
             },
-            {"$project": {"_id": 0, "id": "$_id.id", "display_name": "$_id.display_name", "count": 1}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": "$_id.id",
+                    "display_name": "$_id.display_name",
+                    "subfield": "$_id.subfield",
+                    "field": "$_id.field",
+                    "domain": "$_id.domain",
+                    "count": 1,
+                }
+            },
             {"$sort": {"count": -1}},
         ],
     }
