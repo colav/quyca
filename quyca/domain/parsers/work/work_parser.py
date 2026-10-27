@@ -11,7 +11,7 @@ def parse_works(works: list) -> list:
 
 
 def parse_work(work: Work) -> dict:
-    return dict(work.model_dump())
+    return dict(work.model_dump(exclude={"abstracts", "affiliations_data"}))
 
 
 def parse_available_filters(filters: dict) -> dict:
