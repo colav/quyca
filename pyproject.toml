@@ -27,7 +27,6 @@ pydantic = "^2.13.4"
 sentry-sdk = "^2.14.0"
 flask-compress = "^1.17"
 elasticsearch = "^8.17.0"
-flask-limiter = "^3.12"
 bcrypt = "^5.0.0"
 
 [tool.poetry.group.dev.dependencies]
