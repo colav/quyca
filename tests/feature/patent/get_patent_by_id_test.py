@@ -4,5 +4,5 @@ random_patent_id = database["patents"].aggregate([{"$sample": {"size": 1}}]).nex
 
 
 def test_get_patent_by_id(client):
-    response = client.get(f"/app/patent/{random_patent_id}")
+    response = client.get(f"/patent/{random_patent_id}")
     assert response.status_code == 200

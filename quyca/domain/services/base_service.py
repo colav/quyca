@@ -1,23 +1,35 @@
 from typing import Generator, Iterator, Union, Any, Dict, List, Union, cast
 from urllib.parse import urlparse
 from quyca.domain.constants.institutions import institutions_list
+from quyca.domain.constants.summary_rules import (
+    AFFILIATION_SUMMARY_FIELDS,
+    PATENT_SUMMARY_FIELDS,
+    PERSON_SUMMARY_FIELDS,
+    PROJECT_SUMMARY_FIELDS,
+    SOURCE_SUMMARY_FIELDS,
+    WORK_SUMMARY_FIELDS,
+)
 from quyca.domain.models.affiliation_model import Affiliation, Relation
 from quyca.domain.constants.external_urls import external_urls_dict
-from quyca.domain.models.base_model import Title, ProductType, ExternalUrl, Type
+from quyca.domain.models.base_model import APC, Title, ProductType, ExternalUrl, Type
 from quyca.domain.models.patent_model import Patent
 from quyca.domain.models.project_model import Project
-from quyca.domain.models.work_model import Work, Source as WorkSource
+from quyca.domain.models.work_model import Work
 from quyca.infrastructure.repositories.person import person_repository
 from quyca.domain.constants.sensitive_data import SENSITIVE_ID_SOURCES
 from quyca.infrastructure.repositories.affiliation import affiliation_repository
 
+SUMMARY_AUTHORS_LIMIT = 10
 
-def get_entity_data(documents: Generator) -> list:
+
+def get_entity_data(documents: Generator, view: str = "full") -> list:
+    authors_limit = SUMMARY_AUTHORS_LIMIT if view == "summary" else None
     data = []
     for doc in documents:
-        limit_authors(doc)
+        limit_authors(doc, authors_limit)
         set_title_and_language(doc)
         set_product_types(doc)
+        set_authors_affiliation_years(doc)
         data.append(doc)
     return data
 
@@ -84,8 +96,10 @@ def set_authors_external_ids(workable: Union[Work, Patent, Project], filter_sens
             author.external_ids = external_ids
 
 
-def limit_authors(workable: Union[Work, Patent, Project], limit: int = 10) -> None:
-    if not workable.authors:
+def limit_authors(workable: Union[Work, Patent, Project], limit: int | None = None) -> None:
+    if not workable.authors or limit is None:
+        return
+    if isinstance(workable.authors, str):
         return
     if len(workable.authors) > limit:
         workable.authors = workable.authors[:limit]
@@ -220,165 +234,95 @@ def set_logo(affiliation: Affiliation, relation: Relation) -> None:
             affiliation.logo = str(logo_url)
 
 
-def update_csv_work_source(work: Work) -> None:
-    if not work.source:
-        return
-
+def get_source_export_fields(work: Work) -> dict:
     source = work.source
-    work.source_name = str(source.name) if source.name else None
-    if source.apc and source.apc.charges and source.apc.currency:
-        work.source_apc = f"{source.apc.charges} / {source.apc.currency}"
-    else:
-        work.source_apc = None
 
-    set_source_urls(work, source)
-    set_scimago_quartile(work, source)
+    if not source:
+        return {
+            "source_name": None,
+            "source_apc": None,
+            "source_urls": None,
+            "scimago_quartile": None,
+        }
 
+    source_name = str(source.name) if source.name else None
 
-def set_source_urls(work: Work, source: WorkSource) -> None:
-    if source.external_urls:
-        urls = {str(url.url) for url in source.external_urls if url.url}
-        work.source_urls = " | ".join(urls) if urls else None
-    else:
-        work.source_urls = None
+    source_apc = None
+    if isinstance(source.apc, APC):
+        if source.apc.charges and source.apc.currency:
+            source_apc = f"{source.apc.charges} / {source.apc.currency}"
+    elif isinstance(source.apc, str):
+        source_apc = source.apc or None
 
+    urls = {str(url.url) for url in (source.external_urls or []) if url.url}
+    source_urls = " | ".join(urls) if urls else None
 
-def set_scimago_quartile(work: Work, source: WorkSource) -> None:
-    work.scimago_quartile = None
-    if source.ranking and work.date_published:
+    scimago_quartile = None
+
+    if source.ranking and work.date_published is not None:
         for ranking in source.ranking:
-            condition = (
+            if (
                 ranking.source == "scimago Best Quartile"
                 and ranking.rank
                 and ranking.rank != "-"
                 and isinstance(ranking.from_date, int)
                 and isinstance(ranking.to_date, int)
                 and ranking.from_date <= work.date_published <= ranking.to_date
-            )
-            if condition:
-                work.scimago_quartile = str(ranking.rank)
+            ):
+                scimago_quartile = str(ranking.rank)
                 break
 
-
-def build_work_pipeline_params() -> dict:
-    pipeline_params = {
-        "project": [
-            "_id",
-            "author_count",
-            "open_access",
-            "authors.full_name",
-            "authors.id",
-            "authors.type",
-            "authors.affiliations.id",
-            "authors.affiliations.name",
-            "authors.affiliations.types",
-            "citations_count",
-            "bibliographic_info",
-            "types",
-            "source",
-            "titles",
-            "subjects",
-            "year_published",
-            "external_ids",
-            "external_urls",
-            "ranking",
-            "topics",
-        ]
-    }
-    return pipeline_params
-
-
-def build_person_pipeline_params() -> dict:
-    pipeline_params = {
-        "project": [
-            "_id",
-            "full_name",
-            "affiliations",
-            "external_ids",
-            "citations_count",
-            "products_count",
-            "affiliations_data",
-            "logo",
-            "h_index",
-            "h5_index",
-        ]
-    }
-    return pipeline_params
-
-
-def build_affiliation_pipeline_params() -> dict:
-    pipeline_params = {
-        "project": [
-            "_id",
-            "names",
-            "addresses.country_code",
-            "addresses.country",
-            "external_ids",
-            "external_urls",
-            "relations",
-            "ranking",
-            "types",
-            "citations_count",
-            "products_count",
-            "h_index",
-            "h5_index",
-        ]
+    return {
+        "source_name": source_name,
+        "source_apc": source_apc,
+        "source_urls": source_urls,
+        "scimago_quartile": scimago_quartile,
     }
 
-    return pipeline_params
+
+def set_authors_affiliation_years(docs: list | Work | Patent | Project) -> None:
+    if not isinstance(docs, list):
+        docs = [docs]
+    person_ids = {a.id for d in docs for a in (d.authors or []) if a.id}
+    years_by_person = person_repository.get_affiliation_years(person_ids)
+    for doc in docs:
+        for author in doc.authors or []:
+            author_years = years_by_person.get(author.id, {})
+            for aff in author.affiliations or []:
+                aff.years = author_years.get(aff.id, [])
 
 
-def build_patents_pipeline_params() -> dict:
-    pipeline_params = {
-        "project": [
-            "_id",
-            "author_count",
-            "authors",
-            "types",
-            "titles",
-            "subjects",
-            "external_ids",
-            "external_urls",
-            "authors_data",
-        ]
-    }
-    return pipeline_params
+def build_work_pipeline_params(view: str = "full") -> dict:
+    if view == "summary":
+        return {"project": WORK_SUMMARY_FIELDS}
+    return {}
 
 
-def build_projects_pipeline_params() -> dict:
-    pipeline_params = {
-        "project": [
-            "_id",
-            "author_count",
-            "authors",
-            "types",
-            "titles",
-            "subjects",
-            "year_init",
-            "year_end",
-            "external_ids",
-            "external_urls",
-            "authors_data",
-        ]
-    }
-    return pipeline_params
+def build_person_pipeline_params(view: str = "full") -> dict:
+    if view == "summary":
+        return {"project": PERSON_SUMMARY_FIELDS}
+    return {}
 
 
-def build_sources_pipeline_params() -> dict:
-    pipeline_source_params = {
-        "source": [
-            "external_ids",
-            "external_urls",
-            "global_citations_count",
-            "global_products_count",
-            "keywords",
-            "names",
-            "publisher",
-            "ranking",
-            "subjects",
-            "types",
-        ],
-        "collection": "sources",
-    }
+def build_affiliation_pipeline_params(view: str = "full") -> dict:
+    if view == "summary":
+        return {"project": AFFILIATION_SUMMARY_FIELDS}
+    return {}
 
-    return pipeline_source_params
+
+def build_patents_pipeline_params(view: str = "full") -> dict:
+    if view == "summary":
+        return {"project": PATENT_SUMMARY_FIELDS}
+    return {}
+
+
+def build_projects_pipeline_params(view: str = "full") -> dict:
+    if view == "summary":
+        return {"project": PROJECT_SUMMARY_FIELDS}
+    return {}
+
+
+def build_sources_pipeline_params(view: str = "full") -> dict:
+    if view == "summary":
+        return {"project": SOURCE_SUMMARY_FIELDS, "collection": "sources"}
+    return {}

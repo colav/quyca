@@ -1,19 +1,22 @@
+from typing import Any
+
 from pydantic import ValidationError
 import pytest
+from quyca.domain.models.geo_model import Geo
 from quyca.domain.parsers.search import search_parser
 
-
-ENDPOINT = "/app/search/geo"
+ENDPOINT = "/search/geo"
 
 
 def assert_common_search_response(data):
     """Valida la estructura común de cualquier respuesta de búsqueda."""
     assert "data" in data
-    assert "total_results" in data
+    assert "meta" in data
+    total_results = data["meta"]["count"]
 
     assert isinstance(data["data"], list)
-    assert isinstance(data["total_results"], int)
-    assert data["total_results"] >= 0
+    assert isinstance(total_results, int)
+    assert total_results >= 0
 
 
 def assert_citation_structure(citations):
@@ -106,7 +109,7 @@ def test_search_geolocation_states_response_structure(client):
 
     data = response.get_json()
 
-    assert data["total_results"] >= 1
+    assert data["meta"]["count"] >= 1
     assert len(data["data"]) >= 1
 
     state = data["data"][0]
@@ -183,7 +186,7 @@ def test_search_geolocation_cities_response_structure(client):
 
     data = response.get_json()
 
-    assert data["total_results"] >= 1
+    assert data["meta"]["count"] >= 1
     assert len(data["data"]) >= 1
 
     city = data["data"][0]
@@ -218,7 +221,7 @@ def test_search_geolocation_with_keywords(client, location_type, keyword):
     data = response.get_json()
 
     assert_common_search_response(data)
-    assert data["total_results"] >= len(data["data"])
+    assert data["meta"]["count"] >= len(data["data"])
 
 
 @pytest.mark.parametrize(
@@ -258,7 +261,7 @@ def test_search_geolocation_no_results(client, location_type, keyword):
 
     assert_common_search_response(data)
     assert data["data"] == []
-    assert data["total_results"] == 0
+    assert data["meta"]["count"] == 0
 
 
 @pytest.mark.parametrize(
@@ -384,9 +387,9 @@ def test_search_geolocation_large_page(client, location_type):
     assert response.status_code == 200
 
     data = response.get_json()
-
+    total_results = data["meta"]["count"]
     assert_common_search_response(data)
-    assert len(data["data"]) <= data["total_results"]
+    assert len(data["data"]) <= total_results
 
 
 def test_search_geolocation_invalid_params(client):
@@ -454,12 +457,10 @@ def test_search_geolocation_invalid_location_type(client, location_type):
 
     response = client.get(url)
 
-    assert response.status_code == 200
+    assert response.status_code == 400
 
     data = response.get_json()
-
-    assert data["data"] == []
-    assert data["total_results"] == 0
+    assert "error" in data
 
 
 def test_search_geolocation_missing_location_type(client):
@@ -479,15 +480,9 @@ def test_parse_search_result_empty():
 
 
 def test_parse_search_result_preserves_order():
-    geolocations = [
-        {
-            "_id": "05",
-            "name": "Antioquia",
-        },
-        {
-            "_id": "11",
-            "name": "Bogotá, D.c.",
-        },
+    geolocations: list[Geo] = [
+        Geo(_id="05", name="Antioquia"),
+        Geo(_id="11", name="Bogotá, D.c."),
     ]
 
     result = search_parser.parse_geolocations_search(geolocations)
@@ -501,33 +496,35 @@ def test_parse_search_result_preserves_order():
 
 def test_parse_search_result_preserves_fields():
     geolocations = [
-        {
-            "_id": "05",
-            "name": "Antioquia",
-            "country": "Colombia",
-            "country_code": "CO",
-            "authors_count": 43836,
-            "cities_count": 22,
-            "groups_count": 1117,
-            "institutions_count": 178,
-            "products_count": 295187,
-            "citations_count": [
-                {
-                    "count": 1172650,
-                    "source": "openalex",
-                },
-                {
-                    "count": 1126729,
-                    "source": "scholar",
-                },
-            ],
-            "external_ids": [
-                {
-                    "id": "05",
-                    "source": "dane",
-                }
-            ],
-        }
+        Geo(
+            **{
+                "_id": "05",
+                "name": "Antioquia",
+                "country": "Colombia",
+                "country_code": "CO",
+                "authors_count": 43836,
+                "cities_count": 22,
+                "groups_count": 1117,
+                "institutions_count": 178,
+                "products_count": 295187,
+                "citations_count": [
+                    {
+                        "count": 1172650,
+                        "source": "openalex",
+                    },
+                    {
+                        "count": 1126729,
+                        "source": "scholar",
+                    },
+                ],
+                "external_ids": [
+                    {
+                        "id": "05",
+                        "source": "dane",
+                    }
+                ],
+            }
+        )
     ]
 
     result = search_parser.parse_geolocations_search(geolocations)
@@ -568,38 +565,40 @@ def test_parse_search_result_preserves_fields():
 
 def test_parse_search_result_city():
     geolocations = [
-        {
-            "_id": "11001",
-            "name": "Bogotá, D.c.",
-            "country": "Colombia",
-            "country_code": "CO",
-            "latitude": 4.649251,
-            "longitude": -74.106992,
-            "authors_count": 133557,
-            "groups_count": 2489,
-            "institutions_count": 428,
-            "products_count": 680841,
-            "citations_count": [
-                {
-                    "count": 3012900,
-                    "source": "openalex",
-                },
-                {
-                    "count": 3223321,
-                    "source": "scholar",
-                },
-            ],
-            "external_ids": [
-                {
-                    "id": "11001",
-                    "source": "dane",
-                }
-            ],
-            "state": {
-                "id": "11",
+        Geo(
+            **{
+                "_id": "11001",
                 "name": "Bogotá, D.c.",
-            },
-        }
+                "country": "Colombia",
+                "country_code": "CO",
+                "latitude": 4.649251,
+                "longitude": -74.106992,
+                "authors_count": 133557,
+                "groups_count": 2489,
+                "institutions_count": 428,
+                "products_count": 680841,
+                "citations_count": [
+                    {
+                        "count": 3012900,
+                        "source": "openalex",
+                    },
+                    {
+                        "count": 3223321,
+                        "source": "scholar",
+                    },
+                ],
+                "external_ids": [
+                    {
+                        "id": "11001",
+                        "source": "dane",
+                    }
+                ],
+                "state": {
+                    "id": "11",
+                    "name": "Bogotá, D.c.",
+                },
+            }
+        )
     ]
 
     result = search_parser.parse_geolocations_search(geolocations)
@@ -612,7 +611,6 @@ def test_parse_search_result_city():
     assert city["name"] == "Bogotá, D.c."
     assert city["country"] == "Colombia"
     assert city["country_code"] == "CO"
-
     assert city["latitude"] == 4.649251
     assert city["longitude"] == -74.106992
 
@@ -628,11 +626,10 @@ def test_parse_search_result_city():
 
 
 def test_parse_search_result_missing_id():
-    geolocations = [
-        {
-            "name": "Antioquia",
-        }
-    ]
+    geolocation: dict[str, Any] = {
+        "name": "Antioquia",
+    }
 
     with pytest.raises(ValidationError):
-        search_parser.parse_geolocations_search(geolocations)
+        geo = Geo(**geolocation)
+        search_parser.parse_geolocations_search([geo])

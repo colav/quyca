@@ -2,8 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-
-ENDPOINT = "/app/search/affiliations"
+ENDPOINT = "/search/affiliations"
 
 
 def test_search_institutions(client):

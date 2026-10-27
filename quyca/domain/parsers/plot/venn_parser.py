@@ -1,6 +1,5 @@
 from itertools import combinations as source_combinations
 
-
 VENN_SOURCES = (
     "scienti",
     "minciencias",

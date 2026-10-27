@@ -17,13 +17,13 @@ def auth_cookie(client: FlaskClient, role: str = "admin") -> None:
 
 
 def test_list_users_no_token(client: FlaskClient) -> None:
-    resp = client.get("/app/admin/users")
+    resp = client.get("/admin/users")
     assert resp.status_code == 401
 
 
 def test_list_users_non_admin(client: FlaskClient) -> None:
     auth_cookie(client, role="staff")
-    resp = client.get("/app/admin/users")
+    resp = client.get("/admin/users")
     assert resp.status_code == 403
     json_data = cast(dict[str, Any], resp.get_json())
     assert "Permiso" in json_data["msg"]
@@ -35,7 +35,7 @@ def test_list_users_success(client: FlaskClient) -> None:
     usecase_mock.get_all_users.return_value = [{"email": "a@a.com", "role": "staff"}]
 
     with patch(f"{ROUTER_MOD}.usecase", usecase_mock):
-        resp = client.get("/app/admin/users")
+        resp = client.get("/admin/users")
 
     assert resp.status_code == 200
     json_data = cast(dict[str, Any], resp.get_json())

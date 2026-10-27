@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator, List, Mapping, Sequence
+from typing import Any, Dict, Generator, Iterable, List, Mapping, Sequence
 from bson import ObjectId
 
 from quyca.infrastructure.generators import person_generator
@@ -100,3 +100,17 @@ def get_person_external_ids(person_id: str) -> list[ExternalId]:
         return []
 
     return [ExternalId(**eid) for eid in data.get("external_ids", [])]
+
+
+def get_affiliation_years(person_ids: Iterable[str]) -> Dict[str, Dict[str, List[int]]]:
+    ids = list({pid for pid in person_ids if pid})
+    if not ids:
+        return {}
+    cursor = database["person"].find(
+        {"_id": {"$in": ids}},
+        {"affiliations.id": 1, "affiliations.years": 1},
+    )
+    return {
+        person["_id"]: {aff["id"]: aff.get("years") or [] for aff in person.get("affiliations", []) if aff.get("id")}
+        for person in cursor
+    }

@@ -16,7 +16,6 @@ from quyca.infrastructure.repositories.affiliation import affiliation_repository
 from quyca.infrastructure.repositories.plot import plot_repository
 from quyca.infrastructure.repositories.work import work_repository
 
-
 PlotExporter = Callable[..., Any]
 
 
@@ -42,7 +41,7 @@ def export_affiliations_by_product_type(
     }[plot]
 
     if affiliation_type == "institution":
-        return plot_repository.get_affiliations_scienti_works_count_by_institution(
+        return plot_repository.get_affiliations_impactu_works_count_by_institution(
             affiliation_id,
             relation_type,
             query_params,
@@ -55,7 +54,7 @@ def export_affiliations_by_product_type(
         )
 
     if affiliation_type in {"faculty", "department"} and relation_type == "group":
-        return plot_repository.get_groups_scienti_works_count_by_faculty_or_department(
+        return plot_repository.get_groups_impactu_works_count_by_faculty_or_department(
             affiliation_id,
             query_params,
         )

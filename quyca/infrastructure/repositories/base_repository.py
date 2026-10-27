@@ -11,9 +11,10 @@ def set_search_end_stages(pipeline: list, query_params: QueryParams, pipeline_pa
 
 
 def set_pagination(pipeline: list, query_params: QueryParams) -> None:
-    if (page := query_params.page) and (limit := query_params.limit):
+    if limit := query_params.limit:
+        page = query_params.page or 1
         skip = (page - 1) * limit
-        pipeline += [{"$skip": skip}, {"$limit": limit}]
+        pipeline.extend([{"$skip": skip}, {"$limit": limit}])
 
 
 def set_match(pipeline: list, match: dict | None) -> None:

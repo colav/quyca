@@ -10,15 +10,14 @@ from quyca.infrastructure.repositories.work import work_repository
 from quyca.infrastructure.repositories.affiliation import affiliation_repository
 
 
-def get_affiliations_scienti_works_count_by_institution(
+def get_affiliations_impactu_works_count_by_institution(
     institution_id: str, relation_type: str, query_params: QueryParams
 ) -> CommandCursor:
     affiliation_ids = affiliation_ids_for_institution(institution_id, relation_type)
     match_initial: dict[str, Any] = {
         "$match": {
             "authors.affiliations.id": {"$in": affiliation_ids},
-            "types.source": "scienti",
-            "types.level": 2,
+            "types.source": "impactu",
         }
     }
     pipeline: list[dict[str, Any]] = [match_initial]
@@ -29,7 +28,6 @@ def get_affiliations_scienti_works_count_by_institution(
         "authors.affiliations.id",
         "citations_count",
         "types.source",
-        "types.level",
     ]
     pipeline.append(build_project_stage(static_fields))
 
@@ -38,7 +36,7 @@ def get_affiliations_scienti_works_count_by_institution(
         {"$unwind": "$authors.affiliations"},
         {"$match": {"authors.affiliations.id": {"$in": affiliation_ids}}},
         {"$unwind": "$types"},
-        {"$match": {"types.source": "scienti", "types.level": 2}},
+        {"$match": {"types.source": "impactu"}},
         {
             "$group": {
                 "_id": {
@@ -70,17 +68,16 @@ def get_affiliations_scienti_works_count_by_institution(
 
 
 def get_departments_scienti_works_count_by_faculty(affiliation_id: str, query_params: QueryParams) -> CommandCursor:
-    return get_affiliations_scienti_works_count_by_institution(affiliation_id, "department", query_params)
+    return get_affiliations_impactu_works_count_by_institution(affiliation_id, "department", query_params)
 
 
-def get_groups_scienti_works_count_by_faculty_or_department(
+def get_groups_impactu_works_count_by_faculty_or_department(
     affiliation_id: str, query_params: QueryParams
 ) -> CommandCursor:
     group_ids = group_ids_for_faculty_or_department(affiliation_id)
     static_fields = [
         "citations_count",
         "types.source",
-        "types.level",
         "groups.id",
         "groups.name",
     ]
@@ -91,7 +88,7 @@ def get_groups_scienti_works_count_by_faculty_or_department(
         {"$unwind": "$groups"},
         {"$match": {"groups.id": {"$in": group_ids}}},
         {"$unwind": "$types"},
-        {"$match": {"types.source": "scienti", "types.level": 2}},
+        {"$match": {"types.source": "impactu"}},
         {
             "$group": {
                 "_id": {

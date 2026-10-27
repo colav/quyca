@@ -3,7 +3,7 @@ from io import BytesIO
 from typing import Any, Generator
 
 from quyca.domain.models.export_model import EXPORT_MODEL_BY_ENTITY, ExportEntity, WorkExportBase, export_columns
-from quyca.domain.services.base_service import set_title_and_language, update_csv_work_source
+from quyca.domain.services.base_service import get_source_export_fields, set_title_and_language
 from quyca.domain.models.work_model import BiblioGraphicInfo, Work
 from quyca.domain.constants.institutions import institutions_list
 from quyca.domain.constants.openalex_types import openalex_types_dict
@@ -30,7 +30,7 @@ def export_rows(works: Generator, entity: ExportEntity, person_id: str | None) -
 
 def build_export(work: Work, model_cls: type[WorkExportBase], person_id: str | None = None) -> WorkExportBase:
     set_title_and_language(work)
-    update_csv_work_source(work)
+    source_fields = get_source_export_fields(work)
 
     affiliations = compute_affiliations(work)
     biblio = compute_bibliographic_info(work)
@@ -55,9 +55,9 @@ def build_export(work: Work, model_cls: type[WorkExportBase], person_id: str | N
         "openalex_types": types["openalex_types"],
         "scienti_types": types["scienti_types"],
         "impactu_types": types["impactu_types"],
-        "source_name": work.source_name,
-        "source_apc": work.source_apc,
-        "source_urls": work.source_urls,
+        "source_name": source_fields["source_name"],
+        "source_apc": source_fields["source_apc"],
+        "source_urls": source_fields["source_urls"],
         "institutions": affiliations["institutions"],
         "faculties": affiliations["faculties"],
         "departments": affiliations["departments"],
@@ -73,13 +73,12 @@ def build_export(work: Work, model_cls: type[WorkExportBase], person_id: str | N
         "scienti_id": identifiers["scienti_id"],
         "minciencias_id": identifiers["minciencias_id"],
         "contract_type": compute_contract_type(work, person_id),
-        "scimago_quartile": work.scimago_quartile,
+        "scimago_quartile": source_fields["scimago_quartile"],
     }
 
     return model_cls(**fields)
 
 
-# Pure Functions: receive Work, return the computed value. Do not mutate anything.
 def compute_open_access_status(work: Work) -> str | None:
     if work.open_access:
         return work.open_access.open_access_status
@@ -167,7 +166,7 @@ def compute_bibliographic_info(work: Work) -> dict[str, Any]:
 
 
 def compute_authors(work: Work) -> str | None:
-    names = {author.full_name for author in work.authors if author.full_name}
+    names = {author.full_name for author in (work.authors or []) if author.full_name}
     return " | ".join(sorted(names)) or None
 
 

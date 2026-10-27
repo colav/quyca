@@ -28,7 +28,6 @@ class Settings(BaseSettings):
     APP_PORT: str | int
     APP_DOMAIN: str
 
-    APP_URL_PREFIX: str
     API_URL_PREFIX: str
 
     MONGO_SERVER: str
@@ -49,8 +48,6 @@ class Settings(BaseSettings):
     ES_DEPARTMENT_COMPLETER_INDEX: str
     ES_FACULTY_COMPLETER_INDEX: str
     ES_SOURCES_COMPLETER_INDEX: str
-
-    API_LIMITS: str
 
     SENTRY_DSN: str
 

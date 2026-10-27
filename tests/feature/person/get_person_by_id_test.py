@@ -1,7 +1,7 @@
 from quyca.infrastructure.mongo import database
 from unittest.mock import patch
 
-ENDPOINT = "/app/person"
+ENDPOINT = "/person"
 random_person_id = database["person"].aggregate([{"$sample": {"size": 1}}]).next()["_id"]
 
 

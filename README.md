@@ -72,7 +72,6 @@ APP_PORT=8010
 APP_DOMAIN=localhost:8010
 APP_DEBUG=True
 
-APP_URL_PREFIX=/app
 API_URL_PREFIX=/api
 
 MONGO_SERVER=localhost
@@ -101,8 +100,6 @@ LOCAL_STORAGE_PATH=/app # ruta para guardar el archivo si hay problemas con goog
 GOOGLE_CREDENTIALS=/app # ruta para guardar el .pickle
 
 GOOGLE_PARENT_ID= # ID de la carpetade GoogleDrive
-
-API_LIMITS=100000 per day,10 per second
 
 SENTRY_DSN=
 ```

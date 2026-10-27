@@ -27,6 +27,12 @@ def get_work_by_id(work_id: str) -> Work:
     return Work(**work)
 
 
+def get_work_by_doi(work_doi: str) -> Generator:
+    pipeline = [{"$match": {"doi": work_doi}}]
+    cursor = database["works"].aggregate(pipeline)
+    return work_generator.get(cursor)
+
+
 def get_works_by_affiliation(
     affiliation_id: str,
     query_params: QueryParams,
@@ -42,11 +48,7 @@ def get_works_by_affiliation(
         },
     ]
     set_product_filters(pipeline, query_params)
-    base_repository.set_match(pipeline, pipeline_params.get("match"))
-    if sort := query_params.sort:
-        base_repository.set_sort(sort, pipeline)
-    base_repository.set_pagination(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
@@ -60,8 +62,7 @@ def get_works_with_source_by_affiliation(
         {"$match": {"authors.affiliations.id": affiliation_id}},
     ]
     set_product_filters(pipeline, query_params)
-    base_repository.set_match(pipeline, pipeline_params.get("match"))
-    base_repository.set_project(pipeline, pipeline_params.get("work_project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
@@ -86,11 +87,7 @@ def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_para
         {"$match": {"authors.id": person_id}},
     ]
     set_product_filters(pipeline, query_params)
-    base_repository.set_match(pipeline, pipeline_params.get("match"))
-    if sort := query_params.sort:
-        base_repository.set_sort(sort, pipeline)
-    base_repository.set_pagination(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
@@ -104,8 +101,7 @@ def get_works_with_source_by_person(
         {"$match": {"authors.id": person_id}},
     ]
     set_product_filters(pipeline, query_params)
-    base_repository.set_match(pipeline, pipeline_params.get("match"))
-    base_repository.set_project(pipeline, pipeline_params.get("work_project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
@@ -117,17 +113,12 @@ def get_works_count_by_person(person_id: str, query_params: QueryParams) -> int:
     return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)
 
 
-def get_works_by_source(source_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:
+def get_works_by_source(source_id: str, query_params: QueryParams, pipeline_params: dict | None = None) -> Generator:
     if pipeline_params is None:
         pipeline_params = {}
-
     pipeline = [{"$match": {"source.id": ObjectId(source_id)}}]
     set_product_filters(pipeline, query_params)
-    base_repository.set_match(pipeline, pipeline_params.get("match"))
-    if sort := query_params.sort:
-        base_repository.set_sort(sort, pipeline)
-    base_repository.set_pagination(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
@@ -139,13 +130,14 @@ def get_works_count_by_source(source_id: str, query_params: QueryParams) -> int:
     return next(database["works"].aggregate(pipeline), {"total": 0}).get("total", 0)
 
 
-def get_works_by_geo(geo_type: str, geo_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:
+def get_works_by_geo(
+    geo_type: str, geo_id: str, query_params: QueryParams, pipeline_params: dict | None = None
+) -> Generator:
+    if pipeline_params is None:
+        pipeline_params = {}
     pipeline = [geo_repository.build_works_geo_match(geo_type, geo_id)]
     set_product_filters(pipeline, query_params)
-    if sort := query_params.sort:
-        base_repository.set_sort(sort, pipeline)
-    base_repository.set_pagination(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("project"))
+    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
@@ -171,6 +163,9 @@ def get_works_available_filters_by_person(person_id: str, query_params: QueryPar
         if key == "years":
             cursor = collection.aggregate(pipe)
             result = next(cursor, {"min_year": None, "max_year": None})
+        elif key == "authors_count":
+            cursor = collection.aggregate(pipe)
+            result = next(cursor, {"min_authors_count": None, "max_authors_count": None})
         else:
             result = list(collection.aggregate(pipe))
         available_filters[key] = result
@@ -196,6 +191,9 @@ def get_works_available_filters_by_affiliation(
         if key == "years":
             cursor = collection.aggregate(pipe)
             result = next(cursor, {"min_year": None, "max_year": None})
+        elif key == "authors_count":
+            cursor = collection.aggregate(pipe)
+            result = next(cursor, {"min_authors_count": None, "max_authors_count": None})
         else:
             result = list(collection.aggregate(pipe))
         available_filters[key] = result
@@ -215,6 +213,9 @@ def get_works_available_filters_by_source(source_id: str, query_params: QueryPar
         if key == "years":
             cursor = collection.aggregate(pipe)
             result = next(cursor, {"min_year": None, "max_year": None})
+        elif key == "authors_count":
+            cursor = collection.aggregate(pipe)
+            result = next(cursor, {"min_authors_count": None, "max_authors_count": None})
         else:
             result = list(collection.aggregate(pipe))
         available_filters[key] = result
@@ -262,12 +263,71 @@ def build_pipelines_filters(pipeline: list) -> dict[str, list[dict]]:
                 }
             },
         ],
+        "institutions_type": pipeline.copy()
+        + [
+            {
+                "$project": {
+                    "_id": 0,
+                    "institutions_type": {
+                        "$reduce": {
+                            "input": {"$ifNull": ["$authors", []]},
+                            "initialValue": [],
+                            "in": {
+                                "$setUnion": [
+                                    "$$value",
+                                    {
+                                        "$reduce": {
+                                            "input": {"$ifNull": ["$$this.affiliations", []]},
+                                            "initialValue": [],
+                                            "in": {
+                                                "$setUnion": [
+                                                    "$$value",
+                                                    {
+                                                        "$map": {
+                                                            "input": {
+                                                                "$filter": {
+                                                                    "input": {"$ifNull": ["$$this.types", []]},
+                                                                    "as": "t",
+                                                                    "cond": {"$eq": ["$$t.source", "ror"]},
+                                                                }
+                                                            },
+                                                            "as": "t",
+                                                            "in": "$$t.type",
+                                                        }
+                                                    },
+                                                ]
+                                            },
+                                        }
+                                    },
+                                ]
+                            },
+                        }
+                    },
+                }
+            },
+            {"$unwind": "$institutions_type"},
+            {"$group": {"_id": "$institutions_type", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+        ],
         "years": pipeline.copy()
         + [
             {"$project": {"year_published": 1}},
             {"$match": {"year_published": {"$type": "number"}}},
             {"$group": {"_id": None, "min_year": {"$min": "$year_published"}, "max_year": {"$max": "$year_published"}}},
             {"$project": {"_id": 0, "min_year": 1, "max_year": 1}},
+        ],
+        "authors_count": pipeline.copy()
+        + [
+            {"$project": {"author_count": 1}},
+            {"$match": {"author_count": {"$type": "number"}}},
+            {
+                "$group": {
+                    "_id": None,
+                    "min_authors": {"$min": "$author_count"},
+                    "max_authors": {"$max": "$author_count"},
+                }
+            },
+            {"$project": {"_id": 0, "min_authors": 1, "max_authors": 1}},
         ],
         "status": pipeline.copy()
         + [
@@ -350,18 +410,43 @@ def build_pipelines_filters(pipeline: list) -> dict[str, list[dict]]:
         ],
         "topics": pipeline.copy()
         + [
-            {"$project": {"primary_topic.id": 1, "primary_topic.display_name": 1}},
+            {
+                "$project": {
+                    "primary_topic.id": 1,
+                    "primary_topic.display_name": 1,
+                    "primary_topic.subfield": 1,
+                    "primary_topic.field": 1,
+                    "primary_topic.domain": 1,
+                }
+            },
             {"$match": {"primary_topic.id": {"$ne": None}}},
             {
                 "$group": {
-                    "_id": {"id": "$primary_topic.id", "display_name": "$primary_topic.display_name"},
+                    "_id": {
+                        "id": "$primary_topic.id",
+                        "display_name": "$primary_topic.display_name",
+                        "subfield": "$primary_topic.subfield",
+                        "field": "$primary_topic.field",
+                        "domain": "$primary_topic.domain",
+                    },
                     "count": {"$sum": 1},
                 }
             },
-            {"$project": {"_id": 0, "id": "$_id.id", "display_name": "$_id.display_name", "count": 1}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": "$_id.id",
+                    "display_name": "$_id.display_name",
+                    "subfield": "$_id.subfield",
+                    "field": "$_id.field",
+                    "domain": "$_id.domain",
+                    "count": 1,
+                }
+            },
             {"$sort": {"count": -1}},
         ],
     }
+
     return pipelines
 
 

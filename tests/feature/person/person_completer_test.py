@@ -15,7 +15,7 @@ Tests for the person completer. Using the AAA (Arrange, Act, Assert) pattern wit
   from the Elasticsearch query logic (already covered above).
 """
 
-ENDPOINT = "/app/completer/person"
+ENDPOINT = "/completer/person"
 
 
 @patch("quyca.infrastructure.repositories.completers.es_database", None)

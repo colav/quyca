@@ -5,8 +5,7 @@ import pytest
 from quyca.config import settings
 from quyca.infrastructure.repositories.completers import source_completer
 
-
-ENDPOINT = "/app/completer/sources"
+ENDPOINT = "/completer/sources"
 
 
 @patch("quyca.infrastructure.repositories.completers.es_database", None)

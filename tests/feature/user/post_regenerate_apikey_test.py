@@ -10,7 +10,7 @@ def _headers() -> dict[str, str]:
 
 def test_regenerate_apikey_unauthorized(client: Any) -> None:
     """Should return 401 when no token is provided."""
-    resp = client.post("/app/users/test@test.com/apikey")
+    resp = client.post("/users/test@test.com/apikey")
     assert resp.status_code == 401
 
 
@@ -19,7 +19,7 @@ def test_regenerate_apikey_wrong_user(client: Any) -> None:
     with patch(f"{ROUTER}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER}.get_jwt_identity", return_value="other@email.com"
     ):
-        resp = client.post("/app/users/test@test.com/apikey", headers=_headers())
+        resp = client.post("/users/test@test.com/apikey", headers=_headers())
         assert resp.status_code == 403
         assert resp.json["success"] is False
 
@@ -35,7 +35,7 @@ def test_regenerate_apikey_success(client: Any) -> None:
     with patch(f"{ROUTER}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER}.get_jwt_identity", return_value="test@test.com"
     ), patch(f"{ROUTER}.usecase", usecase_mock):
-        resp = client.post("/app/users/test@test.com/apikey", json={"expires": None}, headers=_headers())
+        resp = client.post("/users/test@test.com/apikey", json={"expires": None}, headers=_headers())
 
         assert resp.status_code == 200
         assert resp.json["success"] is True

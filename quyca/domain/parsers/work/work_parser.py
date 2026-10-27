@@ -1,3 +1,4 @@
+from quyca.domain.constants.institutions import INSTITUTION_TYPE_LABELS
 from quyca.domain.models.work_model import Work
 
 from quyca.domain.constants import countries_iso
@@ -5,40 +6,20 @@ from quyca.domain.constants.open_access_status import open_access_status_dict
 from quyca.domain.constants.product_types import source_titles
 
 
-def parse_works_by_entity(works: list) -> list:
-    include = [
-        "id",
-        "authors",
-        "authors_count",
-        "open_access",
-        "citations_count",
-        "product_types",
-        "year_published",
-        "title",
-        "subjects",
-        "source",
-        "external_ids",
-        "ranking",
-        "topics",
-    ]
-    return [work.model_dump(include=include, exclude_none=True) for work in works]
+def parse_works(works: list) -> list:
+    return [work.model_dump(exclude_none=True) for work in works]
 
 
 def parse_work(work: Work) -> dict:
-    fields_exclude = {"abstracts"}
-    return dict(work.model_dump(exclude=fields_exclude, exclude_none=True))
-
-
-def parse_api_expert(works: list, fields: list[str] | None = None) -> list:
-    exclude = {"abstracts"}
-    include = {"id", *fields} if fields else None
-    return [work.model_dump(include=include, exclude=exclude, exclude_none=True) for work in works]
+    return dict(work.model_dump(exclude={"abstracts", "affiliations_data"}))
 
 
 def parse_available_filters(filters: dict) -> dict:
     available_filters: dict = {}
     if product_types := filters.get("product_types"):
         available_filters["product_types"] = parse_product_type_filter(product_types)
+    if institutions_type := filters.get("institutions_type"):
+        available_filters["institutions_type"] = parse_institutions_type_filter(institutions_type)
     if years := filters.get("years"):
         available_filters["years"] = years
     if status := filters.get("status"):
@@ -51,6 +32,8 @@ def parse_available_filters(filters: dict) -> dict:
         available_filters["groups_ranking"] = parse_groups_ranking_filter(groups_ranking)
     if authors_ranking := filters.get("authors_ranking"):
         available_filters["authors_ranking"] = parse_authors_ranking_filter(authors_ranking)
+    if authors_count := filters.get("authors_count"):
+        available_filters["authors_count"] = authors_count
     return available_filters
 
 
@@ -104,16 +87,31 @@ def parse_groups_ranking_filter(groups_ranking: list) -> list:
 
 
 def parse_topic_filter(topics: list) -> list:
-    parsed_topics = []
+    tree: dict = {}
     for topic in topics:
-        parsed_topics.append(
-            {
-                "value": topic.get("id"),
-                "label": topic.get("display_name"),
-                "count": topic.get("count"),
-            }
-        )
-    return parsed_topics
+        levels = [topic.get("domain"), topic.get("field"), topic.get("subfield"), topic]
+        if any(not (level or {}).get("id") for level in levels):
+            continue
+        count = topic.get("count") or 0
+        nodes = tree
+        for level in levels:
+            node = nodes.setdefault(
+                level["id"],
+                {"value": level["id"], "title": level.get("display_name"), "count": 0, "children": {}},
+            )
+            node["count"] += count
+            nodes = node["children"]
+    return topic_tree_to_list(tree)
+
+
+def topic_tree_to_list(nodes: dict) -> list:
+    result = []
+    for node in sorted(nodes.values(), key=lambda n: n["count"], reverse=True):
+        item = {"value": node["value"], "title": node["title"], "count": node["count"]}
+        if children := topic_tree_to_list(node["children"]):
+            item["children"] = children
+        result.append(item)
+    return result
 
 
 def parse_country_filter(countries: list) -> list:
@@ -249,3 +247,12 @@ def parse_product_type_filter(product_types: list) -> list:
         )
     types.sort(key=lambda x: x["title"] != "Colav")
     return types
+
+
+def parse_institutions_type_filter(institutions_type: list) -> list:
+    counts = {item.get("_id"): item.get("count", 0) for item in institutions_type if item.get("_id")}
+    return [
+        {"value": value, "label": label, "count": counts[value]}
+        for value, label in INSTITUTION_TYPE_LABELS.items()
+        if value in counts
+    ]

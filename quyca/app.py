@@ -7,7 +7,7 @@ from flask_compress import Compress
 from flask_cors import CORS
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-from quyca.application.routes.router import router, limiter
+from quyca.application.routes.router import router
 from quyca.config import Settings
 
 
@@ -54,5 +54,4 @@ def create_app() -> Flask:
 if __name__ == "__main__":
     settings = Settings()  # type: ignore[call-arg]
     app = create_app()
-    limiter.init_app(app)
     app.run(host="0.0.0.0", port=int(settings.APP_PORT), debug=settings.APP_DEBUG, threaded=True)

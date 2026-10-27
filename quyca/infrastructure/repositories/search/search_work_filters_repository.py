@@ -2,6 +2,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, List, Tuple
 
 from quyca.domain.models.base_model import QueryParams
+from quyca.domain.normalizers.authors_count import parse_authors_count
 from quyca.infrastructure.mongo import database
 
 # Cache for global filters (no entity filter, no query params applied).
@@ -18,11 +19,12 @@ def get_works_available_filters(query_params: QueryParams) -> Dict:
             query_params.product_types,
             query_params.years,
             query_params.status,
-            query_params.subjects,
             query_params.topics,
             query_params.countries,
             query_params.groups_ranking,
             query_params.authors_ranking,
+            query_params.authors_count,
+            query_params.institutions_type,
             query_params.keywords,
         ]
     )
@@ -73,12 +75,71 @@ def get_works_available_filters(query_params: QueryParams) -> Dict:
                 }
             },
         ],
+        "institutions_type": pipeline.copy()
+        + [
+            {
+                "$project": {
+                    "_id": 0,
+                    "institutions_type": {
+                        "$reduce": {
+                            "input": {"$ifNull": ["$authors", []]},
+                            "initialValue": [],
+                            "in": {
+                                "$setUnion": [
+                                    "$$value",
+                                    {
+                                        "$reduce": {
+                                            "input": {"$ifNull": ["$$this.affiliations", []]},
+                                            "initialValue": [],
+                                            "in": {
+                                                "$setUnion": [
+                                                    "$$value",
+                                                    {
+                                                        "$map": {
+                                                            "input": {
+                                                                "$filter": {
+                                                                    "input": {"$ifNull": ["$$this.types", []]},
+                                                                    "as": "t",
+                                                                    "cond": {"$eq": ["$$t.source", "ror"]},
+                                                                }
+                                                            },
+                                                            "as": "t",
+                                                            "in": "$$t.type",
+                                                        }
+                                                    },
+                                                ]
+                                            },
+                                        }
+                                    },
+                                ]
+                            },
+                        }
+                    },
+                }
+            },
+            {"$unwind": "$institutions_type"},
+            {"$group": {"_id": "$institutions_type", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+        ],
         "years": pipeline.copy()
         + [
             {"$project": {"year_published": 1}},
             {"$match": {"year_published": {"$type": "number"}}},
             {"$group": {"_id": None, "min_year": {"$min": "$year_published"}, "max_year": {"$max": "$year_published"}}},
             {"$project": {"_id": 0, "min_year": 1, "max_year": 1}},
+        ],
+        "authors_count": pipeline.copy()
+        + [
+            {"$project": {"author_count": 1}},
+            {"$match": {"author_count": {"$type": "number"}}},
+            {
+                "$group": {
+                    "_id": None,
+                    "min_authors": {"$min": "$author_count"},
+                    "max_authors": {"$max": "$author_count"},
+                }
+            },
+            {"$project": {"_id": 0, "min_authors": 1, "max_authors": 1}},
         ],
         "status": pipeline.copy()
         + [
@@ -161,15 +222,39 @@ def get_works_available_filters(query_params: QueryParams) -> Dict:
         ],
         "topics": pipeline.copy()
         + [
-            {"$project": {"primary_topic.id": 1, "primary_topic.display_name": 1}},
+            {
+                "$project": {
+                    "primary_topic.id": 1,
+                    "primary_topic.display_name": 1,
+                    "primary_topic.subfield": 1,
+                    "primary_topic.field": 1,
+                    "primary_topic.domain": 1,
+                }
+            },
             {"$match": {"primary_topic.id": {"$ne": None}}},
             {
                 "$group": {
-                    "_id": {"id": "$primary_topic.id", "display_name": "$primary_topic.display_name"},
+                    "_id": {
+                        "id": "$primary_topic.id",
+                        "display_name": "$primary_topic.display_name",
+                        "subfield": "$primary_topic.subfield",
+                        "field": "$primary_topic.field",
+                        "domain": "$primary_topic.domain",
+                    },
                     "count": {"$sum": 1},
                 }
             },
-            {"$project": {"_id": 0, "id": "$_id.id", "display_name": "$_id.display_name", "count": 1}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "id": "$_id.id",
+                    "display_name": "$_id.display_name",
+                    "subfield": "$_id.subfield",
+                    "field": "$_id.field",
+                    "domain": "$_id.domain",
+                    "count": 1,
+                }
+            },
             {"$sort": {"count": -1}},
         ],
     }
@@ -178,6 +263,9 @@ def get_works_available_filters(query_params: QueryParams) -> Dict:
         if key == "years":
             cursor = collection.aggregate(pipe)
             return key, next(cursor, {"min_year": None, "max_year": None})
+        elif key == "authors_count":
+            cursor = collection.aggregate(pipe)
+            return key, next(cursor, {"max_authors": None, "min_authors": None})
         else:
             return key, list(collection.aggregate(pipe))
 
@@ -195,13 +283,14 @@ def get_works_available_filters(query_params: QueryParams) -> Dict:
 
 def set_product_filters(pipeline: list, query_params: QueryParams) -> None:
     set_product_type_filters(pipeline, query_params.product_types)
+    set_institutions_type_filters(pipeline, query_params.institutions_type)
     set_year_filters(pipeline, query_params.years)
     set_status_filters(pipeline, query_params.status)
-    set_subject_filters(pipeline, query_params.subjects)
     set_topic_filters(pipeline, query_params.topics)
     set_country_filters(pipeline, query_params.countries)
     set_groups_ranking_filters(pipeline, query_params.groups_ranking)
     set_authors_ranking_filters(pipeline, query_params.authors_ranking)
+    set_authors_count_filter(pipeline, query_params.authors_count)
 
 
 def set_product_type_filters(pipeline: list, type_filters: str | None) -> None:
@@ -219,6 +308,15 @@ def set_product_type_filters(pipeline: list, type_filters: str | None) -> None:
                 {"types": {"$elemMatch": {"source": params[0], "type": params[1], "code": {"$regex": "^" + params[2]}}}}
             )
     pipeline += [{"$match": {"$or": match_filters}}]
+
+
+def set_institutions_type_filters(pipeline: list, institutions_type: str | None) -> None:
+    if not institutions_type:
+        return
+    types = [t.strip() for t in institutions_type.split(",") if t.strip()]
+    if not types:
+        return
+    pipeline += [{"$match": {"authors.affiliations.types": {"$elemMatch": {"source": "ror", "type": {"$in": types}}}}}]
 
 
 def set_year_filters(pipeline: list, years: str | None) -> None:
@@ -244,25 +342,33 @@ def set_status_filters(pipeline: list, status: str | None) -> None:
     pipeline += [{"$match": {"$or": match_filters}}]
 
 
-def set_subject_filters(pipeline: list, subjects: str | None) -> None:
-    if not subjects:
-        return
-    match_filters: list[dict[str, Any]] = []
-    for subject in subjects.split(","):
-        params = subject.split("_")
-        if len(params) == 1:
-            return
-        match_filters.append({"subjects.subjects": {"$elemMatch": {"level": int(params[0]), "name": params[1]}}})
-    pipeline += [{"$match": {"$or": match_filters}}]
+OPENALEX = "https://openalex.org/"
+TOPIC_LEVEL_FIELDS = (
+    (OPENALEX + "domains/", "primary_topic.domain.id"),
+    (OPENALEX + "fields/", "primary_topic.field.id"),
+    (OPENALEX + "subfields/", "primary_topic.subfield.id"),
+)
+
+
+def topic_filter_field(topic_id: str) -> str:
+    for prefix, mongo_field in TOPIC_LEVEL_FIELDS:
+        if topic_id.startswith(prefix):
+            return mongo_field
+    return "primary_topic.id"
 
 
 def set_topic_filters(pipeline: list, topics: str | None) -> None:
     if not topics:
         return
-    match_filters: list[str] = []
+    ids_by_field: dict[str, list[str]] = {}
     for topic in topics.split(","):
-        match_filters.append(topic.strip())
-    pipeline += [{"$match": {"primary_topic.id": {"$in": match_filters}}}]
+        topic = topic.strip()
+        if topic:
+            ids_by_field.setdefault(topic_filter_field(topic), []).append(topic)
+    if not ids_by_field:
+        return
+    match_filters = [{field: {"$in": ids}} for field, ids in ids_by_field.items()]
+    pipeline += [{"$match": {"$or": match_filters}}]
 
 
 def set_country_filters(pipeline: list, countries: str | None) -> None:
@@ -317,3 +423,15 @@ def set_authors_filter_if_large(pipeline: list) -> None:
             }
         }
     )
+
+
+def set_authors_count_filter(pipeline: list, authors_count: str | None) -> None:
+    if not authors_count:
+        return
+    count_range = parse_authors_count(authors_count)
+    conditions: dict[str, int] = {}
+    if count_range.min is not None:
+        conditions["$gte"] = count_range.min
+    if count_range.max is not None:
+        conditions["$lte"] = count_range.max
+    pipeline.append({"$match": {"author_count": conditions}})

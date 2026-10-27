@@ -18,7 +18,8 @@ def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_para
     ]
     search_work_filters_repository.set_authors_filter_if_large(pipeline)
     work_repository.set_product_filters(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("$project"))
+    base_repository.set_sort(query_params.sort, pipeline)
+    base_repository.set_project(pipeline, pipeline_params.get("project"))
     cursor = database["works"].aggregate(
         pipeline,
         batchSize=500,
@@ -44,7 +45,8 @@ def get_works_by_affiliation(
     ]
     search_work_filters_repository.set_authors_filter_if_large(pipeline)
     work_repository.set_product_filters(pipeline, query_params)
-    base_repository.set_project(pipeline, pipeline_params.get("$project"))
+    base_repository.set_sort(query_params.sort, pipeline)
+    base_repository.set_project(pipeline, pipeline_params.get("project"))
     cursor = database["works"].aggregate(
         pipeline,
         batchSize=500,

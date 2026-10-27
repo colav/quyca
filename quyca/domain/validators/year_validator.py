@@ -2,7 +2,6 @@ from datetime import datetime
 import re
 from typing import Any, Dict, Optional
 
-
 _INTEGER_TEXT_RE = re.compile(r"^[0-9]+(?:\.0+)?$")
 
 

@@ -86,9 +86,6 @@ def get_affiliations_available_filters(affiliation_type: str, query_params: Quer
 
 
 def set_affiliation_filters(pipeline: List, query_params: QueryParams) -> None:
-    """
-    Sets the affiliation filters based on the query parameters.
-    """
     set_affiliation_states(pipeline, query_params.states)
     set_affiliation_cities(pipeline, query_params.cities)
     set_affiliation_groups_ranking(pipeline, query_params.groups_ranking)
