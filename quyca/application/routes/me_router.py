@@ -6,34 +6,6 @@ from quyca.infrastructure.container import build_get_me_usecase
 me_router = Blueprint("me_app_router", __name__)
 
 
-"""
-@api {get} /me Estado de sesión
-@apiName GetMe
-@apiGroup Authentication
-@apiVersion 1.0.0
-
-@apiDescription
-Retorna el estado de la sesión actual leyendo el JWT desde cookie HttpOnly `access_token_cookie`.
-- 200 si la sesión está activa
-- 401 si no hay sesión o el token es inválido/expirado
-
-@apiHeader (Auth Cookie) {String} access_token_cookie Cookie JWT HttpOnly.
-
-@apiSuccess (200) {String} status "sesion_activa"
-@apiSuccess (200) {String} msg "Sesión activa"
-@apiSuccess (200) {Object} user
-@apiSuccess (200) {String} user._id
-@apiSuccess (200) {String} user.institution
-@apiSuccess (200) {String} user.role
-@apiSuccess (200) {String} user.email
-
-@apiError (401) {String} status "sesion_no_iniciada" | "token_expirado"
-@apiError (401) {String} msg
-@apiError (500) {Boolean} success false
-@apiError (500) {String} msg "Error interno del servidor"
-"""
-
-
 @me_router.route("/me", methods=["GET"])
 def me() -> tuple[Any, int]:
     try:

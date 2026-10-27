@@ -5,9 +5,6 @@ from sentry_sdk import capture_exception
 from quyca.application.usecases.user_crud import UserCrudUseCase
 from quyca.domain.exceptions.not_entity_exception import NotEntityException
 
-"""
-HTTP routes for admin user management (JWT-protected).
-"""
 
 user_crud_router = Blueprint("user_crud_app_router", __name__)
 usecase = UserCrudUseCase()
@@ -34,48 +31,6 @@ def check_admin_permission() -> tuple[dict[str, Any] | None, int | None]:
         return {"success": False, "msg": "Identidad de sesión inválida"}, 401
 
     return None, None
-
-
-"""
-@api {post} /admin/users/:email Create user (admin only)
-@apiName CreateUser
-@apiGroup Users
-@apiVersion 1.0.0
-
-@apiDescription
-Creates a new user in the platform. Requires admin role.
-Authentication uses HttpOnly cookie `access_token_cookie` (token is not sent in JSON).
-
-@apiHeader (Auth Cookie) {String} access_token_cookie JWT access cookie (HttpOnly)
-
-@apiParam (Path) {String} email User email passed in URL
-
-@apiBody {String} institution Institution name
-@apiBody {String} ror_id Institution ROR identifier
-@apiBody {String} role User role in the application
-
-@apiSuccess (201) {Boolean} success true
-@apiSuccess (201) {String} msg Success message
-
-@apiError (400) {Boolean} success false
-@apiError (400) {String} msg Validation or payload error
-
-@apiError (401) {Boolean} success false
-@apiError (401) {String} msg Token missing or invalid
-
-@apiError (403) {Boolean} success false
-@apiError (403) {String} msg Permission denied
-
-@apiError (409) {Boolean} success false
-@apiError (409) {String} msg User already exists for the institution
-
-@apiExample {json} Request Body Example
-{
-  "institution": "Universidad de Antioquia",
-  "ror_id": "059yx9a68",
-  "role": "staff"
-}
-"""
 
 
 @user_crud_router.route("/admin/users/<email>", methods=["POST"])
@@ -105,34 +60,6 @@ def create_user(email: str) -> tuple[Any, int]:
         return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
-"""
-@api {get} /admin/users List users (admin only)
-@apiName ListUsers
-@apiGroup Users
-@apiVersion 1.0.0
-
-@apiDescription
-Returns a list of all users excluding admin accounts. Requires admin session.
-Authentication uses HttpOnly cookie `access_token_cookie`.
-
-@apiHeader (Auth Cookie) {String} access_token_cookie JWT cookie (HttpOnly)
-
-@apiSuccess (200) {Boolean} success true
-@apiSuccess (200) {Object[]} data List of users
-@apiSuccess (200) {String} data.email User email
-@apiSuccess (200) {String} data.institution Institution name
-@apiSuccess (200) {String} data.id User identifier
-@apiSuccess (200) {String} data.role User role
-@apiSuccess (200) {Boolean} data.is_active Active status
-
-@apiError (401) {Boolean} success false
-@apiError (401) {String} msg Token missing or invalid
-
-@apiError (403) {Boolean} success false
-@apiError (403) {String} msg Permission denied
-"""
-
-
 @user_crud_router.route("/admin/users", methods=["GET"])
 def list_users() -> tuple[Any, int]:
     """Lists users (admin-only, excludes admins)."""
@@ -146,30 +73,6 @@ def list_users() -> tuple[Any, int]:
     except Exception as e:
         capture_exception(e)
         return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
-
-
-"""
-@api {delete} /admin/users/:email Deactivate user
-@apiName DeactivateUser
-@apiGroup Users
-@apiVersion 1.0.0
-
-@apiDescription
-Deactivates a user account by setting is_active to false.
-
-@apiHeader {String} Authorization JWT token "Bearer &lt;token&gt;"
-
-@apiParam (Path) {String} email User email
-
-@apiSuccess (200) {Boolean} success true
-@apiSuccess (200) {String} msg Deactivation message
-
-@apiError (404) {Boolean} success false
-@apiError (404) {String} msg User not found
-
-@apiError (401) {Boolean} success false
-@apiError (401) {String} msg Token invalid or missing
-"""
 
 
 @user_crud_router.route("/admin/users/<email>", methods=["DELETE"])
@@ -190,27 +93,6 @@ def deactivate_user(email: str) -> tuple[Any, int]:
         return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
-"""
-@api {patch} /admin/users/:email/restore Activate user
-@apiName ActivateUser
-@apiGroup Users
-@apiVersion 1.0.0
-
-@apiDescription
-Reactivates a deactivated user by setting is_active to true.
-
-@apiHeader {String} Authorization JWT token "Bearer &lt;token&gt;"
-
-@apiParam (Path) {String} email User email
-
-@apiSuccess (200) {Boolean} success true
-@apiSuccess (200) {String} msg Activation message
-
-@apiError (404) {Boolean} success false
-@apiError (404) {String} msg User not found
-"""
-
-
 @user_crud_router.route("/admin/users/<email>/restore", methods=["PATCH"])
 def activate_user(email: str) -> tuple[Any, int]:
     error_response, status = check_admin_permission()
@@ -227,27 +109,6 @@ def activate_user(email: str) -> tuple[Any, int]:
     except Exception as e:
         capture_exception(e)
         return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
-
-
-"""
-@api {patch} /admin/users/:email Reset user password
-@apiName ResetPassword
-@apiGroup Users
-@apiVersion 1.0.0
-
-@apiDescription
-Resets the user password and sends the new credentials via email.
-
-@apiHeader {String} Authorization JWT token "Bearer &lt;token&gt;"
-
-@apiParam (Path) {String} email User email
-
-@apiSuccess (200) {Boolean} success true
-@apiSuccess (200) {String} msg Password updated
-
-@apiError (400) {Boolean} success false
-@apiError (400) {String} msg User not found or account disabled
-"""
 
 
 @user_crud_router.route("/admin/users/<email>", methods=["PATCH"])
@@ -267,36 +128,6 @@ def update_password(email: str) -> tuple[Any, int]:
     except Exception as e:
         capture_exception(e)
         return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
-
-
-"""
-@api {put} /admin/users/:email Edit user email or role
-@apiName EditUser
-@apiGroup Users
-@apiVersion 1.0.0
-
-@apiDescription
-Edits the email and/or role of a user. It is not allowed to assign admin role or edit admin accounts.
-
-@apiHeader {String} Authorization JWT token "Bearer &lt;token&gt;"
-
-@apiParam (Path) {String} email Current user email
-
-@apiBody {String} [email] New email
-@apiBody {String} [rol] New role
-
-@apiSuccess (200) {Boolean} success true
-@apiSuccess (200) {String} msg Update message
-
-@apiError (400) {Boolean} success false
-@apiError (400) {String} msg No changes detected or invalid payload
-
-@apiError (403) {Boolean} success false
-@apiError (403) {String} msg Not allowed to assign admin role
-
-@apiError (404) {Boolean} success false
-@apiError (404) {String} msg User not found
-"""
 
 
 @user_crud_router.route("/admin/users/<email>", methods=["PUT"])
@@ -325,37 +156,6 @@ def edit_user(email: str) -> tuple[Any, int]:
     except Exception as e:
         capture_exception(e)
         return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
-
-
-"""
-@api {post} /users/:email/apikey Generate or regenerate API Key
-@apiName RegenerateApiKey
-@apiGroup ApiKey
-@apiVersion 1.0.0
-
-@apiDescription
-Generates a new API Key for the authenticated user. If an API Key exists, it is replaced.
-
-@apiHeader {String} Authorization JWT token "Bearer &lt;token&gt;"
-
-@apiParam (Path) {String} email User email (must match token identity)
-
-@apiBody {Number} [expires] Expiration timestamp in seconds (optional, must be future and at least 1 day away)
-
-@apiSuccess (200) {Boolean} success true
-@apiSuccess (200) {Object} apikey API Key object
-@apiSuccess (200) {String} apikey.id Key identifier
-@apiSuccess (200) {Number} [apikey.expires] Expiration timestamp
-
-@apiError (401) {Boolean} success false
-@apiError (401) {String} msg Token missing or invalid
-
-@apiError (403) {Boolean} success false
-@apiError (403) {String} msg Not allowed to manage another user's API Key
-
-@apiError (400) {Boolean} success false
-@apiError (400) {String} msg Invalid expiration value
-"""
 
 
 @user_crud_router.route("/users/<email>/apikey", methods=["POST"])
@@ -390,35 +190,6 @@ def regenerate_apikey(email: str) -> tuple[Any, int]:
         return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
-"""
-@api {patch} /users/:email/apikey Update API Key expiration
-@apiName UpdateApiKeyExpiration
-@apiGroup ApiKey
-@apiVersion 1.0.0
-
-@apiDescription
-Updates the expiration timestamp of the user's existing API Key.
-
-@apiHeader {String} Authorization JWT token "Bearer &lt;token&gt;"
-
-@apiParam (Path) {String} email User email (must match token identity)
-
-@apiBody {Number} expires New expiration timestamp (future, at least 1 day away)
-
-@apiSuccess (200) {Boolean} success true
-@apiSuccess (200) {String} msg Expiration updated successfully
-
-@apiError (401) {Boolean} success false
-@apiError (401) {String} msg Token missing or invalid
-
-@apiError (403) {Boolean} success false
-@apiError (403) {String} msg Not allowed to modify another user's API Key
-
-@apiError (400) {Boolean} success false
-@apiError (400) {String} msg Invalid expiration
-"""
-
-
 @user_crud_router.route("/users/<email>/apikey", methods=["PATCH"])
 def update_apikey_expiration(email: str) -> tuple[Any, int]:
     try:
@@ -449,33 +220,6 @@ def update_apikey_expiration(email: str) -> tuple[Any, int]:
     except Exception as e:
         capture_exception(e)
         return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
-
-
-"""
-@api {delete} /users/:email/apikey Delete API Key
-@apiName DeleteApiKey
-@apiGroup ApiKey
-@apiVersion 1.0.0
-
-@apiDescription
-Deletes the API Key associated with the authenticated user.
-
-@apiHeader {String} Authorization JWT token "Bearer &lt;token&gt;"
-
-@apiParam (Path) {String} email User email (must match token identity)
-
-@apiSuccess (200) {Boolean} success true
-@apiSuccess (200) {String} msg API Key deleted successfully
-
-@apiError (401) {Boolean} success false
-@apiError (401) {String} msg Token missing or invalid
-
-@apiError (403) {Boolean} success false
-@apiError (403) {String} msg Not allowed to delete another user's API Key
-
-@apiError (404) {Boolean} success false
-@apiError (404) {String} msg User not found
-"""
 
 
 @user_crud_router.route("/users/<email>/apikey", methods=["DELETE"])

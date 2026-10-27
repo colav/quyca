@@ -10,24 +10,6 @@ from quyca.domain.services.source import source_plot_service, source_service
 
 source_router = Blueprint("source_app_router", __name__)
 
-"""
-@api {get} /source/:source_id Get Source by ID
-@apiName GetSourceById
-@apiGroup Source
-@apiVersion 1.0.0
-@apiDescription Obtiene los detalles de una fuente específica utilizando su identificador único.
-
-@apiParam {String} source_id Identificador único de la fuente.
-
-@apiError (404) SourceNotFound The source with the specified ID was not found.
-
-@apiErrorExample {json} Respuesta de error:
-HTTP/1.1 404 Not Found
-{
-  "error": "Source not found"
-}
-"""
-
 
 @source_router.route("/<source_id>", methods=["GET"])
 def get_source_by_id(source_id: str) -> Response | Tuple[Response, int]:
@@ -37,21 +19,6 @@ def get_source_by_id(source_id: str) -> Response | Tuple[Response, int]:
     except Exception as e:
         capture_exception(e)
         return jsonify({"error": str(e)}), 404
-
-
-"""
-@api {get} /source/:source_id/products Get works by source
-@apiName GetSourceProducts
-@apiGroup Source
-@apiVersion 1.0.0
-@apiDescription Obtiene los productos bibliográficos de una fuente.
-
-@apiParam {String} source_id ID de la fuente.
-
-@apiQuery {Number} [page=1] Número de la página.
-@apiQuery {Number} [max=10] Número máximo de resultados.
-@apiQuery {String} [sort] Campo a ordenar (citations, products, alphabetical). dirección del ordenamiento (asc/desc).
-"""
 
 
 @source_router.route("/<source_id>/products", methods=["GET"])
@@ -68,21 +35,6 @@ def get_source_products(source_id: str) -> Response | Tuple[Response, int]:
         return jsonify({"error": str(e)}), 400
 
 
-"""
-@api {get} /source/:source_id/products/filters Get works filters by source
-@apiName GetSourceProductsFilters
-@apiGroup Source
-@apiVersion 1.0.0
-@apiDescription Obtiene los filtros disponibles en los productos bibliográficos de una fuente.
-
-@apiParam {String} source_id ID de la fuente.
-
-@apiQuery {Number} [page=1] Número de la página.
-@apiQuery {Number} [max=10] Número máximo de resultados.
-@apiQuery {String} [sort] Campo a ordenar (citations, products, alphabetical). dirección del ordenamiento (asc/desc).
-"""
-
-
 @source_router.route("/<source_id>/products/filters", methods=["GET"])
 def get_source_products_filters(source_id: str) -> Response | Tuple[Response, int]:
     try:
@@ -92,22 +44,6 @@ def get_source_products_filters(source_id: str) -> Response | Tuple[Response, in
     except Exception as e:
         capture_exception(e)
         return jsonify({"error": str(e)}), 400
-
-
-"""
-@api {get} /source/:source_id/products/csv Get works csv by Source
-@apiName GetSourceProductsCSV
-@apiGroup Source
-@apiVersion 1.0.0
-@apiDescription Obtiene los productos bibliográficos de una fuente en formato CSV.
-
-@apiParam {String} source_id ID de la afiliación.
-
-@apiSuccessExample {csv} Success-Response:
-HTTP/1.1 200 OK
-Content-Type: text/csv
-Content-Disposition: attachment; filename=source.csv
-"""
 
 
 @source_router.route("/<source_id>/products/csv", methods=["GET"])
@@ -121,22 +57,6 @@ def get_works_csv_by_source(source_id: str) -> Response | Tuple[Response, int]:
     except Exception as e:
         capture_exception(e)
         return jsonify({"error": str(e)}), 400
-
-
-"""
-@api {get} /source/:source_id/products/excel Get works excel by Source
-@apiName GetSourceProductsExcel
-@apiGroup Source
-@apiVersion 1.0.0
-@apiDescription Obtiene los productos bibliográficos de una fuente en formato Excel.
-
-@apiParam {String} source_id ID de la fuente.
-
-@apiSuccessExample {excel} Success-Response:
-HTTP/1.1 200 OK
-Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-Content-Disposition: attachment; filename=source_works.xlsx
-"""
 
 
 @source_router.route("/<source_id>/products/excel", methods=["GET"])

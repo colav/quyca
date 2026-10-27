@@ -16,35 +16,6 @@ from quyca.infrastructure.container import build_ciarp_service, build_scienti_se
 
 submit_router = Blueprint("submit_app_router", __name__)
 
-"""
-@api {post} /submit/staff Subir archivo Staff (.xlsx)
-@apiName SubmitStaff
-@apiGroup Staff
-@apiVersion 1.0.0
-
-@apiDescription
-Sube un Excel de Staff para validación, genera reporte (PDF + Excel anotado) y envía notificación.
-Auth por cookie HttpOnly `access_token_cookie`.
-
-@apiHeader (Auth Cookie) {String} access_token_cookie Cookie JWT HttpOnly.
-
-@apiBody {File} file Archivo Excel `.xlsx`.
-
-@apiSuccess (200) {Boolean} success
-@apiSuccess (200) {Number} errors
-@apiSuccess (200) {Number} duplicates
-@apiSuccess (200) {String} pdf_base64
-@apiSuccess (200) {String} msg
-
-@apiError (400) {Boolean} success false
-@apiError (400) {String} msg "Archivo requerido" | "El archivo cargado está vacío. Verifique que contenga información."
-@apiError (401) {Boolean} success false
-@apiError (401) {String} msg "Token inválido o expirado"
-@apiError (422) {Boolean} success false
-@apiError (422) {String} msg "El archivo enviado no cumple con el formato requerido de columnas"
-@apiError (500) {String} msg "Error interno del servidor"
-"""
-
 
 @submit_router.route("/staff", methods=["POST"])
 def submit_staff() -> Tuple[Response, int]:
@@ -85,36 +56,6 @@ def submit_staff() -> Tuple[Response, int]:
         return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
-"""
-@api {post} /submit/ciarp Subir archivo CIARP (.xlsx)
-@apiName SubmitCiarp
-@apiGroup CIARP
-@apiVersion 1.0.0
-
-@apiDescription
-Sube un Excel CIARP para validación y genera reporte de calidad (PDF + anotaciones).
-La autenticación se maneja con cookie HttpOnly `access_token_cookie` (no se envía token en JSON).
-
-@apiHeader (Auth Cookie) {String} access_token_cookie Cookie JWT HttpOnly (enviada automáticamente por el navegador).
-
-@apiBody {File} file Archivo Excel `.xlsx`.
-
-@apiSuccess (200) {Boolean} success
-@apiSuccess (200) {Number} errors
-@apiSuccess (200) {Number} duplicates
-@apiSuccess (200) {String} pdf_base64
-@apiSuccess (200) {String} msg
-
-@apiError (400) {Boolean} success false
-@apiError (400) {String} msg "Archivo requerido" | "El archivo cargado está vacío. Verifique que contenga información."
-@apiError (401) {Boolean} success false
-@apiError (401) {String} msg "Token inválido o expirado"
-@apiError (422) {Boolean} success false
-@apiError (422) {String} msg "El archivo enviado no cumple con el formato requerido de columnas"
-@apiError (500) {String} msg "Error interno del servidor"
-"""
-
-
 @submit_router.route("/ciarp", methods=["POST"])
 def submit_ciarp() -> tuple[Any, int]:
     try:
@@ -141,35 +82,6 @@ def submit_ciarp() -> tuple[Any, int]:
         return jsonify({"succes": False, "msg": "Error interno del servidor"}), 500
 
 
-"""
-@api {post} /submit/scienti Subir comprimido SCIENTI
-@apiName SubmitScienti
-@apiGroup SCIENTI
-@apiVersion 1.0.0
-
-@apiDescription
-Sube un archivo comprimido de SCIENTI para validación/procesamiento.
-Auth por cookie HttpOnly `access_token_cookie`.
-
-@apiHeader (Auth Cookie) {String} access_token_cookie Cookie JWT HttpOnly.
-
-@apiBody {File} file Archivo comprimido (.zip, .rar, .7z, .tar, .gz, .tgz, .bz2, .tar.gz, .tar.bz2).
-
-@apiSuccess (200) {Boolean} success
-@apiSuccess (200) {String} msg
-@apiSuccess (200) {String} upload_date
-@apiSuccess (200) {String} file_msg
-
-@apiError (400) {Boolean} success false
-@apiError (400) {String} msg "Archivo requerido"
-@apiError (401) {Boolean} success false
-@apiError (401) {String} msg "Token inválido o expirado"
-@apiError (415) {Boolean} success false
-@apiError (415) {String} msg "Tipo de archivo no permitido..."
-@apiError (500) {String} msg "Error interno del servidor"
-"""
-
-
 @submit_router.route("/scienti", methods=["POST"])
 def submit_scienti() -> Tuple[Response, int]:
     try:
@@ -193,17 +105,6 @@ def submit_scienti() -> Tuple[Response, int]:
     except Exception as e:
         capture_exception(e)
         return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
-
-
-"""
-@api {post} /project/validate Validate projects file
-@apiName ValidateProjectFile
-@apiGroup Project
-@apiVersion 1.0.0
-@apiDescription Valida el archivo Excel de proyectos institucionales (formato v1.0) y devuelve el reporte de errores y advertencias.
- 
-@apiBody {File} file Archivo .xlsx enviado como multipart/form-data.
-"""
 
 
 @submit_router.route("/project", methods=["POST"])

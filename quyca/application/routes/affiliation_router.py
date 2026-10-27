@@ -16,17 +16,6 @@ from quyca.domain.services.work import work_service
 
 affiliation_router = Blueprint("affiliation_app_router", __name__)
 
-"""
-@api {get} /affiliations/:affiliation_type/:affiliation_id Get affiliation by id
-@apiName GetAffiliationById
-@apiGroup Affiliation
-@apiVersion 1.0.0
-@apiDescription Obtiene una afiliación específica.
-
-@apiParam {String} affiliation_type Tipo de afiliación (ej. "institution", "department").
-@apiParam {String} affiliation_id ID de la afiliación.
-"""
-
 
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>", methods=["GET"])
 def get_affiliation_by_id(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
@@ -38,18 +27,6 @@ def get_affiliation_by_id(affiliation_type: str, affiliation_id: str) -> Respons
         return jsonify({"error": str(e)}), 400
 
 
-"""
-@api {get} /affiliations/:affiliation_type/:affiliation_id/affiliations Get related affiliations
-@apiName GetAffiliationAffiliations
-@apiGroup Affiliation
-@apiVersion 1.0.0
-@apiDescription Obtiene las afiliaciones relacionadas a una afiliación.
-
-@apiParam {String} affiliation_type Tipo de afiliación (ej. "institution", "department").
-@apiParam {String} affiliation_id ID de la afiliación.
-"""
-
-
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/affiliations", methods=["GET"])
 def get_affiliation_affiliations(affiliation_type: str, affiliation_id: str) -> Response | Tuple[Response, int]:
     try:
@@ -59,18 +36,6 @@ def get_affiliation_affiliations(affiliation_type: str, affiliation_id: str) -> 
     except Exception as e:
         capture_exception(e)
         return jsonify({"error": str(e)}), 400
-
-
-"""
-@api {get} /affiliations/:affiliation_type/:affiliation_id/research/products Get works by affiliation
-@apiName GetAffiliationResearchProducts
-@apiGroup Affiliation
-@apiVersion 1.0.0
-@apiDescription Obtiene los productos bibliográficos de una afiliación.
-
-@apiParam {String} affiliation_type Tipo de afiliación (ej. "institution", "department").
-@apiParam {String} affiliation_id ID de la afiliación.
-"""
 
 
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/products", methods=["GET"])
@@ -87,18 +52,6 @@ def get_affiliation_research_products(affiliation_type: str, affiliation_id: str
         return jsonify({"error": str(e)}), 400
 
 
-"""
-@api {get} /affiliations/:affiliation_type/:affiliation_id/research/products/filters Get works filters by affiliation
-@apiName GetAffiliationResearchProductsFilters
-@apiGroup Affiliation
-@apiVersion 1.0.0
-@apiDescription Obtiene los filtros disponibles en los productos bibliográficos de una afiliación.
-
-@apiParam {String} affiliation_type Tipo de afiliación (ej. "institution", "department").
-@apiParam {String} affiliation_id ID de la afiliación.
-"""
-
-
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/products/filters", methods=["GET"])
 def get_affiliation_research_products_filters(
     affiliation_type: str, affiliation_id: str
@@ -110,18 +63,6 @@ def get_affiliation_research_products_filters(
     except Exception as e:
         capture_exception(e)
         return jsonify({"error": str(e)}), 400
-
-
-"""
-@api {get} /affiliations/:affiliation_type/:affiliation_id/research/products/csv Get works csv by affiliation
-@apiName GetAffiliationResearchProductsCSV
-@apiGroup Affiliation
-@apiVersion 1.0.0
-@apiDescription Obtiene los productos bibliográficos de una afiliación en formato CSV.
-
-@apiParam {String} affiliation_type Tipo de afiliación (ej. "institution", "department", "faculty", "group").
-@apiParam {String} affiliation_id ID de la afiliación.
-"""
 
 
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/products/csv", methods=["GET"])
@@ -140,15 +81,6 @@ def get_works_csv_by_affiliation(affiliation_type: str, affiliation_id: str) -> 
     except Exception as e:
         capture_exception(e)
         return jsonify({"error": str(e)}), 400
-
-
-""" 
-@api {get} /affiliations/:affiliation_type/:affiliation_id/research/products/excel Get works excel by affiliation
-@apiName GetAffiliationResearchProductsExcel
-@apiGroup Affiliation
-@apiVersion 1.0.0
-@apiDescription Obtiene los productos bibliográficos de una afiliación en formato Excel.
-"""
 
 
 @affiliation_router.route(
@@ -174,18 +106,6 @@ def get_works_excel_by_affiliation(affiliation_type: str, affiliation_id: str) -
         return jsonify({"error": str(e)}), 400
 
 
-"""
-@api {get} /affiliations/:affiliation_type/:affiliation_id/research/patents Get patents by affiliation
-@apiName GetAffiliationPatents
-@apiGroup Affiliation
-@apiVersion 1.0.0
-@apiDescription Obtiene los patentes de una afiliación.
-
-@apiParam {String} affiliation_type Tipo de afiliación (ej. "institution", "department").
-@apiParam {String} affiliation_id ID de la afiliación.
-"""
-
-
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/patents", methods=["GET"])
 def get_affiliation_research_patents(affiliation_id: str, affiliation_type: str) -> Response | Tuple[Response, int]:
     try:
@@ -197,18 +117,6 @@ def get_affiliation_research_patents(affiliation_id: str, affiliation_type: str)
         return jsonify({"error": str(e)}), 400
 
 
-"""
-@api {get} /affiliations/:affiliation_type/:affiliation_id/research/projects Get projects by affiliation
-@apiName GetAffiliationProjects
-@apiGroup Affiliation
-@apiVersion 1.0.0
-@apiDescription Obtiene los proyectos de una afiliación.
-
-@apiParam {String} affiliation_type Tipo de afiliación (ej. "institution", "department").
-@apiParam {String} affiliation_id ID de la afiliación.
-"""
-
-
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/projects", methods=["GET"])
 def get_affiliation_research_projects(affiliation_id: str, affiliation_type: str) -> Response | Tuple[Response, int]:
     try:
@@ -218,17 +126,6 @@ def get_affiliation_research_projects(affiliation_id: str, affiliation_type: str
     except Exception as e:
         capture_exception(e)
         return jsonify({"error": str(e)}), 400
-
-
-"""
-@api {get} /affiliations/:affiliation_type/:affiliation_id/research/news Get news by affiliation
-@apiName GetAffiliationNews
-@apiGroup Affiliation
-@apiVersion 1.0.0
-@apiDescription Obtiene las noticias asociadas a los autores de una afiliación.
-@apiParam {String} affiliation_type Tipo de afiliación (ej. "institution", "department").
-@apiParam {String} affiliation_id ID de la afiliación.
-"""
 
 
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/research/news")
