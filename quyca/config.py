@@ -49,8 +49,6 @@ class Settings(BaseSettings):
     ES_FACULTY_COMPLETER_INDEX: str
     ES_SOURCES_COMPLETER_INDEX: str
 
-    API_LIMITS: str
-
     SENTRY_DSN: str
 
     LOCAL_STORAGE_PATH: str
