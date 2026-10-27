@@ -5,7 +5,6 @@ from sentry_sdk import capture_exception
 from quyca.application.usecases.user_crud import UserCrudUseCase
 from quyca.domain.exceptions.not_entity_exception import NotEntityException
 
-
 user_crud_router = Blueprint("user_crud_app_router", __name__)
 usecase = UserCrudUseCase()
 

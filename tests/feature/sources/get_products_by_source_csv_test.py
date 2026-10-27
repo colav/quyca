@@ -5,7 +5,6 @@ import io
 from bson import ObjectId
 from quyca.infrastructure.mongo import database
 
-
 random_source_with_products = database["sources"].find_one(
     {"products_count": {"$gt": 100, "$lt": 400}}, sort=[("products_count", -1)]
 )

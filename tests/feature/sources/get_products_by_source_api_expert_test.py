@@ -3,7 +3,6 @@ from bson import ObjectId
 from quyca.infrastructure.mongo import database
 from flask.testing import FlaskClient
 
-
 random_source_with_products = database["sources"].find_one(
     {"products_count": {"$gt": 0}}, sort=[("products_count", -1)]
 )

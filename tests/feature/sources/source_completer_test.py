@@ -5,7 +5,6 @@ import pytest
 from quyca.config import settings
 from quyca.infrastructure.repositories.completers import source_completer
 
-
 ENDPOINT = "/completer/sources"
 
 

@@ -16,7 +16,6 @@ from quyca.infrastructure.repositories.affiliation import affiliation_repository
 from quyca.infrastructure.repositories.plot import plot_repository
 from quyca.infrastructure.repositories.work import work_repository
 
-
 PlotExporter = Callable[..., Any]
 
 

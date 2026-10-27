@@ -2,7 +2,6 @@ from flask.testing import FlaskClient
 import pytest
 from quyca.infrastructure.mongo import database
 
-
 random_source_id = (
     database["sources"]
     .aggregate(

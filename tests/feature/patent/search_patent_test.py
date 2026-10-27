@@ -1,6 +1,5 @@
 from unittest.mock import patch
 
-
 ENDPOINT = "/search/patents"
 
 

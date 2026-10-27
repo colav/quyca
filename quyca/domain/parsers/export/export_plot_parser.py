@@ -17,7 +17,6 @@ from quyca.domain.models.calculations_model import Calculations
 from quyca.domain.parsers.plot import map_parser
 from quyca.domain.parsers.export import export_network_parser
 
-
 VENN_SOURCES = (
     "scienti",
     "minciencias",

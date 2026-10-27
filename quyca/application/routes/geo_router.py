@@ -8,7 +8,6 @@ from quyca.domain.models.base_model import QueryParams
 from quyca.domain.services.geo import geo_service
 from quyca.domain.services.work import work_service
 
-
 geo_router = Blueprint("geo_app_router", __name__)
 
 

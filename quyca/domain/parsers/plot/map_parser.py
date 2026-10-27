@@ -6,7 +6,6 @@ from typing import Any, Iterator, Optional, Tuple
 
 import pandas as pd
 
-
 Coordinate = Tuple[float, float]
 
 

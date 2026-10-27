@@ -1,7 +1,6 @@
 import csv
 import io
 
-
 ENDPOINT = "/apc"
 
 FIELDNAMES = [

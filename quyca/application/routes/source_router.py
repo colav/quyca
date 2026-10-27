@@ -7,7 +7,6 @@ from quyca.domain.services.work import work_service
 from quyca.domain.services.export import export_service
 from quyca.domain.services.source import source_plot_service, source_service
 
-
 source_router = Blueprint("source_app_router", __name__)
 
 

@@ -5,7 +5,6 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from quyca.domain.models.base_model import QueryParams
 
-
 ALLOWED_FIELDS = {
     "id",
     "authors",

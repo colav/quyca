@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field
 
 from quyca.domain.models.base_model import CitationsCount, ExternalId
 
-
 GEO_ITEM_EXCLUDED_FIELDS = {"type", "institutions", "groups", "cities"}
 
 

@@ -1,7 +1,6 @@
 from quyca.infrastructure.mongo import database
 from unittest.mock import patch
 
-
 ENDPOINT = "/person"
 
 
