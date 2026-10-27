@@ -101,8 +101,6 @@ GOOGLE_CREDENTIALS=/app # ruta para guardar el .pickle
 
 GOOGLE_PARENT_ID= # ID de la carpetade GoogleDrive
 
-API_LIMITS=100000 per day,10 per second
-
 SENTRY_DSN=
 ```
 
