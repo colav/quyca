@@ -7,12 +7,8 @@ from flask_jwt_extended import verify_jwt_in_request, get_jwt
 from sentry_sdk import capture_exception
 from werkzeug.datastructures import FileStorage
 
-from quyca.application.services.ciarp_service import CiarpService
-from quyca.application.services.staff_service import StaffService, StaffUploadError
 from quyca.domain.exceptions.project_file_exceptions import ProjectFileException
-from quyca.domain.services.submit.scienti_service import ScientiService
-from quyca.domain.services.submit import submit_project_file_service
-from quyca.infrastructure.container import build_ciarp_service, build_scienti_service, build_staff_service
+from quyca.domain.services.submit import ciarp_service, scienti_service, staff_service, submit_project_file_service
 
 submit_router = Blueprint("submit_app_router", __name__)
 
@@ -32,24 +28,8 @@ def submit_staff() -> Tuple[Response, int]:
 
         upload_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
 
-        process_usecase, save_usecase = build_staff_service()
-        service = StaffService(process_usecase, save_usecase)
-
-        outcome = service.handle_staff_upload(file, claims, upload_date)
-
-        if outcome.error == StaffUploadError.UNAUTHORIZED:
-            return jsonify(outcome.payload), 401
-
-        if outcome.error == StaffUploadError.UNPROCESSABLE_ENTITY:
-            return jsonify(outcome.payload), 422
-
-        if outcome.error == StaffUploadError.BAD_REQUEST:
-            return jsonify(outcome.payload), 400
-
-        if outcome.error == StaffUploadError.INTERNAL_ERROR:
-            return jsonify(outcome.payload), 500
-
-        return jsonify(outcome.payload), 200
+        result, status = staff_service.handle_staff_upload(file, claims, upload_date)
+        return jsonify(result), status
 
     except Exception as e:
         capture_exception(e)
@@ -57,7 +37,7 @@ def submit_staff() -> Tuple[Response, int]:
 
 
 @submit_router.route("/ciarp", methods=["POST"])
-def submit_ciarp() -> tuple[Any, int]:
+def submit_ciarp() -> Tuple[Response, int]:
     try:
         try:
             verify_jwt_in_request()
@@ -71,15 +51,12 @@ def submit_ciarp() -> tuple[Any, int]:
 
         upload_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
 
-        process_usecase, save_usecase = build_ciarp_service()
-        service = CiarpService(process_usecase, save_usecase)
-
-        result, status = service.handle_ciarp_upload(file, claims, upload_date)
+        result, status = ciarp_service.handle_ciarp_upload(file, claims, upload_date)
         return jsonify(result), status
 
     except Exception as e:
         capture_exception(e)
-        return jsonify({"succes": False, "msg": "Error interno del servidor"}), 500
+        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
 
 
 @submit_router.route("/scienti", methods=["POST"])
@@ -97,11 +74,9 @@ def submit_scienti() -> Tuple[Response, int]:
 
         upload_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
 
-        service: ScientiService = build_scienti_service()
-
-        result, status = service.handle_scienti_upload(file=file, claims=claims, upload_date=upload_date)
-
+        result, status = scienti_service.handle_scienti_upload(file=file, claims=claims, upload_date=upload_date)
         return jsonify(result), status
+
     except Exception as e:
         capture_exception(e)
         return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
