@@ -135,6 +135,7 @@ dmypy.json
 mongo-data/
 db/
 storage/
+reports/
 
 # Pickle
 token.pickle
