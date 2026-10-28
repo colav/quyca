@@ -5,7 +5,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-from quyca.application.routes.router import router
+from quyca.api.router import router
 from quyca.config import settings
 
 
@@ -19,7 +19,7 @@ def create_app() -> Flask:
         profiles_sample_rate=settings.SENTRY_PROFILES_SAMPLE_RATE,
     )
 
-    app = Flask(__name__, static_folder="application/static")
+    app = Flask(__name__)
     app.config.update(
         JWT_SECRET_KEY=settings.JWT_SECRET_KEY.get_secret_value(),
         JWT_ACCESS_TOKEN_EXPIRES=settings.JWT_ACCESS_TOKEN_EXPIRES,
