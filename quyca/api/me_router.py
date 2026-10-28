@@ -7,7 +7,7 @@ me_router = Blueprint("me_app_router", __name__)
 
 
 @me_router.route("/me", methods=["GET"])
-def me() -> tuple[Any, int]:
+def get_session() -> tuple[Any, int]:
     try:
         payload = auth_service.get_session()
         status_code = 200 if payload["status"] == auth_service.SESION_ACTIVA else 401

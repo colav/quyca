@@ -101,7 +101,7 @@ def get_person_research_projects(person_id: str) -> Response | Tuple[Response, i
 
 
 @person_router.route("/<person_id>/research/news")
-def news_for_person_app(person_id: str) -> Response | Tuple[Response, int]:
+def get_person_research_news(person_id: str) -> Response | Tuple[Response, int]:
     try:
         query_params = QueryParams.model_validate(request.args.to_dict())
         data = news_service.get_news_by_person(person_id, query_params, request.url)

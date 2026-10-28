@@ -14,7 +14,7 @@ geo_router = Blueprint("geo_app_router", __name__)
 @geo_router.route("/<geo_type>/<geo_id>", methods=["GET"])
 def get_geo_by_id(geo_type: str, geo_id: str) -> Response | Tuple[Response, int]:
     try:
-        data = geo_service.geo_by_id(geo_type, geo_id)
+        data = geo_service.get_geo_by_id(geo_type, geo_id)
         return jsonify(data)
     except Exception as e:
         capture_exception(e)
@@ -22,9 +22,9 @@ def get_geo_by_id(geo_type: str, geo_id: str) -> Response | Tuple[Response, int]
 
 
 @geo_router.route("/<geo_type>/<geo_id>/affiliations", methods=["GET"])
-def get_affiliation_affiliations(geo_type: str, geo_id: str) -> Response | Tuple[Response, int]:
+def get_geo_affiliations(geo_type: str, geo_id: str) -> Response | Tuple[Response, int]:
     try:
-        data = geo_service.related_affiliations_by_geo(geo_type, geo_id)
+        data = geo_service.get_related_affiliations_by_geo(geo_type, geo_id)
         response_data = json.dumps(data, sort_keys=False)
         return Response(response_data, mimetype="application/json")
     except Exception as e:

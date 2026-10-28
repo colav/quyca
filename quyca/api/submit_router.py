@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Tuple, Any
+from typing import Any, Callable, Tuple
 from zoneinfo import ZoneInfo
 
 from flask import Blueprint, request, jsonify, Response
@@ -13,8 +13,25 @@ from quyca.services import ciarp_service, scienti_service, staff_service, submit
 submit_router = Blueprint("submit_app_router", __name__)
 
 
+UploadHandler = Callable[[FileStorage, dict[str, Any], str], tuple[dict, int]]
+
+
 @submit_router.route("/staff", methods=["POST"])
 def submit_staff() -> Tuple[Response, int]:
+    return _submit_file(staff_service.handle_staff_upload)
+
+
+@submit_router.route("/ciarp", methods=["POST"])
+def submit_ciarp() -> Tuple[Response, int]:
+    return _submit_file(ciarp_service.handle_ciarp_upload)
+
+
+@submit_router.route("/scienti", methods=["POST"])
+def submit_scienti() -> Tuple[Response, int]:
+    return _submit_file(scienti_service.handle_scienti_upload)
+
+
+def _submit_file(handle_upload: UploadHandler) -> Tuple[Response, int]:
     try:
         try:
             verify_jwt_in_request()
@@ -27,54 +44,7 @@ def submit_staff() -> Tuple[Response, int]:
             return jsonify({"success": False, "msg": "Archivo requerido"}), 400
 
         upload_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
-
-        result, status = staff_service.handle_staff_upload(file, claims, upload_date)
-        return jsonify(result), status
-
-    except Exception as e:
-        capture_exception(e)
-        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
-
-
-@submit_router.route("/ciarp", methods=["POST"])
-def submit_ciarp() -> Tuple[Response, int]:
-    try:
-        try:
-            verify_jwt_in_request()
-            claims = get_jwt()
-        except Exception:
-            return jsonify({"success": False, "msg": "Token inválido o expirado"}), 401
-
-        file = request.files.get("file")
-        if file is None:
-            return jsonify({"success": False, "msg": "Archivo requerido"}), 400
-
-        upload_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
-
-        result, status = ciarp_service.handle_ciarp_upload(file, claims, upload_date)
-        return jsonify(result), status
-
-    except Exception as e:
-        capture_exception(e)
-        return jsonify({"success": False, "msg": "Error interno del servidor"}), 500
-
-
-@submit_router.route("/scienti", methods=["POST"])
-def submit_scienti() -> Tuple[Response, int]:
-    try:
-        try:
-            verify_jwt_in_request()
-            claims: dict[str, Any] = get_jwt()
-        except Exception:
-            return jsonify({"success": False, "msg": "Token inválido o expirado"}), 401
-
-        file = request.files.get("file")
-        if file is None:
-            return jsonify({"success": False, "msg": "Archivo requerido"}), 400
-
-        upload_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
-
-        result, status = scienti_service.handle_scienti_upload(file=file, claims=claims, upload_date=upload_date)
+        result, status = handle_upload(file, claims, upload_date)
         return jsonify(result), status
 
     except Exception as e:
