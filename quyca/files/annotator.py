@@ -1,5 +1,5 @@
 import pandas as pd
-from quyca.domain.models.staff_report_model import StaffReport
+from quyca.models.staff_report_model import StaffReport
 
 
 def annotate(df: pd.DataFrame, staff_report: StaffReport) -> pd.DataFrame:

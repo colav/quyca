@@ -6,13 +6,9 @@ from io import BytesIO
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
-from quyca.domain.constants.project_file_schema import (
-    ALLOWED_EXTENSIONS,
-    PROJECT_FILE_COLUMNS,
-    normalize_header,
-)
-from quyca.domain.exceptions.project_file_exceptions import ProjectFileException
-from quyca.domain.models.project_file_model import ProjectFileContent, ProjectFileRow
+from quyca.constants.project_file_schema import ALLOWED_EXTENSIONS, PROJECT_FILE_COLUMNS, normalize_header
+from quyca.exceptions.project_file_exceptions import ProjectFileException
+from quyca.models.project_file_model import ProjectFileContent, ProjectFileRow
 
 _COLUMNS_BY_HEADER = {normalize_header(spec.name): spec.name for spec in PROJECT_FILE_COLUMNS}
 
