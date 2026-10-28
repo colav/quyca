@@ -5,7 +5,7 @@ from quyca.models.base_model import QueryParams
 
 def text_search_match(keywords: str | None) -> list[dict]:
     """
-        `$text` must be the first stage of a pipeline, so every search pipeline starts from this list.
+    `$text` must be the first stage of a pipeline, so every search pipeline starts from this list.
     """
     return [{"$match": {"$text": {"$search": keywords}}}] if keywords else []
 
@@ -31,12 +31,6 @@ def set_pagination(pipeline: list, query_params: QueryParams) -> None:
         page = query_params.page or 1
         skip = (page - 1) * limit
         pipeline.extend([{"$skip": skip}, {"$limit": limit}])
-
-
-def set_match(pipeline: list, match: dict | None) -> None:
-    if not match:
-        return
-    pipeline += [{"$match": match}]
 
 
 def set_project(pipeline: list, project: list | dict | None) -> None:

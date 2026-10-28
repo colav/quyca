@@ -1,5 +1,7 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Dict, List, Tuple
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
+import logging
+from typing import Any
 
 from quyca.models.base_model import QueryParams
 from quyca.normalizers.authors_count import parse_authors_count
@@ -7,8 +9,15 @@ from quyca.clients.mongo import database
 from quyca.exceptions.invalid_param_exception import InvalidParamException
 from quyca.repositories import base_repository
 
-# Cache for global filters (no entity filter, no query params applied).
-# Populated on first request, cleared on container restart.
+logger = logging.getLogger(__name__)
+
+FILTERS_COLLECTION = "filters"
+GLOBAL_WORKS_FILTERS_ID = "works_global"
+SINGLE_DOCUMENT_DEFAULTS: dict[str, dict] = {
+    "years": {"min_year": None, "max_year": None},
+    "authors_count": {"max_authors": None, "min_authors": None},
+}
+
 _GLOBAL_FILTERS_CACHE: dict = {}
 
 
@@ -18,257 +27,257 @@ def build_works_match(query_params: QueryParams) -> list[dict]:
     return pipeline
 
 
-def get_works_available_filters(query_params: QueryParams) -> Dict:
-    pipeline = build_works_match(query_params)
-    is_global = not pipeline
-    if is_global and _GLOBAL_FILTERS_CACHE:
-        return _GLOBAL_FILTERS_CACHE
+def get_works_available_filters(query_params: QueryParams) -> dict:
+    match = build_works_match(query_params)
+    if match:
+        return compute_works_available_filters(match)
+    return get_global_works_filters()
 
-    available_filters = {}
+
+def get_global_works_filters() -> dict:
+    """Filters of the whole collection, precomputed by `python -m quyca.jobs.refresh_filters`."""
+    document = database[FILTERS_COLLECTION].find_one({"_id": GLOBAL_WORKS_FILTERS_ID}, {"filters": 1})
+    if document:
+        return document["filters"]
+    if not _GLOBAL_FILTERS_CACHE:
+        logger.warning("%s.%s is missing, computing it in this worker", FILTERS_COLLECTION, GLOBAL_WORKS_FILTERS_ID)
+        _GLOBAL_FILTERS_CACHE.update(compute_works_available_filters([]))
+    return _GLOBAL_FILTERS_CACHE
+
+
+def save_global_works_filters(filters: dict, duration_seconds: float) -> None:
+    database[FILTERS_COLLECTION].replace_one(
+        {"_id": GLOBAL_WORKS_FILTERS_ID},
+        {"filters": filters, "updated_at": datetime.now(timezone.utc), "duration_seconds": round(duration_seconds, 1)},
+        upsert=True,
+    )
+
+
+def compute_works_available_filters(match: list[dict]) -> dict:
     collection = database["works"]
 
-    pipelines = {
-        "product_types": pipeline.copy()
-        + [
-            {
-                "$project": {
-                    "_id": 0,
-                    "types.source": 1,
-                    "types.type": 1,
-                    "types.code": 1,
-                    "types.level": 1,
-                }
-            },
-            {"$unwind": "$types"},
-            {
-                "$group": {
-                    "_id": {
-                        "source": "$types.source",
-                        "type": "$types.type",
-                        "code": "$types.code",
-                        "level": "$types.level",
-                    },
-                    "count": {"$sum": 1},
-                }
-            },
-            {
-                "$group": {
-                    "_id": "$_id.source",
-                    "types": {
-                        "$addToSet": {
-                            "type": "$_id.type",
-                            "code": "$_id.code",
-                            "level": "$_id.level",
-                            "count": "$count",
-                        }
-                    },
-                }
-            },
-        ],
-        "institutions_type": pipeline.copy()
-        + [
-            {
-                "$project": {
-                    "_id": 0,
-                    "institutions_type": {
-                        "$reduce": {
-                            "input": {"$ifNull": ["$authors", []]},
-                            "initialValue": [],
-                            "in": {
-                                "$setUnion": [
-                                    "$$value",
-                                    {
-                                        "$reduce": {
-                                            "input": {"$ifNull": ["$$this.affiliations", []]},
-                                            "initialValue": [],
-                                            "in": {
-                                                "$setUnion": [
-                                                    "$$value",
-                                                    {
-                                                        "$map": {
-                                                            "input": {
-                                                                "$filter": {
-                                                                    "input": {"$ifNull": ["$$this.types", []]},
-                                                                    "as": "t",
-                                                                    "cond": {"$eq": ["$$t.source", "ror"]},
-                                                                }
-                                                            },
-                                                            "as": "t",
-                                                            "in": "$$t.type",
-                                                        }
-                                                    },
-                                                ]
-                                            },
-                                        }
-                                    },
-                                ]
-                            },
-                        }
-                    },
-                }
-            },
-            {"$unwind": "$institutions_type"},
-            {"$group": {"_id": "$institutions_type", "count": {"$sum": 1}}},
-            {"$sort": {"count": -1}},
-        ],
-        "years": pipeline.copy()
-        + [
-            {"$project": {"year_published": 1}},
-            {"$match": {"year_published": {"$type": "number"}}},
-            {"$group": {"_id": None, "min_year": {"$min": "$year_published"}, "max_year": {"$max": "$year_published"}}},
-            {"$project": {"_id": 0, "min_year": 1, "max_year": 1}},
-        ],
-        "authors_count": pipeline.copy()
-        + [
-            {"$project": {"author_count": 1}},
-            {"$match": {"author_count": {"$type": "number"}}},
-            {
-                "$group": {
-                    "_id": None,
-                    "min_authors": {"$min": "$author_count"},
-                    "max_authors": {"$max": "$author_count"},
-                }
-            },
-            {"$project": {"_id": 0, "min_authors": 1, "max_authors": 1}},
-        ],
-        "status": pipeline.copy()
-        + [
-            {"$project": {"open_access.open_access_status": 1}},
-            {"$match": {"open_access.open_access_status": {"$ne": None}}},
-            {"$group": {"_id": "$open_access.open_access_status", "count": {"$sum": 1}}},
-            {"$sort": {"count": -1}},
-        ],
-        "countries": pipeline.copy()
-        + [
-            {
-                "$project": {
-                    "countries": {
-                        "$reduce": {
-                            "input": "$authors",
-                            "initialValue": [],
-                            "in": {
-                                "$setUnion": [
-                                    "$$value",
-                                    {
-                                        "$reduce": {
-                                            "input": "$$this.affiliations",
-                                            "initialValue": [],
-                                            "in": {
-                                                "$setUnion": [
-                                                    "$$value",
-                                                    {
-                                                        "$filter": {
-                                                            "input": {
-                                                                "$map": {
-                                                                    "input": "$$this.addresses",
-                                                                    "in": "$$this.country_code",
-                                                                }
-                                                            },
-                                                            "cond": {"$ne": ["$$this", None]},
-                                                        }
-                                                    },
-                                                ]
-                                            },
-                                        }
-                                    },
-                                ]
-                            },
-                        }
-                    }
-                }
-            },
-            {"$match": {"countries": {"$ne": []}}},
-            {"$unwind": "$countries"},
-            {"$group": {"_id": "$countries", "count": {"$sum": 1}}},
-            {"$sort": {"count": -1}},
-        ],
-        "authors_ranking": pipeline.copy()
-        + [
-            {"$project": {"authors.ranking.source": 1, "authors.ranking.rank": 1}},
-            {"$match": {"authors.ranking.source": "minciencias"}},
-            {"$unwind": "$authors"},
-            {"$unwind": "$authors.ranking"},
-            {"$match": {"authors.ranking.source": "minciencias"}},
-            {"$group": {"_id": "$authors.ranking", "count": {"$sum": 1}}},
-        ],
-        "groups_ranking": pipeline.copy()
-        + [
-            {"$project": {"groups.ranking.rank": 1, "groups.ranking.source": 1}},
-            {"$unwind": "$groups"},
-            {"$project": {"rank_val": "$groups.ranking.rank", "source_val": "$groups.ranking.source"}},
-            {"$match": {"source_val": "minciencias"}},
-            {
-                "$project": {
-                    "rank_val": {
-                        "$cond": {
-                            "if": {"$isArray": "$rank_val"},
-                            "then": {"$arrayElemAt": ["$rank_val", 0]},
-                            "else": "$rank_val",
-                        }
-                    }
-                }
-            },
-            {"$group": {"_id": "$rank_val", "count": {"$sum": 1}}},
-        ],
-        "topics": pipeline.copy()
-        + [
-            {
-                "$project": {
-                    "primary_topic.id": 1,
-                    "primary_topic.display_name": 1,
-                    "primary_topic.subfield": 1,
-                    "primary_topic.field": 1,
-                    "primary_topic.domain": 1,
-                }
-            },
-            {"$match": {"primary_topic.id": {"$ne": None}}},
-            {
-                "$group": {
-                    "_id": {
-                        "id": "$primary_topic.id",
-                        "display_name": "$primary_topic.display_name",
-                        "subfield": "$primary_topic.subfield",
-                        "field": "$primary_topic.field",
-                        "domain": "$primary_topic.domain",
-                    },
-                    "count": {"$sum": 1},
-                }
-            },
-            {
-                "$project": {
-                    "_id": 0,
-                    "id": "$_id.id",
-                    "display_name": "$_id.display_name",
-                    "subfield": "$_id.subfield",
-                    "field": "$_id.field",
-                    "domain": "$_id.domain",
-                    "count": 1,
-                }
-            },
-            {"$sort": {"count": -1}},
-        ],
-    }
-
-    def run_pipeline(key: str, pipe: List) -> Tuple[str, List | Dict]:
-        if key == "years":
-            cursor = collection.aggregate(pipe)
-            return key, next(cursor, {"min_year": None, "max_year": None})
-        elif key == "authors_count":
-            cursor = collection.aggregate(pipe)
-            return key, next(cursor, {"max_authors": None, "min_authors": None})
-        else:
-            return key, list(collection.aggregate(pipe))
+    def run(key: str) -> tuple[str, list | dict]:
+        cursor = collection.aggregate(match + FILTER_STAGES[key])
+        if key in SINGLE_DOCUMENT_DEFAULTS:
+            return key, next(cursor, dict(SINGLE_DOCUMENT_DEFAULTS[key]))
+        return key, list(cursor)
 
     with ThreadPoolExecutor(max_workers=2) as executor:
-        futures = [executor.submit(run_pipeline, k, v) for k, v in pipelines.items()]
-        for future in as_completed(futures):
-            key, result = future.result()
-            available_filters[key] = result
+        return dict(executor.map(run, FILTER_STAGES))
 
-    if is_global:
-        _GLOBAL_FILTERS_CACHE.update(available_filters)
 
-    return available_filters
+FILTER_STAGES: dict[str, list[dict]] = {
+    "product_types": [
+        {
+            "$project": {
+                "_id": 0,
+                "types.source": 1,
+                "types.type": 1,
+                "types.code": 1,
+                "types.level": 1,
+            }
+        },
+        {"$unwind": "$types"},
+        {
+            "$group": {
+                "_id": {
+                    "source": "$types.source",
+                    "type": "$types.type",
+                    "code": "$types.code",
+                    "level": "$types.level",
+                },
+                "count": {"$sum": 1},
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id.source",
+                "types": {
+                    "$addToSet": {
+                        "type": "$_id.type",
+                        "code": "$_id.code",
+                        "level": "$_id.level",
+                        "count": "$count",
+                    }
+                },
+            }
+        },
+    ],
+    "institutions_type": [
+        {
+            "$project": {
+                "_id": 0,
+                "institutions_type": {
+                    "$reduce": {
+                        "input": {"$ifNull": ["$authors", []]},
+                        "initialValue": [],
+                        "in": {
+                            "$setUnion": [
+                                "$$value",
+                                {
+                                    "$reduce": {
+                                        "input": {"$ifNull": ["$$this.affiliations", []]},
+                                        "initialValue": [],
+                                        "in": {
+                                            "$setUnion": [
+                                                "$$value",
+                                                {
+                                                    "$map": {
+                                                        "input": {
+                                                            "$filter": {
+                                                                "input": {"$ifNull": ["$$this.types", []]},
+                                                                "as": "t",
+                                                                "cond": {"$eq": ["$$t.source", "ror"]},
+                                                            }
+                                                        },
+                                                        "as": "t",
+                                                        "in": "$$t.type",
+                                                    }
+                                                },
+                                            ]
+                                        },
+                                    }
+                                },
+                            ]
+                        },
+                    }
+                },
+            }
+        },
+        {"$unwind": "$institutions_type"},
+        {"$group": {"_id": "$institutions_type", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ],
+    "years": [
+        {"$project": {"year_published": 1}},
+        {"$match": {"year_published": {"$type": "number"}}},
+        {"$group": {"_id": None, "min_year": {"$min": "$year_published"}, "max_year": {"$max": "$year_published"}}},
+        {"$project": {"_id": 0, "min_year": 1, "max_year": 1}},
+    ],
+    "authors_count": [
+        {"$project": {"author_count": 1}},
+        {"$match": {"author_count": {"$type": "number"}}},
+        {
+            "$group": {
+                "_id": None,
+                "min_authors": {"$min": "$author_count"},
+                "max_authors": {"$max": "$author_count"},
+            }
+        },
+        {"$project": {"_id": 0, "min_authors": 1, "max_authors": 1}},
+    ],
+    "status": [
+        {"$project": {"open_access.open_access_status": 1}},
+        {"$match": {"open_access.open_access_status": {"$ne": None}}},
+        {"$group": {"_id": "$open_access.open_access_status", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ],
+    "countries": [
+        {
+            "$project": {
+                "countries": {
+                    "$reduce": {
+                        "input": "$authors",
+                        "initialValue": [],
+                        "in": {
+                            "$setUnion": [
+                                "$$value",
+                                {
+                                    "$reduce": {
+                                        "input": "$$this.affiliations",
+                                        "initialValue": [],
+                                        "in": {
+                                            "$setUnion": [
+                                                "$$value",
+                                                {
+                                                    "$filter": {
+                                                        "input": {
+                                                            "$map": {
+                                                                "input": "$$this.addresses",
+                                                                "in": "$$this.country_code",
+                                                            }
+                                                        },
+                                                        "cond": {"$ne": ["$$this", None]},
+                                                    }
+                                                },
+                                            ]
+                                        },
+                                    }
+                                },
+                            ]
+                        },
+                    }
+                }
+            }
+        },
+        {"$match": {"countries": {"$ne": []}}},
+        {"$unwind": "$countries"},
+        {"$group": {"_id": "$countries", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ],
+    "authors_ranking": [
+        {"$project": {"authors.ranking.source": 1, "authors.ranking.rank": 1}},
+        {"$match": {"authors.ranking.source": "minciencias"}},
+        {"$unwind": "$authors"},
+        {"$unwind": "$authors.ranking"},
+        {"$match": {"authors.ranking.source": "minciencias"}},
+        {"$group": {"_id": "$authors.ranking", "count": {"$sum": 1}}},
+    ],
+    "groups_ranking": [
+        {"$project": {"groups.ranking.rank": 1, "groups.ranking.source": 1}},
+        {"$unwind": "$groups"},
+        {"$project": {"rank_val": "$groups.ranking.rank", "source_val": "$groups.ranking.source"}},
+        {"$match": {"source_val": "minciencias"}},
+        {
+            "$project": {
+                "rank_val": {
+                    "$cond": {
+                        "if": {"$isArray": "$rank_val"},
+                        "then": {"$arrayElemAt": ["$rank_val", 0]},
+                        "else": "$rank_val",
+                    }
+                }
+            }
+        },
+        {"$group": {"_id": "$rank_val", "count": {"$sum": 1}}},
+    ],
+    "topics": [
+        {
+            "$project": {
+                "primary_topic.id": 1,
+                "primary_topic.display_name": 1,
+                "primary_topic.subfield": 1,
+                "primary_topic.field": 1,
+                "primary_topic.domain": 1,
+            }
+        },
+        {"$match": {"primary_topic.id": {"$ne": None}}},
+        {
+            "$group": {
+                "_id": {
+                    "id": "$primary_topic.id",
+                    "display_name": "$primary_topic.display_name",
+                    "subfield": "$primary_topic.subfield",
+                    "field": "$primary_topic.field",
+                    "domain": "$primary_topic.domain",
+                },
+                "count": {"$sum": 1},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "id": "$_id.id",
+                "display_name": "$_id.display_name",
+                "subfield": "$_id.subfield",
+                "field": "$_id.field",
+                "domain": "$_id.domain",
+                "count": 1,
+            }
+        },
+        {"$sort": {"count": -1}},
+    ],
+}
 
 
 def set_product_filters(pipeline: list, query_params: QueryParams) -> None:
