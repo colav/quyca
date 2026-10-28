@@ -16,7 +16,7 @@ else:
     exit(1)
 
 from quyca.domain.services.api_expert_service import search_works
-from quyca.domain.models.base_model import QueryParams
+from quyca.models.base_model import QueryParams
 
 qp = QueryParams()
 qp.page = 1
