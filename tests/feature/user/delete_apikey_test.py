@@ -2,7 +2,7 @@ from typing import Any
 from unittest.mock import patch, Mock
 from quyca.application.routes.user_crud_router import NotEntityException
 
-ROUTER = "quyca.application.routes.app.user_crud_app_router"
+ROUTER = "quyca.application.routes.user_crud_router"
 
 
 def _headers() -> dict[str, str]:
@@ -27,7 +27,7 @@ def test_delete_apikey_user_not_found(client: Any) -> None:
     usecase_mock.delete_apikey.side_effect = NotEntityException("Usuario test@test.com no encontrado")
     with patch(f"{ROUTER}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER}.get_jwt_identity", return_value="test@test.com"
-    ), patch(f"{ROUTER}.usecase", usecase_mock):
+    ), patch(f"{ROUTER}.user_service", usecase_mock):
         resp = client.delete("/users/test@test.com/apikey", headers=_headers())
         assert resp.status_code == 404
 
@@ -37,7 +37,7 @@ def test_delete_apikey_success(client: Any) -> None:
     usecase_mock.delete_apikey.return_value = {"success": True, "msg": "API key eliminada correctamente"}
     with patch(f"{ROUTER}.verify_jwt_in_request", return_value=True), patch(
         f"{ROUTER}.get_jwt_identity", return_value="test@test.com"
-    ), patch(f"{ROUTER}.usecase", usecase_mock):
+    ), patch(f"{ROUTER}.user_service", usecase_mock):
         resp = client.delete("/users/test@test.com/apikey", headers=_headers())
 
         assert resp.status_code == 200
