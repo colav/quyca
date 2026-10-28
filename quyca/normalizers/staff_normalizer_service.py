@@ -18,7 +18,7 @@ from typing import Any, Callable
 
 import pandas as pd
 
-from quyca.domain.constants.staff_field_values import (
+from quyca.constants.staff_field_values import (
     ACADEMIC_LEVEL_MAP,
     CONTRACT_TYPE_MAP,
     DOCUMENT_TYPE_MAP,
