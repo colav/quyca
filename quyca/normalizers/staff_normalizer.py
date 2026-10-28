@@ -11,12 +11,13 @@ Two-phase normalization:
 
 from __future__ import annotations
 
-import unicodedata
 import re
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from typing import Any, Callable
 
 import pandas as pd
+
+from quyca.normalizers.text_normalizer import normalize_key
 
 from quyca.constants.staff_field_values import (
     ACADEMIC_LEVEL_MAP,
@@ -28,7 +29,6 @@ from quyca.constants.staff_field_values import (
 )
 
 # Excel epoch: days since 1899-12-30
-_EXCEL_EPOCH = datetime(1899, 12, 30, tzinfo=timezone.utc)
 
 # Columns subject to semantic mapping and their respective maps
 _FIELD_MAPS: dict[str, dict[str, str]] = {
@@ -105,18 +105,13 @@ _IDENTIFIER_EXTRACTORS: dict[str, Callable[..., Any]] = {
 }
 
 
-def _normalize_key(s: str) -> str:
-    """Strips accents and lowercases for map lookups."""
-    return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("ascii").strip().lower()
-
-
-def _normalize_header(s: str) -> str:
+def _normalize_header(header: str) -> str:
     """Normalizes header formatting while preserving accents for later canonical matching."""
-    return str(s).strip().lower().replace(" ", "_").replace("-", "_")
+    return str(header).strip().lower().replace(" ", "_").replace("-", "_")
 
 
 _NORMALIZED_FIELD_MAPS: dict[str, dict[str, str]] = {
-    field: {_normalize_key(alias): canonical for alias, canonical in mapping.items()}
+    field: {normalize_key(alias): canonical for alias, canonical in mapping.items()}
     for field, mapping in _FIELD_MAPS.items()
 }
 
@@ -124,8 +119,8 @@ _NORMALIZED_FIELD_MAPS: dict[str, dict[str, str]] = {
 def _is_meaningful_change(original: str, normalized: str) -> bool:
     """Avoids logging cosmetic changes (case/accents/spacing only)."""
     if normalized == _UNKNOWN_VALUE:
-        return _normalize_key(original) != _UNKNOWN_VALUE
-    return _normalize_key(original) != _normalize_key(normalized)
+        return normalize_key(original) != _UNKNOWN_VALUE
+    return normalize_key(original) != normalize_key(normalized)
 
 
 def _is_valid_short_date(value: str) -> bool:
@@ -216,11 +211,7 @@ def _coerce_numeric_scalar(value: Any) -> Any:
     return value
 
 
-# ------------------------------------------------------------------
 # Phase 2 — semantic mapping (only when no errors)
-# ------------------------------------------------------------------
-
-
 def map_values(df: pd.DataFrame) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
     """
     Maps field variants to their canonical values.
@@ -247,7 +238,7 @@ def map_values(df: pd.DataFrame) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
                 continue
 
             raw_str = str(raw_value).strip()
-            lookup_key = _normalize_key(raw_str)
+            lookup_key = normalize_key(raw_str)
             canonical = mapping.get(lookup_key)
 
             if canonical is None and field in _MAP_TO_UNKNOWN_FIELDS:
@@ -258,8 +249,8 @@ def map_values(df: pd.DataFrame) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
                 if _is_meaningful_change(raw_str, canonical):
                     changelog.append(
                         {
-                            "fila": int(idx),
-                            "fila_excel": int(idx) + 2,
+                            "fila": int(str(idx)),
+                            "fila_excel": int(str(idx)) + 2,
                             "columna": field,
                             "valor_original": raw_str,
                             "valor_normalizado": canonical,
@@ -277,7 +268,7 @@ def map_values(df: pd.DataFrame) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
                 continue
 
             raw_str = str(raw_value).strip()
-            lookup_key = _normalize_key(raw_str)
+            lookup_key = normalize_key(raw_str)
 
             if _is_valid_short_date(raw_str):
                 continue
@@ -286,8 +277,8 @@ def map_values(df: pd.DataFrame) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
                 df.at[idx, field] = _UNKNOWN_VALUE
                 changelog.append(
                     {
-                        "fila": int(idx),
-                        "fila_excel": int(idx) + 2,
+                        "fila": int(str(idx)),
+                        "fila_excel": int(str(idx)) + 2,
                         "columna": field,
                         "valor_original": raw_str,
                         "valor_normalizado": _UNKNOWN_VALUE,

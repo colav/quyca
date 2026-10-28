@@ -3,7 +3,7 @@ from typing import Any, Dict, List, cast
 from quyca.config import settings
 
 
-def person_completer(text: str) -> List[Dict[str, Any]]:
+def get_person_completions(text: str) -> List[Dict[str, Any]]:
     if es_database is None:
         raise RuntimeError("Elasticsearch client is not initialized")
 
@@ -29,7 +29,7 @@ def person_completer(text: str) -> List[Dict[str, Any]]:
     return options
 
 
-def affiliations_completer(aff_type: str, text: str) -> List[Dict[str, Any]]:
+def get_affiliation_completions(affiliation_type: str, text: str) -> List[Dict[str, Any]]:
     query = {
         "suggest": {
             "affiliation_suggest": {
@@ -40,13 +40,13 @@ def affiliations_completer(aff_type: str, text: str) -> List[Dict[str, Any]]:
     }
 
     index = ""
-    if aff_type == "institution":
+    if affiliation_type == "institution":
         index = settings.ES_INSTITUTION_COMPLETER_INDEX
-    elif aff_type == "group":
+    elif affiliation_type == "group":
         index = settings.ES_GROUP_COMPLETER_INDEX
-    elif aff_type == "department":
+    elif affiliation_type == "department":
         index = settings.ES_DEPARTMENT_COMPLETER_INDEX
-    elif aff_type == "faculty":
+    elif affiliation_type == "faculty":
         index = settings.ES_FACULTY_COMPLETER_INDEX
     else:
         raise ValueError("Invalid affiliation type")
@@ -71,7 +71,7 @@ def affiliations_completer(aff_type: str, text: str) -> List[Dict[str, Any]]:
     return options
 
 
-def source_completer(text: str) -> List[Dict[str, Any]]:
+def get_source_completions(text: str) -> List[Dict[str, Any]]:
     if es_database is None:
         raise RuntimeError("Elasticsearch client is not initialized")
 
