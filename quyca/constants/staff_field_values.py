@@ -5,10 +5,6 @@ Validators import the canonical sets (e.g. DOCUMENT_TYPES).
 The normalizer imports the maps (e.g. DOCUMENT_TYPE_MAP).
 """
 
-# ---------------------------------------------------------------------------
-# tipo_documento
-# ---------------------------------------------------------------------------
-
 DOCUMENT_TYPES = {
     "cédula de ciudadanía",
     "cédula de extranjería",
@@ -37,10 +33,6 @@ DOCUMENT_TYPE_MAP: dict[str, str] = {
     "pas": "pasaporte",
     "pasaporte": "pasaporte",
 }
-
-# ---------------------------------------------------------------------------
-# nivel_académico
-# ---------------------------------------------------------------------------
 
 ACADEMIC_LEVELS = {
     "sin título",
@@ -112,10 +104,6 @@ ACADEMIC_LEVEL_MAP: dict[str, str] = {
     "posdoctorado": "doctorado",
 }
 
-# ---------------------------------------------------------------------------
-# tipo_contrato
-# ---------------------------------------------------------------------------
-
 CONTRACT_TYPES = {
     "término fijo",
     "término indefinido",
@@ -173,10 +161,6 @@ CONTRACT_TYPE_MAP: dict[str, str] = {
     "ad-honorem": "ad honorem",
 }
 
-# ---------------------------------------------------------------------------
-# jornada_laboral
-# ---------------------------------------------------------------------------
-
 WORK_SCHEDULES = {
     "medio tiempo",
     "tiempo completo",
@@ -207,10 +191,6 @@ WORK_SCHEDULE_MAP: dict[str, str] = {
     "hora cátedra": "hora cátedra",
     "cátedra": "hora cátedra",
 }
-
-# ---------------------------------------------------------------------------
-# categoría_laboral
-# ---------------------------------------------------------------------------
 
 JOB_CATEGORIES = {
     "instructor asistente",
@@ -264,10 +244,6 @@ JOB_CATEGORY_MAP: dict[str, str] = {
     # ordinario
     "ordinario": "ordinario",
 }
-
-# ---------------------------------------------------------------------------
-# sexo
-# ---------------------------------------------------------------------------
 
 SEX = {
     "hombre",

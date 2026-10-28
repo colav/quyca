@@ -132,11 +132,7 @@ def _is_valid_short_date(value: str) -> bool:
         return False
 
 
-# ------------------------------------------------------------------
 # Phase 1 — structural cleaning (always runs)
-# ------------------------------------------------------------------
-
-
 def clean(df: pd.DataFrame) -> pd.DataFrame:
     """
     Strips whitespace from headers and string cells.

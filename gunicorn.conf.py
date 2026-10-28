@@ -1,7 +1,7 @@
-# Loaded automatically by gunicorn from the working directory (/app in the containers).
 from quyca.config import settings
 from quyca.constants.banner import BANNER
 
+# Loaded automatically by gunicorn from the working directory (/app in the containers).
 wsgi_app = "quyca.app:create_app()"
 bind = f"0.0.0.0:{settings.APP_PORT}"
 workers = settings.GUNICORN_WORKERS

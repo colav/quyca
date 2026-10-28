@@ -59,7 +59,6 @@ def search_sources(query_params: QueryParams, pipeline_params: dict | None = Non
     pipeline = search_source_filters_repository.build_sources_match(query_params)
     base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
     if not pipeline_params.get("project"):
-        # computed on the page only, not on the whole collection; the summary view projection never kept it
         search_source_filters_repository.set_source_type_pipeline(pipeline)
     return source_generator.get(database["sources"].aggregate(pipeline))
 
