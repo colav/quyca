@@ -1,157 +1,30 @@
-import csv
-import io
-from typing import Any, Generator, Iterable, Mapping, Sequence, Tuple
-from pymongo.command_cursor import CommandCursor
+from typing import Generator
 
-from flask import Blueprint, request, jsonify, Response
-from sentry_sdk import capture_exception
+from flask import Blueprint, Response
 
-from quyca.models.base_model import QueryParams
-from quyca.clients.mongo import database
+from quyca.api.helpers import parse_query_params, register_error_handlers
+from quyca.services import apc_service
 
 apc_router = Blueprint("apc_api_router", __name__)
+register_error_handlers(apc_router)
 
 
 @apc_router.route("/search", methods=["GET"])
-def apc_search() -> Response | Tuple[Response, int]:
-    try:
-        query_params = QueryParams.model_validate(request.args.to_dict())
-        pipeline: list[dict[str, Any]] = []
-        if query_params.keywords:
-            pipeline = [{"$match": {"$text": {"$search": query_params.keywords}}}]
-        pipeline += [
-            {
-                "$project": {
-                    "_id": 0,
-                    "work_doi": "$doi",
-                    "work_title": {"$first": "$titles.title"},
-                    "source_name": "$source.name",
-                    "source_apc_value": "$source.apc.charges",
-                    "source_apc_currency": "$source.apc.currency",
-                    "work_apc_currency": "$apc.paid.currency",
-                    "work_apc_value": "$apc.paid.value",
-                }
-            }
-        ]
-        cursor: CommandCursor[dict[str, Any]] = database["works"].aggregate(pipeline)
-        rows: list[dict[str, Any]] = list(cursor)
-        fieldnames = [
-            "work_doi",
-            "work_title",
-            "source_name",
-            "source_apc_value",
-            "source_apc_currency",
-            "work_apc_value",
-            "work_apc_currency",
-        ]
-        output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=fieldnames, escapechar="\\", quoting=csv.QUOTE_MINIMAL)
-        writer.writeheader()
-        writer.writerows(rows)
-        csv_data: str = output.getvalue()
-        response = Response(csv_data, content_type="text/csv")
-        response.headers["Content-Disposition"] = "attachment; filename=search.csv"
-        return response
-    except Exception as e:
-        capture_exception(e)
-        return jsonify({"error": str(e)}), 400
+def get_apc_csv_by_search() -> Response:
+    return _csv_response(apc_service.get_apc_csv_by_search(parse_query_params().keywords), "search.csv")
 
 
 @apc_router.route("/person/<person_id>", methods=["GET"])
-def apc_person(person_id: str) -> Response | Tuple[Response, int]:
-    try:
-        pipeline: Sequence[Mapping[str, Any]] = [
-            {"$match": {"authors.id": person_id}},
-            {
-                "$project": {
-                    "_id": 0,
-                    "work_doi": "$doi",
-                    "work_title": {"$first": "$titles.title"},
-                    "source_name": "$source.name",
-                    "source_apc_value": "$source.apc.charges",
-                    "source_apc_currency": "$source.apc.currency",
-                    "work_apc_currency": "$apc.paid.currency",
-                    "work_apc_value": "$apc.paid.value",
-                }
-            },
-        ]
-
-        cursor: CommandCursor[dict[str, Any]] = database["works"].aggregate(pipeline)
-        rows: list[dict[str, Any]] = list(cursor)
-
-        fieldnames = [
-            "work_doi",
-            "work_title",
-            "source_name",
-            "source_apc_value",
-            "source_apc_currency",
-            "work_apc_value",
-            "work_apc_currency",
-        ]
-
-        output = io.StringIO()
-        writer = csv.DictWriter(
-            output,
-            fieldnames=fieldnames,
-            escapechar="\\",
-            quoting=csv.QUOTE_MINIMAL,
-        )
-        writer.writeheader()
-        writer.writerows(rows)
-
-        csv_data: str = output.getvalue()
-        response = Response(csv_data, content_type="text/csv")
-        response.headers["Content-Disposition"] = "attachment; filename=person.csv"
-        return response
-
-    except Exception as e:
-        capture_exception(e)
-        return jsonify({"error": str(e)}), 400
+def get_apc_csv_by_person(person_id: str) -> Response:
+    return _csv_response(apc_service.get_apc_csv_by_person(person_id), "person.csv")
 
 
 @apc_router.route("/affiliation/<affiliation_id>", methods=["GET"])
-def apc_affiliation(affiliation_id: str) -> Response | Tuple[Response, int]:
-    try:
-        pipeline: Sequence[Mapping[str, Any]] = [
-            {"$match": {"authors.affiliations.id": affiliation_id}},
-            {
-                "$project": {
-                    "_id": 0,
-                    "work_doi": "$doi",
-                    "work_title": {"$first": "$titles.title"},
-                    "source_name": "$source.name",
-                    "source_apc_value": "$source.apc.charges",
-                    "source_apc_currency": "$source.apc.currency",
-                    "work_apc_currency": "$apc.paid.currency",
-                    "work_apc_value": "$apc.paid.value",
-                }
-            },
-        ]
+def get_apc_csv_by_affiliation(affiliation_id: str) -> Response:
+    return _csv_response(apc_service.get_apc_csv_by_affiliation(affiliation_id), "affiliation.csv")
 
-        cursor = database["works"].aggregate(pipeline)
 
-        fieldnames = [
-            "work_doi",
-            "work_title",
-            "source_name",
-            "source_apc_value",
-            "source_apc_currency",
-            "work_apc_value",
-            "work_apc_currency",
-        ]
-
-        def generate_csv(cursor: Iterable[Any], fieldnames: list[str]) -> Generator[str, None, None]:
-            yield ",".join(fieldnames) + "\n"
-            for doc in cursor:
-                row = {field: doc.get(field, "") for field in fieldnames}
-                yield ",".join(map(str, row.values())) + "\n"
-
-        return Response(
-            generate_csv(cursor, fieldnames),
-            content_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=affiliation.csv"},
-        )
-
-    except Exception as e:
-        capture_exception(e)
-        return jsonify({"error": str(e)}), 400
+def _csv_response(csv_rows: Generator[str, None, None], filename: str) -> Response:
+    return Response(
+        csv_rows, content_type="text/csv", headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )

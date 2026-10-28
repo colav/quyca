@@ -6,7 +6,7 @@ from openpyxl import Workbook
 
 def write_csv(rows: Iterable[dict], columns: list[str]) -> Generator[str, None, None]:
     output = StringIO(newline="")
-    writer = csv.DictWriter(output, fieldnames=columns, escapechar="\\", quoting=csv.QUOTE_MINIMAL)
+    writer = csv.DictWriter(output, fieldnames=columns)
     writer.writeheader()
     yield output.getvalue()
     output.seek(0)
