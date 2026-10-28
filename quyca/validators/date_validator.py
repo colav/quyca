@@ -1,7 +1,7 @@
 from datetime import datetime, date
 import pandas as pd
 from typing import Dict, Any, Optional
-from quyca.domain.validators import base_validator
+from quyca.validators import base_validator
 
 
 def validate(value: Any, field: str, index: int) -> Optional[Dict[str, Any]]:

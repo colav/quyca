@@ -2,15 +2,15 @@ import re
 import unicodedata
 from typing import List, Dict, Any, Tuple
 import pandas as pd
-from quyca.domain.models.staff_report_model import StaffReport
-from quyca.domain.validators import required_fields_validator_ciarp
-from quyca.domain.validators import document_validator
-from quyca.domain.validators import base_validator
-from quyca.domain.validators import year_validator
-from quyca.domain.validators import language_validator
-from quyca.domain.validators import country_validator
-from quyca.domain.validators import unit_validator
-from quyca.domain.validators import error_grouper
+from quyca.models.staff_report_model import StaffReport
+from quyca.validators import required_fields_validator_ciarp
+from quyca.validators import document_validator
+from quyca.validators import base_validator
+from quyca.validators import year_validator
+from quyca.validators import language_validator
+from quyca.validators import country_validator
+from quyca.validators import unit_validator
+from quyca.validators import error_grouper
 
 EXTRA_ALLOWED = {"estado_de_validación", "observación"}
 

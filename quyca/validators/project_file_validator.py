@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import date, datetime
 from typing import Any, Literal
 
-from quyca.domain.constants.project_file_schema import (
+from quyca.constants.project_file_schema import (
     LIST_SEPARATOR,
     PROJECT_FILE_COLUMNS,
     PROJECT_STATE_FINISHED,
@@ -11,7 +11,7 @@ from quyca.domain.constants.project_file_schema import (
     ColumnSpec,
     normalize_token,
 )
-from quyca.domain.models.project_file_model import ProjectFileContent, ProjectFileRow, ValidationIssue
+from quyca.models.project_file_model import ProjectFileContent, ProjectFileRow, ValidationIssue
 
 NormalizedRow = tuple[int, dict[str, Any]]
 

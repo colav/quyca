@@ -1,8 +1,8 @@
 import unicodedata
 from typing import List, Dict, Any, Tuple
 
-from quyca.domain.validators import base_validator
-from quyca.domain.constants.staff_field_values import (
+from quyca.validators import base_validator
+from quyca.constants.staff_field_values import (
     ACADEMIC_LEVELS,
     ACADEMIC_LEVEL_MAP,
     CONTRACT_TYPES,

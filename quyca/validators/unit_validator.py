@@ -1,6 +1,6 @@
 import re
 from typing import List, Dict, Any
-from quyca.domain.validators import base_validator
+from quyca.validators import base_validator
 
 CODE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 UNIT_RE = re.compile(r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9, \-:]+$")

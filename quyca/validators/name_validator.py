@@ -1,6 +1,6 @@
 import unicodedata
 from typing import List, Dict, Any
-from quyca.domain.validators import base_validator
+from quyca.validators import base_validator
 
 
 def _normalize_name(value: object) -> str:

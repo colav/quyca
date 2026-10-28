@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from quyca.domain.validators import base_validator
+from quyca.validators import base_validator
 
 REQUIRED_FIELDS_CIARP = [
     "código_unidad_académica",

@@ -1,8 +1,8 @@
 import re
 import unicodedata
 from typing import List, Dict, Any
-from quyca.domain.validators import base_validator
-from quyca.domain.constants.staff_field_values import DOCUMENT_TYPES
+from quyca.validators import base_validator
+from quyca.constants.staff_field_values import DOCUMENT_TYPES
 
 PASSPORT_RE = re.compile(r"^[A-Za-z0-9]+$")
 

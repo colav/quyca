@@ -1,6 +1,6 @@
 import re
 from typing import List, Dict, Any
-from quyca.domain.validators import base_validator
+from quyca.validators import base_validator
 
 COUNTRY_RE = re.compile(r"^[A-z]{2}$")
 

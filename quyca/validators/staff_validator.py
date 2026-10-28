@@ -1,13 +1,13 @@
 import unicodedata
 from typing import List, Dict, Any, Tuple
-from quyca.domain.validators import required_fields_validator
-from quyca.domain.models.staff_report_model import StaffReport
-from quyca.domain.validators import document_validator
-from quyca.domain.validators import academic_validator
-from quyca.domain.validators import name_validator
-from quyca.domain.validators import date_validator
-from quyca.domain.validators import unit_validator
-from quyca.domain.validators import error_grouper
+from quyca.validators import required_fields_validator
+from quyca.models.staff_report_model import StaffReport
+from quyca.validators import document_validator
+from quyca.validators import academic_validator
+from quyca.validators import name_validator
+from quyca.validators import date_validator
+from quyca.validators import unit_validator
+from quyca.validators import error_grouper
 import pandas as pd
 
 REQUIRED_COLUMNS = [
