@@ -1,9 +1,9 @@
 import re
-import unicodedata
 from typing import List, Dict, Any, Tuple
 import pandas as pd
 from quyca.models.staff_report_model import StaffReport
-from quyca.validators import required_fields_validator_ciarp
+from quyca.normalizers.text_normalizer import normalize_key
+from quyca.validators import ciarp_required_fields_validator
 from quyca.validators import document_validator
 from quyca.validators import base_validator
 from quyca.validators import year_validator
@@ -39,11 +39,6 @@ REQUIRED_COLUMNS = [
 ]
 
 
-def _normalize(s: str) -> str:
-    """Strips accents and lowercases a string for flexible column matching."""
-    return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("ascii").strip().lower()
-
-
 _INTEGER_TEXT_RE = re.compile(r"^[0-9]+(?:\.0+)?$")
 
 
@@ -71,13 +66,8 @@ def _coerce_integer_like(value: Any) -> Any:
     return value
 
 
-_NORMALIZED_REQUIRED = {_normalize(c): c for c in REQUIRED_COLUMNS}
-_NORMALIZED_EXTRA_ALLOWED = {_normalize(c) for c in EXTRA_ALLOWED}
-
-
-def excel_row_index(idx: int) -> int:
-    """Converts dataframe index to Excel row number."""
-    return idx + 2
+_NORMALIZED_REQUIRED = {normalize_key(c): c for c in REQUIRED_COLUMNS}
+_NORMALIZED_EXTRA_ALLOWED = {normalize_key(c) for c in EXTRA_ALLOWED}
 
 
 def validate_columns(df: pd.DataFrame) -> Tuple[bool, List[str], List[str]]:
@@ -88,7 +78,7 @@ def validate_columns(df: pd.DataFrame) -> Tuple[bool, List[str], List[str]]:
 
     for idx, c in enumerate(raw_cols):
         col = c.strip()
-        col_norm = _normalize(col)
+        col_norm = normalize_key(col)
 
         if idx == 0 and (col == "" or col_norm == "index" or col_norm.startswith("unnamed")):
             continue
@@ -100,16 +90,18 @@ def validate_columns(df: pd.DataFrame) -> Tuple[bool, List[str], List[str]]:
 
         usecols.append(col)
 
-    normalized_usecols = {_normalize(c): c for c in usecols}
+    normalized_usecols = {normalize_key(c): c for c in usecols}
 
-    missing = [c for c in REQUIRED_COLUMNS if _normalize(c) not in normalized_usecols]
+    missing = [c for c in REQUIRED_COLUMNS if normalize_key(c) not in normalized_usecols]
 
     if missing:
         errors.append(f"Columnas faltantes: {', '.join(missing)}")
 
     # Return usecols using canonical names from REQUIRED_COLUMNS where possible
     usecols = [
-        _NORMALIZED_REQUIRED.get(_normalize(c), c) for c in usecols if _normalize(c) not in _NORMALIZED_EXTRA_ALLOWED
+        _NORMALIZED_REQUIRED.get(normalize_key(c), c)
+        for c in usecols
+        if normalize_key(c) not in _NORMALIZED_EXTRA_ALLOWED
     ]
 
     return (len(errors) == 0, errors, usecols)
@@ -122,7 +114,7 @@ def validate_row(row: dict, index: int) -> Dict[str, List[Dict[str, Any]]]:
     if all(base_validator.is_empty(v) for v in row.values()):
         return {"errors": [], "warnings": []}
 
-    errors.extend(required_fields_validator_ciarp.validate(row, index))
+    errors.extend(ciarp_required_fields_validator.validate(row, index))
     tipo_documento = str(row.get("tipo_documento") or "").strip()
     identificacion = str(row.get("identificación") or "").strip()
     errors.extend(document_validator.validate(tipo_documento, identificacion, index))
@@ -131,8 +123,8 @@ def validate_row(row: dict, index: int) -> Dict[str, List[Dict[str, Any]]]:
     if year_err:
         errors.append(year_err)
 
-    warnings.extend(language_validator.validator(row, index))
-    warnings.extend(country_validator.validator(row, index))
+    warnings.extend(language_validator.validate(row, index))
+    warnings.extend(country_validator.validate(row, index))
 
     errors.extend(unit_validator.validate(row, index))
 
@@ -183,7 +175,7 @@ def validate_dataframe(df: pd.DataFrame) -> StaffReport:
                 duplicate_info.append(
                     {
                         "index": int(idx),
-                        "index_excel": excel_row_index(int(idx)),
+                        "index_excel": base_validator.excel_row_index(int(idx)),
                         "row": row.to_dict(),
                     }
                 )

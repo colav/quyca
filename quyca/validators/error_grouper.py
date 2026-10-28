@@ -1,11 +1,11 @@
 from typing import List, Dict, Any
 
 
-def _get(d: Dict[str, Any], *keys: str, default: Any = "") -> Any:
+def _get(item: Dict[str, Any], *keys: str, default: Any = "") -> Any:
     """Retrieves the first available key value from a dictionary."""
-    for k in keys:
-        if k in d:
-            return d[k]
+    for key in keys:
+        if key in item:
+            return item[key]
     return default
 
 

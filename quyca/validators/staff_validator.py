@@ -1,12 +1,13 @@
-import unicodedata
 from typing import List, Dict, Any, Tuple
-from quyca.validators import required_fields_validator
+from quyca.validators import staff_required_fields_validator
 from quyca.models.staff_report_model import StaffReport
+from quyca.normalizers.text_normalizer import normalize_key
 from quyca.validators import document_validator
 from quyca.validators import academic_validator
 from quyca.validators import name_validator
 from quyca.validators import date_validator
 from quyca.validators import unit_validator
+from quyca.validators import base_validator
 from quyca.validators import error_grouper
 import pandas as pd
 
@@ -46,24 +47,14 @@ NAME_COLUMNS = {
 EXTRA_ALLOWED = {"estado_de_validación", "observación"}
 
 
-def _normalize(s: str) -> str:
-    """Strips accents and lowercases a string for flexible column matching."""
-    return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("ascii").strip().lower()
-
-
-def _relaxed_normalize(s: str) -> str:
+def _relaxed_normalize(header: str) -> str:
     """Normalizes a header enough to compare spaces, hyphens and underscores."""
-    normalized = _normalize(s)
+    normalized = normalize_key(header)
     return normalized.replace(" ", "_").replace("-", "_")
 
 
-_NORMALIZED_REQUIRED = {_normalize(c): c for c in REQUIRED_COLUMNS}
-_NORMALIZED_EXTRA_ALLOWED = {_normalize(c) for c in EXTRA_ALLOWED}
-
-
-def excel_row_index(idx: int) -> int:
-    """Converts dataframe index to Excel row number."""
-    return idx + 2
+_NORMALIZED_REQUIRED = {normalize_key(c): c for c in REQUIRED_COLUMNS}
+_NORMALIZED_EXTRA_ALLOWED = {normalize_key(c) for c in EXTRA_ALLOWED}
 
 
 def validate_columns(df: pd.DataFrame) -> Tuple[bool, List[str], List[str]]:
@@ -76,11 +67,11 @@ def validate_columns(df: pd.DataFrame) -> Tuple[bool, List[str], List[str]]:
 
     relaxed_required_map = {_relaxed_normalize(required): required for required in REQUIRED_COLUMNS}
 
-    normalized_optional = {_normalize(column): column for column in OPTIONAL_COLUMNS}
+    normalized_optional = {normalize_key(column): column for column in OPTIONAL_COLUMNS}
 
     for idx, c in enumerate(raw_cols):
         col = c.strip()
-        col_norm = _normalize(col)
+        col_norm = normalize_key(col)
         col_relaxed = _relaxed_normalize(col)
 
         if idx == 0 and (col_norm.startswith("unnamed") or col == "" or col_norm == "index"):
@@ -137,7 +128,7 @@ def validate_row(row: dict, index: int) -> dict:
     errors: List[Dict[str, Any]] = []
     warnings: List[Dict[str, Any]] = []
 
-    errors.extend(required_fields_validator.validate(row, index))
+    errors.extend(staff_required_fields_validator.validate(row, index))
 
     document_type: str = str(row.get("tipo_documento"))
     identification: str = str(row.get("identificación"))
@@ -174,12 +165,12 @@ def validate_dataframe(df: pd.DataFrame) -> StaffReport:
     """Validates the full Staff dataframe and detects duplicates."""
     errors: List[Dict[str, Any]] = []
     warnings: List[Dict[str, Any]] = []
-    _NORMALIZED_OPTIONAL = {_normalize(c): c for c in OPTIONAL_COLUMNS}
+    _NORMALIZED_OPTIONAL = {normalize_key(c): c for c in OPTIONAL_COLUMNS}
     # Rename columns to canonical names so row validators always find the right keys
     rename_map = {}
 
     for col in df.columns:
-        normalized = _normalize(col)
+        normalized = normalize_key(col)
         if normalized in _NORMALIZED_REQUIRED:
             rename_map[col] = _NORMALIZED_REQUIRED[normalized]
         elif normalized in _NORMALIZED_OPTIONAL:
@@ -211,7 +202,7 @@ def validate_dataframe(df: pd.DataFrame) -> StaffReport:
                 duplicate_info.append(
                     {
                         "index": int(idx),
-                        "index_excel": excel_row_index(int(idx)),
+                        "index_excel": base_validator.excel_row_index(int(idx)),
                         "row": row.to_dict(),
                     }
                 )

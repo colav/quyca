@@ -5,7 +5,7 @@ from quyca.validators import base_validator
 LANG_RE = re.compile(r"^[a-z]{2}$")
 
 
-def validator(row: dict, index: int) -> List[Dict[str, Any]]:
+def validate(row: dict, index: int) -> List[Dict[str, Any]]:
     warnings = []
 
     language = row.get("idioma")

@@ -1,6 +1,6 @@
-import unicodedata
 from typing import List, Dict, Any, Tuple
 
+from quyca.normalizers.text_normalizer import normalize_key
 from quyca.validators import base_validator
 from quyca.constants.staff_field_values import (
     ACADEMIC_LEVELS,
@@ -18,14 +18,10 @@ from quyca.constants.staff_field_values import (
 _UNKNOWN_VALUE = "desconocido"
 
 
-def _normalize_key(value: Any) -> str:
-    return unicodedata.normalize("NFD", str(value)).encode("ascii", "ignore").decode("ascii").strip().lower()
-
-
 def _is_known_value(value: Any, canonicals: set[str], aliases: dict[str, str]) -> bool:
-    normalized = _normalize_key(value)
-    normalized_canonicals = {_normalize_key(item) for item in canonicals}
-    normalized_aliases = {_normalize_key(item) for item in aliases.keys()}
+    normalized = normalize_key(value)
+    normalized_canonicals = {normalize_key(item) for item in canonicals}
+    normalized_aliases = {normalize_key(item) for item in aliases.keys()}
     return normalized in normalized_canonicals or normalized in normalized_aliases or normalized == _UNKNOWN_VALUE
 
 
