@@ -2,11 +2,11 @@ from typing import Any, Generator, Mapping
 
 from pymongo.command_cursor import CommandCursor
 
-from quyca.domain.models.affiliation_model import Affiliation
-from quyca.infrastructure.mongo import database
-from quyca.infrastructure.repositories.base_repository import set_project
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.infrastructure.generators import affiliation_generator
+from quyca.models.affiliation_model import Affiliation
+from quyca.clients.mongo import database
+from quyca.repositories.base_repository import set_project
+from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.generators import affiliation_generator
 
 
 def get_affiliation_by_id(affiliation_id: str) -> Affiliation:

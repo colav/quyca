@@ -1,8 +1,8 @@
 from datetime import datetime, timezone
 from typing import Any
-from quyca.domain.constants.source_types import NORMALIZED_TYPE_MAPPING
-from quyca.domain.models.base_model import QueryParams
-from quyca.infrastructure.mongo import database
+from quyca.constants.source_types import NORMALIZED_TYPE_MAPPING
+from quyca.models.base_model import QueryParams
+from quyca.clients.mongo import database
 
 
 def search_sources_available_filters(query_params: QueryParams) -> dict:

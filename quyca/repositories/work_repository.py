@@ -2,15 +2,15 @@ from typing import Any, Generator
 
 from bson import ObjectId
 
-from quyca.infrastructure.generators import work_generator
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.models.work_model import Work
-from quyca.infrastructure.repositories import base_repository
-from quyca.infrastructure.mongo import database
-from quyca.domain.constants.institutions import institutions_list
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.infrastructure.repositories.geo import geo_repository
-from quyca.infrastructure.repositories.search.search_work_filters_repository import set_product_filters
+from quyca.generators import work_generator
+from quyca.models.base_model import QueryParams
+from quyca.models.work_model import Work
+from quyca.repositories import base_repository
+from quyca.clients.mongo import database
+from quyca.constants.institutions import institutions_list
+from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.repositories import geo_repository
+from quyca.repositories.search_work_filters_repository import set_product_filters
 
 
 def get_work_by_id(work_id: str) -> Work:

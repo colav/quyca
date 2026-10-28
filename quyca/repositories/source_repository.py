@@ -1,12 +1,12 @@
 from typing import Any
 from bson import ObjectId
 
-from quyca.infrastructure.mongo import database
-from quyca.domain.models.source_model import Source
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.domain.constants.source_types import normalize_source_type
-from quyca.domain.models.base_model import Topic
-from quyca.infrastructure.repositories.search import search_source_filters_repository
+from quyca.clients.mongo import database
+from quyca.models.source_model import Source
+from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.constants.source_types import normalize_source_type
+from quyca.models.base_model import Topic
+from quyca.repositories import search_source_filters_repository
 
 
 def get_source_by_id(source_id: str) -> Source:

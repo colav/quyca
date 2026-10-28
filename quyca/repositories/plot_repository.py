@@ -3,11 +3,11 @@ from typing import Any, Dict, Generator, List, Tuple
 from bson import ObjectId
 from pymongo.command_cursor import CommandCursor
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.infrastructure.generators import work_generator
-from quyca.infrastructure.mongo import database, calculations_database
-from quyca.infrastructure.repositories.work import work_repository
-from quyca.infrastructure.repositories.affiliation import affiliation_repository
+from quyca.models.base_model import QueryParams
+from quyca.generators import work_generator
+from quyca.clients.mongo import database, calculations_database
+from quyca.repositories import work_repository
+from quyca.repositories import affiliation_repository
 
 
 def get_affiliations_impactu_works_count_by_institution(

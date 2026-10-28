@@ -9,7 +9,8 @@ from zoneinfo import ZoneInfo
 from flask import current_app
 from werkzeug.datastructures import FileStorage
 
-from quyca.infrastructure.repositories import excel_cleaner_openpyxl, google_drive_repository
+from quyca.clients import google_drive
+from quyca.files import excel_cleaner
 
 
 def save_file(
@@ -30,18 +31,18 @@ def save_file(
 
     if original_ext == ".xlsx":
         try:
-            excel_cleaner_openpyxl.clean(temp_path)
+            excel_cleaner.clean(temp_path)
         except Exception as e:
             current_app.logger.exception(f"[ExcelCleaner] FALLÓ {temp_path}: {e}")
 
     try:
-        drive = google_drive_repository.get_service()
-        root_folder = google_drive_repository.get_or_create_folder(drive, file_type)
+        drive = google_drive.get_service()
+        root_folder = google_drive.get_or_create_folder(drive, file_type)
         safe_institution = institution.strip().replace(" ", "-")
         user_folder_name = f"{ror_id}_{safe_institution}"
-        user_folder = google_drive_repository.get_or_create_folder(drive, user_folder_name, parent_id=root_folder)
+        user_folder = google_drive.get_or_create_folder(drive, user_folder_name, parent_id=root_folder)
 
-        google_drive_repository.upload_file(drive, temp_path, filename, user_folder)
+        google_drive.upload_file(drive, temp_path, filename, user_folder)
 
         os.remove(temp_path)
         return {"success": True, "msg": f"Archivo {filename} guardado correctamente."}

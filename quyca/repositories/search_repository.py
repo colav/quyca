@@ -1,5 +1,5 @@
 from typing import Any, Dict, Generator, List
-from quyca.infrastructure.generators import (
+from quyca.generators import (
     affiliation_generator,
     geo_generator,
     patent_generator,
@@ -8,15 +8,12 @@ from quyca.infrastructure.generators import (
     source_generator,
     work_generator,
 )
-from quyca.domain.models.base_model import QueryParams
-from quyca.infrastructure.mongo import database
-from quyca.domain.constants.institutions import institutions_list
-from quyca.infrastructure.repositories import base_repository
-from quyca.infrastructure.repositories.search import (
-    search_affiliation_filters_repository,
-    search_source_filters_repository,
-)
-from quyca.infrastructure.repositories.work import work_repository
+from quyca.models.base_model import QueryParams
+from quyca.clients.mongo import database
+from quyca.constants.institutions import institutions_list
+from quyca.repositories import base_repository
+from quyca.repositories import search_affiliation_filters_repository, search_source_filters_repository
+from quyca.repositories import work_repository
 
 
 def search_persons(query_params: QueryParams, pipeline_params: Dict | None = None) -> Generator:

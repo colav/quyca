@@ -1,6 +1,6 @@
 from typing import Any
-from quyca.domain.constants.institutions import institutions_list
-from quyca.infrastructure.mongo import database, impactu_database
+from quyca.constants.institutions import institutions_list
+from quyca.clients.mongo import database, impactu_database
 
 
 def get_last_db_update() -> int:

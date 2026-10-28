@@ -1,12 +1,12 @@
 from typing import Any, Dict, Generator, Iterable, List, Mapping, Sequence
 from bson import ObjectId
 
-from quyca.infrastructure.generators import person_generator
-from quyca.domain.models.base_model import ExternalId
-from quyca.infrastructure.repositories import base_repository
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.domain.models.person_model import Person
-from quyca.infrastructure.mongo import database
+from quyca.generators import person_generator
+from quyca.models.base_model import ExternalId
+from quyca.repositories import base_repository
+from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.models.person_model import Person
+from quyca.clients.mongo import database
 
 
 def get_person_by_id(person_id: str, pipeline_params: dict) -> Person:

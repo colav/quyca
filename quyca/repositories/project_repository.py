@@ -2,13 +2,13 @@ from typing import Any, Dict, Generator, List
 
 from bson import ObjectId
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.models.project_model import Project
-from quyca.domain.constants.institutions import institutions_list
-from quyca.infrastructure.generators import project_generator
-from quyca.infrastructure.mongo import database
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.infrastructure.repositories import base_repository
+from quyca.models.base_model import QueryParams
+from quyca.models.project_model import Project
+from quyca.constants.institutions import institutions_list
+from quyca.generators import project_generator
+from quyca.clients.mongo import database
+from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.repositories import base_repository
 
 
 def get_project_by_id(project_id: str) -> Project:

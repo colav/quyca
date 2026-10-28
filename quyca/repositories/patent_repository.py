@@ -2,13 +2,13 @@ from typing import Any, Dict, Generator, List
 
 from bson import ObjectId
 
-from quyca.infrastructure.generators import patent_generator
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.models.patent_model import Patent
-from quyca.infrastructure.repositories import base_repository
-from quyca.infrastructure.mongo import database
-from quyca.domain.constants.institutions import institutions_list
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
+from quyca.generators import patent_generator
+from quyca.models.base_model import QueryParams
+from quyca.models.patent_model import Patent
+from quyca.repositories import base_repository
+from quyca.clients.mongo import database
+from quyca.constants.institutions import institutions_list
+from quyca.exceptions.not_entity_exception import NotEntityException
 
 
 def get_patent_by_id(patent_id: str) -> Patent:

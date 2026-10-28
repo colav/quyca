@@ -1,9 +1,9 @@
 from typing import Any, Dict, List
 
-from quyca.domain.constants.geo_states_cities import AFFILIATION_CITY_MAPPING, AFFILIATION_STATE_MAPPING
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.constants.institutions import institutions_list
-from quyca.infrastructure.mongo import database
+from quyca.constants.geo_states_cities import AFFILIATION_CITY_MAPPING, AFFILIATION_STATE_MAPPING
+from quyca.models.base_model import QueryParams
+from quyca.constants.institutions import institutions_list
+from quyca.clients.mongo import database
 
 
 def get_affiliations_available_filters(affiliation_type: str, query_params: QueryParams) -> Dict:

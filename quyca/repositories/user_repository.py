@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Optional
 
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.domain.models.user_model import User
-from quyca.infrastructure.mongo import impactu_database
-from quyca.infrastructure.security.password_hasher import verify_password
+from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.models.user_model import User
+from quyca.clients.mongo import impactu_database
+from quyca.security.password_hasher import verify_password
 
 users_collection = impactu_database["users"]
 

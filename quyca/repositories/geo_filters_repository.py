@@ -1,6 +1,6 @@
 from typing import Any, Dict, Dict, List
 
-from quyca.domain.models.base_model import QueryParams
+from quyca.models.base_model import QueryParams
 
 
 def set_geo_filters(query_params: QueryParams, geo_type: str) -> List[Dict[str, Any]]:

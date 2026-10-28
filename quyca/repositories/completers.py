@@ -1,4 +1,4 @@
-from quyca.infrastructure.elasticsearch import es_database
+from quyca.clients.elasticsearch import es_database
 from typing import Any, Dict, List, cast
 from quyca.config import settings
 

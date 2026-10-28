@@ -1,9 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, List, Tuple
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.normalizers.authors_count import parse_authors_count
-from quyca.infrastructure.mongo import database
+from quyca.models.base_model import QueryParams
+from quyca.normalizers.authors_count import parse_authors_count
+from quyca.clients.mongo import database
 
 # Cache for global filters (no entity filter, no query params applied).
 # Populated on first request, cleared on container restart.

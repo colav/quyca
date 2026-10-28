@@ -1,4 +1,4 @@
-from quyca.domain.models.base_model import QueryParams
+from quyca.models.base_model import QueryParams
 
 
 def set_search_end_stages(pipeline: list, query_params: QueryParams, pipeline_params: dict | None = None) -> list:

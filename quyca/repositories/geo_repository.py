@@ -1,10 +1,10 @@
 from typing import Any, List, Dict
 
-from quyca.domain.constants.geo_states_cities import GEO_RELATED_FIELDS
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.domain.models.geo_model import Geo
-from quyca.infrastructure.generators import geo_generator
-from quyca.infrastructure.mongo import database
+from quyca.constants.geo_states_cities import GEO_RELATED_FIELDS
+from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.models.geo_model import Geo
+from quyca.generators import geo_generator
+from quyca.clients.mongo import database
 
 
 def get_geolocation_by_id(geo_type: str, geo_id: str, pipeline_params: Dict | None = None) -> Geo:
