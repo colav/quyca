@@ -1,11 +1,7 @@
 from typing import Any, Dict, List
 
-from quyca.domain.constants.source_types import (
-    NORMALIZED_TYPE_MAPPING,
-    QUARTILE_MAPPING,
-    TYPE_DISPLAY_MAPPING,
-)
-from quyca.domain.models.source_model import Source
+from quyca.constants.source_types import NORMALIZED_TYPE_MAPPING, QUARTILE_MAPPING, TYPE_DISPLAY_MAPPING
+from quyca.models.source_model import Source
 
 
 def parse_source(source: Source) -> dict[str, Any]:

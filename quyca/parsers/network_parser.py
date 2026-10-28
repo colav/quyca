@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
 
-from quyca.domain.models.calculations_model import Calculations
+from quyca.models.calculations_model import Calculations
 
 
 def parse_institutional_coauthorship_network(data: Calculations) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:

@@ -1,4 +1,4 @@
-from quyca.domain.models.project_file_model import ProjectFileReport
+from quyca.models.project_file_model import ProjectFileReport
 
 
 def parse_project_file_report(report: ProjectFileReport) -> dict:

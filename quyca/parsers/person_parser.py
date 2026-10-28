@@ -1,4 +1,4 @@
-from quyca.domain.models.person_model import Person
+from quyca.models.person_model import Person
 
 
 def parse_person(person: Person) -> dict:

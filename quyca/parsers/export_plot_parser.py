@@ -9,13 +9,13 @@ from typing import Any, Callable, Dict, Optional, Tuple
 from currency_converter import CurrencyConverter
 from pymongo.command_cursor import CommandCursor
 
-from quyca.domain.constants.apc_currencies import available_currencies
-from quyca.domain.constants.csv_indicator_columns import CSV_COLUMNS_BY_PLOT, CsvColumns
-from quyca.domain.constants.open_access_status import open_access_status_dict
-from quyca.domain.models.affiliation_model import Affiliation
-from quyca.domain.models.calculations_model import Calculations
-from quyca.domain.parsers.plot import map_parser
-from quyca.domain.parsers.export import export_network_parser
+from quyca.constants.apc_currencies import available_currencies
+from quyca.constants.csv_indicator_columns import CSV_COLUMNS_BY_PLOT, CsvColumns
+from quyca.constants.open_access_status import open_access_status_dict
+from quyca.models.affiliation_model import Affiliation
+from quyca.models.calculations_model import Calculations
+from quyca.parsers import map_parser
+from quyca.parsers import export_network_parser
 
 VENN_SOURCES = (
     "scienti",

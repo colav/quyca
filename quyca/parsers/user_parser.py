@@ -1,4 +1,4 @@
-from quyca.domain.models.user_model import User
+from quyca.models.user_model import User
 
 
 def user_ror_id_and_institution(user: User) -> dict:

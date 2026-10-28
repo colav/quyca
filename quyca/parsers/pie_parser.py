@@ -7,11 +7,11 @@ from collections import Counter, defaultdict
 from currency_converter import CurrencyConverter
 from pymongo.command_cursor import CommandCursor
 
-from quyca.domain.constants.apc_currencies import available_currencies
-from quyca.domain.constants.open_access_status import open_access_status_dict
-from quyca.domain.models.affiliation_model import Affiliation
-from quyca.domain.models.calculations_model import Calculations
-from quyca.domain.normalizers.affiliation_names import get_affiliation_name
+from quyca.constants.apc_currencies import available_currencies
+from quyca.constants.open_access_status import open_access_status_dict
+from quyca.models.affiliation_model import Affiliation
+from quyca.models.calculations_model import Calculations
+from quyca.normalizers.affiliation_names import get_affiliation_name
 
 
 def get_percentage(func: Callable[..., list]) -> Callable[..., dict]:

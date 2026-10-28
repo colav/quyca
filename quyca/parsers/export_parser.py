@@ -2,13 +2,13 @@ from datetime import datetime, timezone
 from io import BytesIO
 from typing import Any, Generator
 
-from quyca.domain.models.export_model import EXPORT_MODEL_BY_ENTITY, ExportEntity, WorkExportBase, export_columns
-from quyca.domain.services.base_service import get_source_export_fields, set_title_and_language
-from quyca.domain.models.work_model import BiblioGraphicInfo, Work
-from quyca.domain.constants.institutions import institutions_list
-from quyca.domain.constants.openalex_types import openalex_types_dict
+from quyca.models.export_model import EXPORT_MODEL_BY_ENTITY, ExportEntity, WorkExportBase, export_columns
+from quyca.services.base_service import get_source_export_fields, set_title_and_language
+from quyca.models.work_model import BiblioGraphicInfo, Work
+from quyca.constants.institutions import institutions_list
+from quyca.constants.openalex_types import openalex_types_dict
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
-from quyca.infrastructure.exporters import tabular_writer_exporter
+from quyca.files import tabular_writer_exporter
 
 
 def parse_csv(works: Generator, entity: ExportEntity, person_id: str | None = None) -> Generator[str, None, None]:

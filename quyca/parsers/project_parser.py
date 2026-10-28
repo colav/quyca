@@ -1,4 +1,4 @@
-from quyca.domain.models.project_model import Project
+from quyca.models.project_model import Project
 
 
 def parse_projects_by_entity(projects: list) -> list:

@@ -1,7 +1,7 @@
 import re
 from typing import Any, Iterator, Optional, Set, Tuple
 
-from quyca.domain.models.calculations_model import Calculations
+from quyca.models.calculations_model import Calculations
 
 PARENTHETICAL_SUFFIX = re.compile(r"\s*\([^)]*\)")
 

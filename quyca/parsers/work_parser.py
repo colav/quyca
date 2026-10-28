@@ -1,9 +1,9 @@
-from quyca.domain.constants.institutions import INSTITUTION_TYPE_LABELS
-from quyca.domain.models.work_model import Work
+from quyca.constants.institutions import INSTITUTION_TYPE_LABELS
+from quyca.models.work_model import Work
 
-from quyca.domain.constants import countries_iso
-from quyca.domain.constants.open_access_status import open_access_status_dict
-from quyca.domain.constants.product_types import source_titles
+from quyca.constants import countries_iso
+from quyca.constants.open_access_status import open_access_status_dict
+from quyca.constants.product_types import source_titles
 
 
 def parse_works(works: list) -> list:

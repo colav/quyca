@@ -1,5 +1,5 @@
 from typing import Iterable, List, Dict
-from quyca.domain.models.news_model import News
+from quyca.models.news_model import News
 
 
 def parse_news(news: Iterable[News]) -> List[Dict]:

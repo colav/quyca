@@ -4,7 +4,7 @@ from typing import Generator
 
 from currency_converter import CurrencyConverter
 from pymongo.command_cursor import CommandCursor
-from quyca.domain.constants.apc_currencies import available_currencies
+from quyca.constants.apc_currencies import available_currencies
 
 
 def parse_annual_evolution_by_impactu_classification(works: Generator) -> dict:

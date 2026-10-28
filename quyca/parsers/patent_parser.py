@@ -1,4 +1,4 @@
-from quyca.domain.models.patent_model import Patent
+from quyca.models.patent_model import Patent
 
 
 def parse_patents_by_entity(patents: list) -> list:
