@@ -265,6 +265,7 @@ class Author(BaseModel):
     last_names: list[str] | None = None
     sex: str | None = None
     external_ids: list[ExternalId] | None = None
+    type: str | None = None
     ranking: list[Ranking] | str | None = None
     h_index: int | None = None
     h5_index: int | None = None
