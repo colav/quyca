@@ -1,8 +1,8 @@
 from typing import Any
-from quyca.infrastructure.repositories import gmail_repository
-from quyca.infrastructure.email_templates.staff_report_templates import build_email_template
-from quyca.infrastructure.email_templates.scienti_upload_templeates import build_scienti_received_templete
-from quyca.domain.models.staff_report_model import StaffReport
+from quyca.clients import gmail
+from quyca.files.email_templates.staff_report_templates import build_email_template
+from quyca.files.email_templates.scienti_upload_templates import build_scienti_received_templete
+from quyca.models.staff_report_model import StaffReport
 
 
 def send_report(
@@ -27,7 +27,7 @@ def send_report(
         status_type=tipo_correo, role=user, institution=institution, filename=filename, upload_date=upload_date
     )
 
-    result: dict[str, Any] = gmail_repository.send_labeled_email(
+    result: dict[str, Any] = gmail.send_labeled_email(
         to_email=email,
         subject=subject,
         body_html=body_html,
@@ -73,7 +73,7 @@ def send_custom_email(
             </html>
             """
 
-    result: dict[str, Any] = gmail_repository.send_labeled_email(
+    result: dict[str, Any] = gmail.send_labeled_email(
         to_email=email,
         subject=subject,
         body_html=body_html,
@@ -105,7 +105,7 @@ def send_email_change_password(
         </html>
         """
 
-    result: dict[str, Any] = gmail_repository.send_labeled_email(
+    result: dict[str, Any] = gmail.send_labeled_email(
         to_email=email,
         subject=subject,
         body_html=body_html,
@@ -131,7 +131,7 @@ def send_scienti_compressed_received(
         role=role, institution=institution, filename=filename, upload_date=upload_date
     )
 
-    result: dict[str, Any] = gmail_repository.send_labeled_email(
+    result: dict[str, Any] = gmail.send_labeled_email(
         to_email=email,
         subject=subject,
         body_html=body_html,

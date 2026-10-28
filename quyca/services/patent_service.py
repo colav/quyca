@@ -1,9 +1,9 @@
 import time
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.parsers.base_parser import build_metadata
-from quyca.infrastructure.repositories.patent import patent_repository
-from quyca.domain.services.base_service import (
+from quyca.models.base_model import QueryParams
+from quyca.parsers.base_parser import build_metadata
+from quyca.repositories import patent_repository
+from quyca.services.base_service import (
     build_patents_pipeline_params,
     get_entity_data,
     set_authors_affiliation_years,
@@ -14,7 +14,7 @@ from quyca.domain.services.base_service import (
     set_product_types,
     set_title_and_language,
 )
-from quyca.domain.parsers.patent import patent_parser
+from quyca.parsers import patent_parser
 
 
 def get_patent_by_id(patent_id: str) -> dict:

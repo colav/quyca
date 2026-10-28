@@ -3,11 +3,11 @@ import string
 import time
 from typing import Any, List
 
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.domain.models.user_model import User
-from quyca.infrastructure.notifications import notification
-from quyca.infrastructure.repositories import user_repository
-from quyca.infrastructure.security.password_hasher import hash_password
+from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.models.user_model import User
+from quyca.services import notification_service
+from quyca.repositories import user_repository
+from quyca.security.password_hasher import hash_password
 
 
 def create_user(
@@ -49,7 +49,7 @@ def create_user(
 
     subject = "Tu cuenta en la plataforma ImpactU ha sido creada exitosamente."
 
-    notification.send_custom_email(subject, role, institution, email, raw_password, ror_id=ror_id)
+    notification_service.send_custom_email(subject, role, institution, email, raw_password, ror_id=ror_id)
 
     return {
         "success": True,
@@ -98,7 +98,7 @@ def update_password(email: str) -> dict[str, Any]:
 
     subject = "Tu contraseña ha sido restablecida"
 
-    notification.send_email_change_password(
+    notification_service.send_email_change_password(
         email=email, subject=subject, password=new_password, institution=user.institution, ror_id=user.id
     )
     return {"success": True, "msg": f"La contraseña de {email} se actualizó correctamente."}
@@ -141,7 +141,7 @@ def update_user_info(old_email: str, new_email: str, new_role: str, raw_payload:
         user_repository.update_password(updated_user.email, hashed)
 
         subject = "Tu cuenta en la plataforma ImpactU ha sido creada exitosamente."
-        notification.send_custom_email(
+        notification_service.send_custom_email(
             subject=subject,
             role=updated_user.role,
             institution=updated_user.institution,

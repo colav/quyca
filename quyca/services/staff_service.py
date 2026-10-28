@@ -6,14 +6,15 @@ from typing import Any, Optional
 import pandas as pd
 from werkzeug.datastructures import FileStorage
 
-from quyca.domain.models.staff_report_model import StaffReport
-from quyca.domain.normalizers import staff_normalizer_service
-from quyca.domain.validators import error_grouper, staff_validator
-from quyca.domain.validators.staff_validator import REQUIRED_COLUMNS
-from quyca.infrastructure.annotators import annotator
-from quyca.infrastructure.exporters import xlsx_writer_exporter
-from quyca.infrastructure.notifications import notification
-from quyca.infrastructure.repositories import file_repository, pdf_repository
+from quyca.models.staff_report_model import StaffReport
+from quyca.normalizers import staff_normalizer_service
+from quyca.validators import error_grouper, staff_validator
+from quyca.validators.staff_validator import REQUIRED_COLUMNS
+from quyca.files import annotator
+from quyca.files import xlsx_writer_exporter
+from quyca.services import notification_service
+from quyca.files import pdf_report
+from quyca.repositories import file_repository
 
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
@@ -165,7 +166,7 @@ def process_staff_file(
             duplicates=[],
         )
 
-        pdf_bytes = pdf_repository.generate_quality_report(
+        pdf_bytes = pdf_report.generate_quality_report(
             staff_report.grouped_errors, [], [], institution, filename, upload_date, user
         )
 
@@ -177,7 +178,7 @@ def process_staff_file(
             {"bytes": excel_bytes, "filename": "staff_validado.xlsx", "mime": XLSX_MIME},
         ]
 
-        notification.send_report(
+        notification_service.send_report(
             staff_report, institution, filename, upload_date, user, email, "Staff", attachments, ror_id
         )
 
@@ -205,7 +206,7 @@ def process_staff_file(
         normalized_changes=changelog,
     )
 
-    notification.send_report(
+    notification_service.send_report(
         staff_report, institution, filename, upload_date, user, email, "Staff", attachments, ror_id
     )
 
@@ -261,7 +262,7 @@ def generate_staff_report(
         or staff_report.total_duplicates > 0
         or has_normalizations
     ):
-        pdf_bytes = pdf_repository.generate_quality_report(
+        pdf_bytes = pdf_report.generate_quality_report(
             staff_report.grouped_errors,
             staff_report.grouped_warnings,
             staff_report.duplicates,

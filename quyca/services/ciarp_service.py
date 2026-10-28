@@ -5,12 +5,13 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
-from quyca.domain.models.staff_report_model import StaffReport
-from quyca.domain.validators import ciarp_validator
-from quyca.infrastructure.annotators import annotator
-from quyca.infrastructure.exporters import xlsx_writer_exporter
-from quyca.infrastructure.notifications import notification
-from quyca.infrastructure.repositories import file_repository, pdf_repository
+from quyca.models.staff_report_model import StaffReport
+from quyca.validators import ciarp_validator
+from quyca.files import annotator
+from quyca.files import xlsx_writer_exporter
+from quyca.services import notification_service
+from quyca.files import pdf_report
+from quyca.repositories import file_repository
 
 
 def handle_ciarp_upload(file: Any, claims: dict[str, Any], upload_date: str) -> tuple[dict[str, Any], int]:
@@ -85,12 +86,12 @@ def process_ciarp_file(
             duplicates=[],
         )
 
-        pdf_bytes = pdf_repository.generate_quality_report(
-            grouped_errors, [], [], institution, filename, upload_date, user
-        )
+        pdf_bytes = pdf_report.generate_quality_report(grouped_errors, [], [], institution, filename, upload_date, user)
         attachments = [{"bytes": pdf_bytes, "filename": "reporte_ciarp.pdf", "mime": "application/pdf"}]
 
-        notification.send_report(report, institution, filename, upload_date, user, email, "Ciarp", attachments, ror_id)
+        notification_service.send_report(
+            report, institution, filename, upload_date, user, email, "Ciarp", attachments, ror_id
+        )
 
         pdf_bytes.seek(0)
         pdf_base64 = base64.b64encode(pdf_bytes.read()).decode()
@@ -106,7 +107,9 @@ def process_ciarp_file(
 
     report, attachments = generate_ciarp_report(df, institution, filename, upload_date, user)
 
-    notification.send_report(report, institution, filename, upload_date, user, email, "Ciarp", attachments, ror_id)
+    notification_service.send_report(
+        report, institution, filename, upload_date, user, email, "Ciarp", attachments, ror_id
+    )
 
     for att in attachments:
         att_filename = att.get("filename")
@@ -138,7 +141,7 @@ def generate_ciarp_report(
     if ciarp_report.total_errors > 0 or len(ciarp_report.warnings) > 0 or ciarp_report.total_duplicates > 0:
         advertencias_resumen = {"total_advertencias": len(ciarp_report.warnings)}
 
-        pdf_bytes = pdf_repository.generate_quality_report_ciarp(
+        pdf_bytes = pdf_report.generate_quality_report_ciarp(
             ciarp_report.grouped_errors,
             advertencias_resumen,
             ciarp_report.duplicates,

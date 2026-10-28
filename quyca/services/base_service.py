@@ -1,7 +1,7 @@
 from typing import Generator, Iterator, Union, Any, Dict, List, Union, cast
 from urllib.parse import urlparse
-from quyca.domain.constants.institutions import institutions_list
-from quyca.domain.constants.summary_rules import (
+from quyca.constants.institutions import institutions_list
+from quyca.constants.summary_rules import (
     AFFILIATION_SUMMARY_FIELDS,
     PATENT_SUMMARY_FIELDS,
     PERSON_SUMMARY_FIELDS,
@@ -9,15 +9,15 @@ from quyca.domain.constants.summary_rules import (
     SOURCE_SUMMARY_FIELDS,
     WORK_SUMMARY_FIELDS,
 )
-from quyca.domain.models.affiliation_model import Affiliation, Relation
-from quyca.domain.constants.external_urls import external_urls_dict
-from quyca.domain.models.base_model import APC, Title, ProductType, ExternalUrl, Type
-from quyca.domain.models.patent_model import Patent
-from quyca.domain.models.project_model import Project
-from quyca.domain.models.work_model import Work
-from quyca.infrastructure.repositories.person import person_repository
-from quyca.domain.constants.sensitive_data import SENSITIVE_ID_SOURCES
-from quyca.infrastructure.repositories.affiliation import affiliation_repository
+from quyca.models.affiliation_model import Affiliation, Relation
+from quyca.constants.external_urls import external_urls_dict
+from quyca.models.base_model import APC, Title, ProductType, ExternalUrl, Type
+from quyca.models.patent_model import Patent
+from quyca.models.project_model import Project
+from quyca.models.work_model import Work
+from quyca.repositories import person_repository
+from quyca.constants.sensitive_data import SENSITIVE_ID_SOURCES
+from quyca.repositories import affiliation_repository
 
 SUMMARY_AUTHORS_LIMIT = 10
 

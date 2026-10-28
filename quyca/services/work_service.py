@@ -1,10 +1,10 @@
 import time
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.models.work_model import Work, Abstract
-from quyca.domain.parsers.base_parser import build_metadata
-from quyca.infrastructure.repositories.work import work_repository
-from quyca.domain.services.base_service import (
+from quyca.models.base_model import QueryParams
+from quyca.models.work_model import Work, Abstract
+from quyca.parsers.base_parser import build_metadata
+from quyca.repositories import work_repository
+from quyca.services.base_service import (
     build_work_pipeline_params,
     get_entity_data,
     limit_authors,
@@ -15,7 +15,7 @@ from quyca.domain.services.base_service import (
     set_external_urls,
     set_external_ids,
 )
-from quyca.domain.parsers.work import work_parser
+from quyca.parsers import work_parser
 
 
 def get_work_by_id(work_id: str, query_params: QueryParams) -> dict:

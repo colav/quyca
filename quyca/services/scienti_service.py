@@ -2,8 +2,8 @@ from typing import Any, Dict, Tuple
 
 from werkzeug.datastructures import FileStorage
 
-from quyca.infrastructure.notifications import notification
-from quyca.infrastructure.repositories import file_repository
+from quyca.services import notification_service
+from quyca.repositories import file_repository
 
 ALLOWED_COMPRESSED_EXTENSIONS = {
     ".zip",
@@ -53,7 +53,7 @@ def handle_scienti_upload(
             "msg": "Tipo de archivo no permitido. Los formatos soportados son: .zip, .rar, .7z, .tar, .gz, .tgz, .bz2, .tar.gz y .tar.bz2.",
         }, 415
 
-    notify_result = notification.send_scienti_compressed_received(
+    notify_result = notification_service.send_scienti_compressed_received(
         role=str(role),
         institution=institution,
         filename=filename,

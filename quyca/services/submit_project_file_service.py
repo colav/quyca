@@ -1,11 +1,11 @@
 from io import BytesIO
 from typing import IO
 
-from quyca.domain.constants.project_file_schema import MAX_REPORTED_ISSUES, SCHEMA_VERSION
-from quyca.domain.models.project_file_model import ProjectFileReport, ValidationIssue
-from quyca.domain.parsers.submit import project_file_parser
-from quyca.domain.validators import project_file_validator
-from quyca.infrastructure.readers import project_file_reader
+from quyca.constants.project_file_schema import MAX_REPORTED_ISSUES, SCHEMA_VERSION
+from quyca.models.project_file_model import ProjectFileReport, ValidationIssue
+from quyca.parsers import project_file_parser
+from quyca.validators import project_file_validator
+from quyca.files import project_file_reader
 
 
 def validate_project_file(file_stream: BytesIO | IO[bytes], filename: str) -> dict:

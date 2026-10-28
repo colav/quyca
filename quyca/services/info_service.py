@@ -1,4 +1,4 @@
-from quyca.infrastructure.repositories import info_repository
+from quyca.repositories import info_repository
 
 
 def get_info() -> dict:

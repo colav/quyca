@@ -1,17 +1,13 @@
 from typing import Any
-from quyca.domain.constants.articles_types import articles_types_list
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.parsers.plot import bar_parser, map_parser, network_parser, pie_parser
-from quyca.infrastructure.repositories import (
-    calculations_repository,
-)
-from quyca.domain.parsers.plot import (
-    venn_parser,
-)
-from quyca.infrastructure.repositories.affiliation import affiliation_repository
-from quyca.infrastructure.repositories.person import person_repository
-from quyca.infrastructure.repositories.plot import plot_repository
-from quyca.infrastructure.repositories.work import work_repository
+from quyca.constants.articles_types import articles_types_list
+from quyca.models.base_model import QueryParams
+from quyca.parsers import bar_parser, map_parser, network_parser, pie_parser
+from quyca.repositories import calculations_repository
+from quyca.parsers import venn_parser
+from quyca.repositories import affiliation_repository
+from quyca.repositories import person_repository
+from quyca.repositories import plot_repository
+from quyca.repositories import work_repository
 
 
 def get_person_plot(person_id: str, query_params: QueryParams) -> dict[str, Any]:

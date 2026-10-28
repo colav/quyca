@@ -1,5 +1,5 @@
-from quyca.domain.parsers.person import person_parser
-from quyca.infrastructure.repositories.person import person_repository
+from quyca.parsers import person_parser
+from quyca.repositories import person_repository
 
 
 def get_person_by_id(person_id: str) -> dict:

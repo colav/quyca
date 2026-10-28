@@ -1,5 +1,5 @@
-from quyca.infrastructure.repositories.source import source_repository
-from quyca.domain.parsers.source import source_parser
+from quyca.repositories import source_repository
+from quyca.parsers import source_parser
 
 
 def get_source_by_id(source_id: str) -> dict:

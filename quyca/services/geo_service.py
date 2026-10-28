@@ -1,4 +1,4 @@
-from quyca.infrastructure.repositories.geo import geo_repository
+from quyca.repositories import geo_repository
 
 
 def geo_by_id(geo_type: str, geo_id: str) -> dict:

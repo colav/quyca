@@ -1,13 +1,13 @@
 import time
 from typing import Dict
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.parsers.affiliation import affiliation_parser
-from quyca.domain.parsers.base_parser import build_metadata
-from quyca.domain.parsers.search import search_parser
-from quyca.domain.parsers.source import source_parser
-from quyca.domain.parsers.work import work_parser
-from quyca.domain.services.base_service import (
+from quyca.models.base_model import QueryParams
+from quyca.parsers import affiliation_parser
+from quyca.parsers.base_parser import build_metadata
+from quyca.parsers import search_parser
+from quyca.parsers import source_parser
+from quyca.parsers import work_parser
+from quyca.services.base_service import (
     build_affiliation_pipeline_params,
     build_patents_pipeline_params,
     build_person_pipeline_params,
@@ -16,7 +16,7 @@ from quyca.domain.services.base_service import (
     build_work_pipeline_params,
     get_entity_data,
 )
-from quyca.infrastructure.repositories.search import (
+from quyca.repositories import (
     search_affiliation_filters_repository,
     search_repository,
     search_source_filters_repository,

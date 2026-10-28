@@ -1,9 +1,9 @@
 from typing import Any
 
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.domain.parsers.user_parser import user_ror_id_and_institution
-from quyca.infrastructure.repositories import user_repository
-from quyca.infrastructure.security import jwt_token_service
+from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.parsers.user_parser import user_ror_id_and_institution
+from quyca.repositories import user_repository
+from quyca.security import jwt_token_service
 
 SESION_NO_INICIADA = "sesion_no_iniciada"
 TOKEN_EXPIRADO = "token_expirado"

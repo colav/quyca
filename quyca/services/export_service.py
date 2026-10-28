@@ -1,10 +1,10 @@
 from io import BytesIO
 from typing import Generator
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.models.export_model import ExportEntity
-from quyca.infrastructure.repositories.export import export_repository
-from quyca.domain.parsers.export import export_parser
+from quyca.models.base_model import QueryParams
+from quyca.models.export_model import ExportEntity
+from quyca.repositories import export_repository
+from quyca.parsers import export_parser
 
 
 def get_works_csv_by_affiliation(
