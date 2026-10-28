@@ -3,15 +3,13 @@ from typing import Tuple
 from flask import Blueprint, request, Response, jsonify, stream_with_context
 from sentry_sdk import capture_exception
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.services import (
-    news_service,
-)
-from quyca.domain.services.export import export_service
-from quyca.domain.services.patent import patent_service
-from quyca.domain.services.person import person_plot_service, person_service
-from quyca.domain.services.project import project_service
-from quyca.domain.services.work import work_service
+from quyca.models.base_model import QueryParams
+from quyca.services import news_service
+from quyca.services import export_service
+from quyca.services import patent_service
+from quyca.services import person_plot_service, person_service
+from quyca.services import project_service
+from quyca.services import work_service
 
 person_router = Blueprint("person_app_router", __name__)
 

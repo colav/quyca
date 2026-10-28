@@ -2,8 +2,8 @@ from typing import Any
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity
 from sentry_sdk import capture_exception
-from quyca.domain.services import user_service
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
+from quyca.services import user_service
+from quyca.exceptions.not_entity_exception import NotEntityException
 
 user_crud_router = Blueprint("user_crud_app_router", __name__)
 

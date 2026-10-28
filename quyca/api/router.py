@@ -1,22 +1,22 @@
 from flask import Blueprint
 
-from quyca.application.routes.affiliation_router import affiliation_router
-from quyca.application.routes.apc_router import apc_router
-from quyca.application.routes.completer_router import completer_router
-from quyca.application.routes.docs_router import router as docs_router
-from quyca.application.routes.geo_router import geo_router
-from quyca.application.routes.info_router import info_router
-from quyca.application.routes.patent_router import patent_router
-from quyca.application.routes.person_router import person_router
-from quyca.application.routes.ping_router import ping_router
-from quyca.application.routes.project_router import project_router
-from quyca.application.routes.search_router import search_router
-from quyca.application.routes.source_router import source_router
-from quyca.application.routes.submit_router import submit_router
-from quyca.application.routes.user_auth_router import user_auth_router
-from quyca.application.routes.user_crud_router import user_crud_router
-from quyca.application.routes.work_router import work_router
-from quyca.application.routes.me_router import me_router
+from quyca.api.affiliation_router import affiliation_router
+from quyca.api.apc_router import apc_router
+from quyca.api.completer_router import completer_router
+from quyca.api.docs_router import router as docs_router
+from quyca.api.geo_router import geo_router
+from quyca.api.info_router import info_router
+from quyca.api.patent_router import patent_router
+from quyca.api.person_router import person_router
+from quyca.api.ping_router import ping_router
+from quyca.api.project_router import project_router
+from quyca.api.search_router import search_router
+from quyca.api.source_router import source_router
+from quyca.api.submit_router import submit_router
+from quyca.api.user_auth_router import user_auth_router
+from quyca.api.user_crud_router import user_crud_router
+from quyca.api.work_router import work_router
+from quyca.api.me_router import me_router
 
 router = Blueprint("router", __name__)
 

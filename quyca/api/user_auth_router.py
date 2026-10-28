@@ -4,8 +4,8 @@ from sentry_sdk import capture_exception
 
 from flask_jwt_extended import set_access_cookies, unset_jwt_cookies
 
-from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.domain.services import auth_service
+from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.services import auth_service
 
 user_auth_router = Blueprint("user_auth_app_router", __name__)
 

@@ -7,8 +7,8 @@ from flask_jwt_extended import verify_jwt_in_request, get_jwt
 from sentry_sdk import capture_exception
 from werkzeug.datastructures import FileStorage
 
-from quyca.domain.exceptions.project_file_exceptions import ProjectFileException
-from quyca.domain.services.submit import ciarp_service, scienti_service, staff_service, submit_project_file_service
+from quyca.exceptions.project_file_exceptions import ProjectFileException
+from quyca.services import ciarp_service, scienti_service, staff_service, submit_project_file_service
 
 submit_router = Blueprint("submit_app_router", __name__)
 

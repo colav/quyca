@@ -6,8 +6,8 @@ from pymongo.command_cursor import CommandCursor
 from flask import Blueprint, request, jsonify, Response
 from sentry_sdk import capture_exception
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.infrastructure.mongo import database
+from quyca.models.base_model import QueryParams
+from quyca.clients.mongo import database
 
 apc_router = Blueprint("apc_api_router", __name__)
 

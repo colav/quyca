@@ -4,8 +4,8 @@ from flask import Blueprint, request, jsonify
 from werkzeug.wrappers.response import Response
 from sentry_sdk import capture_exception
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.services.search import search_service
+from quyca.models.base_model import QueryParams
+from quyca.services import search_service
 
 search_router = Blueprint("search_router", __name__)
 

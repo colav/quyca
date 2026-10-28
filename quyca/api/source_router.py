@@ -2,10 +2,10 @@ from typing import Tuple
 from flask import Blueprint, Response, jsonify, request
 from sentry_sdk import capture_exception
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.services.work import work_service
-from quyca.domain.services.export import export_service
-from quyca.domain.services.source import source_plot_service, source_service
+from quyca.models.base_model import QueryParams
+from quyca.services import work_service
+from quyca.services import export_service
+from quyca.services import source_plot_service, source_service
 
 source_router = Blueprint("source_app_router", __name__)
 

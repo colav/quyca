@@ -4,9 +4,9 @@ from flask import Blueprint, json, jsonify, request
 from sentry_sdk import capture_exception
 from werkzeug.wrappers.response import Response
 
-from quyca.domain.models.base_model import QueryParams
-from quyca.domain.services.geo import geo_service
-from quyca.domain.services.work import work_service
+from quyca.models.base_model import QueryParams
+from quyca.services import geo_service
+from quyca.services import work_service
 
 geo_router = Blueprint("geo_app_router", __name__)
 

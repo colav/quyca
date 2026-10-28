@@ -1,7 +1,7 @@
 from typing import Any
 from flask import Blueprint, jsonify
 from sentry_sdk import capture_exception
-from quyca.domain.services import auth_service
+from quyca.services import auth_service
 
 me_router = Blueprint("me_app_router", __name__)
 
