@@ -9,6 +9,7 @@ from quyca.models.staff_report_model import StaffReport
 from quyca.validators import ciarp_validator
 from quyca.files import annotator
 from quyca.files import xlsx_writer_exporter
+from quyca.security import jwt_token_service
 from quyca.services import notification_service
 from quyca.files import pdf_report
 from quyca.repositories import file_repository
@@ -16,22 +17,10 @@ from quyca.repositories import file_repository
 
 def handle_ciarp_upload(file: Any, claims: dict[str, Any], upload_date: str) -> tuple[dict[str, Any], int]:
     """Validates token claims, processes the file (report + email) and saves it. Returns payload and HTTP status."""
-    email = claims.get("sub")
-    ror_id = claims.get("_id")
-    institution = claims.get("institution")
-    user = claims.get("role")
-
-    if (
-        not isinstance(email, str)
-        or not isinstance(ror_id, str)
-        or not isinstance(institution, str)
-        or not isinstance(user, str)
-        or not email
-        or not ror_id
-        or not institution
-        or not user
-    ):
+    upload_claims = jwt_token_service.get_upload_claims(claims)
+    if upload_claims is None:
         return {"success": False, "msg": "Token inválido o revocado"}, 401
+    email, ror_id, institution, user = upload_claims
 
     if not file:
         return {"success": False, "msg": "Archivo requerido"}, 400

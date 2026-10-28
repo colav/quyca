@@ -1,11 +1,12 @@
 import time
 
+from quyca.constants.summary_rules import WORK_SUMMARY_FIELDS
 from quyca.models.base_model import QueryParams
 from quyca.models.work_model import Work, Abstract
 from quyca.parsers.base_parser import build_metadata
 from quyca.repositories import work_repository
 from quyca.services.base_service import (
-    build_work_pipeline_params,
+    build_pipeline_params,
     get_entity_data,
     limit_authors,
     set_authors_affiliation_years,
@@ -87,7 +88,7 @@ def get_works_filters_by_affiliation(affiliation_id: str, affiliation_type: str,
 
 def get_works_by_person(person_id: str, query_params: QueryParams, current_url: str) -> dict:
     start_time = time.time()
-    pipeline_params = build_work_pipeline_params(query_params.view)
+    pipeline_params = build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
     works = work_repository.get_works_by_person(person_id, query_params, pipeline_params)
     works_data = get_entity_data(works, query_params.view)
     total_results = work_repository.get_works_count_by_person(person_id, query_params)
@@ -108,7 +109,7 @@ def get_works_filters_by_person(person_id: str, query_params: QueryParams) -> di
 
 def get_works_by_source(source_id: str, query_params: QueryParams, current_url: str) -> dict:
     start_time = time.time()
-    pipeline_params = build_work_pipeline_params(query_params.view)
+    pipeline_params = build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
     works = work_repository.get_works_by_source(source_id, query_params, pipeline_params)
     works_data = get_entity_data(works, query_params.view)
     total_results = work_repository.get_works_count_by_source(source_id, query_params)
@@ -129,7 +130,7 @@ def get_works_filters_by_source(source_id: str, query_params: QueryParams) -> di
 
 def get_works_by_geo(geo_type: str, geo_id: str, query_params: QueryParams, current_url: str) -> dict:
     start_time = time.time()
-    pipeline_params = build_work_pipeline_params(query_params.view)
+    pipeline_params = build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
     works = work_repository.get_works_by_geo(geo_type, geo_id, query_params, pipeline_params)
 
     works_data = get_entity_data(works, query_params.view)

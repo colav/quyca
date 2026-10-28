@@ -22,3 +22,15 @@ def verify_cookie_claims() -> dict[str, Any] | None:
         return dict(flask_jwt_extended.get_jwt())
     except Exception:
         return None
+
+
+def get_upload_claims(claims: dict[str, Any]) -> tuple[str, str, str, str] | None:
+    """(email, ror_id, institution, role) of an upload token, or None when any of them is missing."""
+    email, ror_id, institution, role = (claims.get(key) for key in ("sub", "_id", "institution", "role"))
+    if not (
+        isinstance(email, str) and isinstance(ror_id, str) and isinstance(institution, str) and isinstance(role, str)
+    ):
+        return None
+    if not (email and ror_id and institution and role):
+        return None
+    return email, ror_id, institution, role

@@ -145,7 +145,7 @@ def plot_annual_articles_by_top_publishers(affiliation_id: str, query_params: Qu
             "source.publisher.name": {"$ne": None},
         },
     }
-    works = work_repository.get_works_with_source_by_affiliation(affiliation_id, query_params, pipeline_params)
+    works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
     return bar_parser.parse_annual_articles_by_top_publishers(works)
 
 
@@ -159,7 +159,7 @@ def plot_articles_by_publisher(affiliation_id: str, query_params: QueryParams) -
         "work_project": ["source.id", "source.publisher.name", "source.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
-    works = work_repository.get_works_with_source_by_affiliation(affiliation_id, query_params, pipeline_params)
+    works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
     return pie_parser.parse_articles_by_publisher(works)
 
 
@@ -210,7 +210,7 @@ def plot_articles_by_scimago_quartile(affiliation_id: str, query_params: QueryPa
         "work_project": ["source.id", "source.name", "date_published", "source.ranking"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
-    works = work_repository.get_works_with_source_by_affiliation(affiliation_id, query_params, pipeline_params)
+    works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
     return pie_parser.parse_articles_by_scimago_quartile(works)
 
 
@@ -220,7 +220,7 @@ def plot_articles_by_publishing_institution(affiliation_id: str, query_params: Q
         "work_project": ["source.id", "source.name", "source.publisher.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
-    works = work_repository.get_works_with_source_by_affiliation(affiliation_id, query_params, pipeline_params)
+    works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
     return pie_parser.parse_articles_by_publishing_institution(works, institution)
 
 
@@ -231,7 +231,7 @@ def plot_coauthorship_by_country_map(affiliation_id: str, query_params: QueryPar
 
 def plot_coauthorship_by_colombian_department_map(affiliation_id: str, query_params: QueryParams) -> dict:
     data = plot_repository.get_coauthorship_by_colombian_department_map_by_affiliation(affiliation_id, query_params)
-    return map_parser.get_coauthorship_by_colombian_department_map(data)
+    return map_parser.parse_coauthorship_by_colombian_department_map(data)
 
 
 def plot_institutional_coauthorship_network(affiliation_id: str, query_params: QueryParams) -> dict:
@@ -259,5 +259,5 @@ def plot_annual_apc_expenses(affiliation_id: str, query_params: QueryParams) -> 
             "source.apc.currency": {"$exists": True, "$ne": None},
         },
     }
-    works = work_repository.get_works_with_source_by_affiliation(affiliation_id, query_params, pipeline_params)
+    works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
     return bar_parser.parse_annual_apc_expenses(works)

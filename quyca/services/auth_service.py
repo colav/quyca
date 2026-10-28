@@ -1,7 +1,7 @@
 from typing import Any
 
 from quyca.exceptions.not_entity_exception import NotEntityException
-from quyca.parsers.user_parser import user_ror_id_and_institution
+from quyca.parsers.user_parser import parse_user_claims
 from quyca.repositories import user_repository
 from quyca.security import jwt_token_service
 
@@ -19,12 +19,12 @@ def login(email: str, password: str) -> dict:
     if not email or not password:
         return {"success": False, "msg": "correo y contraseña requeridos"}
 
-    user = user_repository.get_by_email_and_pass(email, password)
+    user = user_repository.get_user_by_email_and_password(email, password)
 
     if not user.is_active:
         raise NotEntityException("El usuario está desactivado. Contacte al administrador del sistema")
 
-    parse_user = user_ror_id_and_institution(user)
+    parse_user = parse_user_claims(user)
 
     claims: dict[str, Any] = {
         "_id": parse_user["_id"],

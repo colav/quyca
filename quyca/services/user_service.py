@@ -22,7 +22,7 @@ def create_user(
     if role.lower() == "admin":
         raise NotEntityException("No se pueden crear usuarios con el role 'admin'.")
 
-    existing_by_ror = user_repository.find_by_ror_id(ror_id)
+    existing_by_ror = user_repository.get_user_by_ror_id(ror_id)
     if existing_by_ror:
         return {
             "success": False,
@@ -45,7 +45,7 @@ def create_user(
         apikey=None,
     )
 
-    user_repository.create(user)
+    user_repository.create_user(user)
 
     subject = "Tu cuenta en la plataforma ImpactU ha sido creada exitosamente."
 
@@ -59,7 +59,7 @@ def create_user(
 
 def get_all_users() -> List[dict[str, Any]]:
     """Lists users excluding admins and sensitive fields."""
-    users = user_repository.get_all()
+    users = user_repository.get_all_users()
     filtered_users = [u for u in users if u.role.lower() != "admin"]
     return [
         {"email": u.email, "institution": u.institution, "id": u.id, "role": u.role, "is_active": u.is_active}
@@ -69,20 +69,20 @@ def get_all_users() -> List[dict[str, Any]]:
 
 def deactivate_user(email: str) -> dict[str, Any]:
     """Disables a user account by setting its 'is_active' flag to False."""
-    user_repository.deactivate(email)
+    user_repository.deactivate_user(email)
     return {"success": True, "msg": f"El usuario {email} ha sido desactivado."}
 
 
 def activate_user(email: str) -> dict[str, Any]:
     """Reactivates a user account by setting its 'is_active' flag to True."""
-    user_repository.activate(email)
+    user_repository.activate_user(email)
     return {"success": True, "msg": f"El usuario {email} ha sido activado."}
 
 
 def update_password(email: str) -> dict[str, Any]:
     """Resets password, stores hash, and emails the new credentials."""
 
-    all_users = user_repository.get_all()
+    all_users = user_repository.get_all_users()
     user = next((u for u in all_users if u.email == email), None)
 
     if not user:
@@ -94,7 +94,7 @@ def update_password(email: str) -> dict[str, Any]:
     new_password = _generate_password()
     hashed = hash_password(new_password)
 
-    user_repository.update_password(email, hashed)
+    user_repository.update_user_password(email, hashed)
 
     subject = "Tu contraseña ha sido restablecida"
 
@@ -110,7 +110,7 @@ def update_user_info(old_email: str, new_email: str, new_role: str, raw_payload:
 
     if new_role and new_role.strip().lower() == "admin":
         return {"success": False, "msg": "No se puede asignar el rol 'admin' a un usuario."}
-    current_user = user_repository.get_all()
+    current_user = user_repository.get_all_users()
     current = next((u for u in current_user if u.email == old_email), None)
     if not current:
         return {"success": False, "msg": f"Usuario con correo {old_email} no encontrado."}
@@ -138,7 +138,7 @@ def update_user_info(old_email: str, new_email: str, new_role: str, raw_payload:
         new_password = _generate_password()
         hashed = hash_password(new_password)
 
-        user_repository.update_password(updated_user.email, hashed)
+        user_repository.update_user_password(updated_user.email, hashed)
 
         subject = "Tu cuenta en la plataforma ImpactU ha sido creada exitosamente."
         notification_service.send_custom_email(

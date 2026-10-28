@@ -1,46 +1,26 @@
-from typing import Generator, Iterator, Union, Any, Dict, List, Union, cast
+from typing import Generator, Iterator, Union
 from urllib.parse import urlparse
-from quyca.constants.institutions import institutions_list
-from quyca.constants.summary_rules import (
-    AFFILIATION_SUMMARY_FIELDS,
-    PATENT_SUMMARY_FIELDS,
-    PERSON_SUMMARY_FIELDS,
-    PROJECT_SUMMARY_FIELDS,
-    SOURCE_SUMMARY_FIELDS,
-    WORK_SUMMARY_FIELDS,
-)
-from quyca.models.affiliation_model import Affiliation, Relation
 from quyca.constants.external_urls import external_urls_dict
-from quyca.models.base_model import APC, Title, ProductType, ExternalUrl, Type
+from quyca.models.base_model import Title, ProductType, ExternalUrl, Type
 from quyca.models.patent_model import Patent
 from quyca.models.project_model import Project
 from quyca.models.work_model import Work
 from quyca.repositories import person_repository
 from quyca.constants.sensitive_data import SENSITIVE_ID_SOURCES
-from quyca.repositories import affiliation_repository
 
 SUMMARY_AUTHORS_LIMIT = 10
 
 
-def get_entity_data(documents: Generator, view: str = "full") -> list:
+def get_entity_data(workables: Generator, view: str = "full") -> list:
     authors_limit = SUMMARY_AUTHORS_LIMIT if view == "summary" else None
     data = []
-    for doc in documents:
-        limit_authors(doc, authors_limit)
-        set_title_and_language(doc)
-        set_product_types(doc)
-        set_authors_affiliation_years(doc)
-        data.append(doc)
+    for workable in workables:
+        limit_authors(workable, authors_limit)
+        set_title_and_language(workable)
+        set_product_types(workable)
+        set_authors_affiliation_years(workable)
+        data.append(workable)
     return data
-
-
-def get_affiliation_by_entity_data(affiliation_type: str, affiliations: Generator) -> list:
-    affiliations_list = []
-    for affiliation in affiliations:
-        set_relation_external_urls(affiliation)
-        set_upper_affiliations_and_logo(affiliation, affiliation_type)
-        affiliations_list.append(affiliation)
-    return affiliations_list
 
 
 def set_title_and_language(workable: Union[Work, Patent, Project]) -> None:
@@ -141,188 +121,18 @@ def set_external_urls(workable: Union[Work, Patent, Project]) -> None:
     workable.external_urls = list(set(new_external_urls))
 
 
-def set_relation_external_urls(affiliation: Affiliation) -> None:
-    if not affiliation.relations:
-        return
-
-    if isinstance(affiliation.relations, (list, tuple)):
-        relations_iterable = affiliation.relations
-    elif isinstance(affiliation.relations, dict):
-        relations_iterable = [Relation(**affiliation.relations)]
-    elif isinstance(affiliation.relations, Relation):
-        relations_iterable = [affiliation.relations]
-    else:
-        return
-
-    for relation in relations_iterable:
-        if not isinstance(relation, Relation):
-            continue
-
-        if getattr(relation, "external_urls", None):
-            continue
-
-        relation_external_urls = None
-
-        if getattr(relation, "id", None):
-            try:
-                related_aff = affiliation_repository.get_affiliation_by_id(str(relation.id))
-                if getattr(related_aff, "external_urls", None):
-                    relation_external_urls = related_aff.external_urls
-            except Exception:
-                relation_external_urls = None
-
-        relation.external_urls = relation_external_urls or []
-
-
-def set_upper_affiliations_and_logo(affiliation: Affiliation, affiliation_type: str) -> None:
-    if affiliation_type == "institution" and affiliation.external_urls:
-        logo_url = next(
-            (x.url for x in affiliation.external_urls if x.source == "logo"),
-            None,
-        )
-        if logo_url:
-            affiliation.logo = str(logo_url)
-
-    relations_iterable: List[Relation]
-    if isinstance(affiliation.relations, (list, tuple)):
-        relations_iterable = affiliation.relations
-    elif isinstance(affiliation.relations, Dict):
-        relations_iterable = [Relation(**affiliation.relations)]
-    elif isinstance(affiliation.relations, Relation):
-        relations_iterable = [affiliation.relations]
-    else:
-        affiliation.affiliations = []
-        return
-
-    upper_affiliations: list[Relation] = []
-    if not affiliation.relations:
-        affiliation.affiliations = []
-        return
-
-    for relation in relations_iterable:
-        if not isinstance(relation, Relation):
-            continue
-        if not relation.types:
-            continue
-
-        first_type = relation.types[0].type
-
-        if affiliation_type == "faculty" and first_type in institutions_list:
-            set_logo(affiliation, relation)
-            upper_affiliations.append(relation)
-
-        elif affiliation_type == "department" and first_type in institutions_list + ["faculty"]:
-            set_logo(affiliation, relation)
-            upper_affiliations.append(relation)
-
-        elif affiliation_type == "group" and first_type in institutions_list + ["department", "faculty"]:
-            set_logo(affiliation, relation)
-            upper_affiliations.append(relation)
-
-    affiliation.affiliations = cast(List[Union[Dict[Any, Any], Relation]], upper_affiliations) or []
-
-
-def set_logo(affiliation: Affiliation, relation: Relation) -> None:
-    if not relation.types or not relation.external_urls:
-        return
-    if relation.types[0].type in institutions_list:
-        logo_url = next(
-            (x.url for x in relation.external_urls if x.source == "logo"),
-            None,
-        )
-        if logo_url:
-            affiliation.logo = str(logo_url)
-
-
-def get_source_export_fields(work: Work) -> dict:
-    source = work.source
-
-    if not source:
-        return {
-            "source_name": None,
-            "source_apc": None,
-            "source_urls": None,
-            "scimago_quartile": None,
-        }
-
-    source_name = str(source.name) if source.name else None
-
-    source_apc = None
-    if isinstance(source.apc, APC):
-        if source.apc.charges and source.apc.currency:
-            source_apc = f"{source.apc.charges} / {source.apc.currency}"
-    elif isinstance(source.apc, str):
-        source_apc = source.apc or None
-
-    urls = {str(url.url) for url in (source.external_urls or []) if url.url}
-    source_urls = " | ".join(urls) if urls else None
-
-    scimago_quartile = None
-
-    if source.ranking and work.date_published is not None:
-        for ranking in source.ranking:
-            if (
-                ranking.source == "scimago Best Quartile"
-                and ranking.rank
-                and ranking.rank != "-"
-                and isinstance(ranking.from_date, int)
-                and isinstance(ranking.to_date, int)
-                and ranking.from_date <= work.date_published <= ranking.to_date
-            ):
-                scimago_quartile = str(ranking.rank)
-                break
-
-    return {
-        "source_name": source_name,
-        "source_apc": source_apc,
-        "source_urls": source_urls,
-        "scimago_quartile": scimago_quartile,
-    }
-
-
-def set_authors_affiliation_years(docs: list | Work | Patent | Project) -> None:
-    if not isinstance(docs, list):
-        docs = [docs]
-    person_ids = {a.id for d in docs for a in (d.authors or []) if a.id}
+def set_authors_affiliation_years(workables: list | Work | Patent | Project) -> None:
+    if not isinstance(workables, list):
+        workables = [workables]
+    person_ids = {a.id for d in workables for a in (d.authors or []) if a.id}
     years_by_person = person_repository.get_affiliation_years(person_ids)
-    for doc in docs:
-        for author in doc.authors or []:
+    for workable in workables:
+        for author in workable.authors or []:
             author_years = years_by_person.get(author.id, {})
             for aff in author.affiliations or []:
                 aff.years = author_years.get(aff.id, [])
 
 
-def build_work_pipeline_params(view: str = "full") -> dict:
-    if view == "summary":
-        return {"project": WORK_SUMMARY_FIELDS}
-    return {}
-
-
-def build_person_pipeline_params(view: str = "full") -> dict:
-    if view == "summary":
-        return {"project": PERSON_SUMMARY_FIELDS}
-    return {}
-
-
-def build_affiliation_pipeline_params(view: str = "full") -> dict:
-    if view == "summary":
-        return {"project": AFFILIATION_SUMMARY_FIELDS}
-    return {}
-
-
-def build_patents_pipeline_params(view: str = "full") -> dict:
-    if view == "summary":
-        return {"project": PATENT_SUMMARY_FIELDS}
-    return {}
-
-
-def build_projects_pipeline_params(view: str = "full") -> dict:
-    if view == "summary":
-        return {"project": PROJECT_SUMMARY_FIELDS}
-    return {}
-
-
-def build_sources_pipeline_params(view: str = "full") -> dict:
-    if view == "summary":
-        return {"project": SOURCE_SUMMARY_FIELDS, "collection": "sources"}
-    return {}
+def build_pipeline_params(view: str, summary_fields: list[str], **extra: str) -> dict:
+    """The summary view only projects the fields its cards show."""
+    return {"project": summary_fields, **extra} if view == "summary" else {}

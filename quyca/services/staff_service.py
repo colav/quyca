@@ -7,11 +7,12 @@ import pandas as pd
 from werkzeug.datastructures import FileStorage
 
 from quyca.models.staff_report_model import StaffReport
-from quyca.normalizers import staff_normalizer_service
+from quyca.normalizers import staff_normalizer
 from quyca.validators import error_grouper, staff_validator
 from quyca.validators.staff_validator import REQUIRED_COLUMNS
 from quyca.files import annotator
 from quyca.files import xlsx_writer_exporter
+from quyca.security import jwt_token_service
 from quyca.services import notification_service
 from quyca.files import pdf_report
 from quyca.repositories import file_repository
@@ -22,22 +23,10 @@ XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 def handle_staff_upload(file: FileStorage, claims: dict[str, Any], upload_date: str) -> tuple[dict, int]:
     """Validates token claims, processes the Excel and, when it has no errors, saves the original
     and normalized files. Returns the response payload and its HTTP status."""
-    email = claims.get("sub")
-    ror_id = claims.get("_id")
-    institution = claims.get("institution")
-    user = claims.get("role")
-
-    if (
-        not isinstance(email, str)
-        or not isinstance(ror_id, str)
-        or not isinstance(institution, str)
-        or not isinstance(user, str)
-        or not email
-        or not ror_id
-        or not institution
-        or not user
-    ):
+    upload_claims = jwt_token_service.get_upload_claims(claims)
+    if upload_claims is None:
         return {"success": False, "msg": "Token inválido o revocado"}, 401
+    email, ror_id, institution, user = upload_claims
 
     if not file:
         return {"success": False, "msg": "Archivo requerido"}, 400
@@ -126,10 +115,10 @@ def process_staff_file(
     df_original = df.copy()
 
     # 2. Structural cleaning — always, before any validation
-    df = staff_normalizer_service.clean(df)
+    df = staff_normalizer.clean(df)
 
     # 3. Semantic mapping — always, so validators see canonical values
-    df, changelog = staff_normalizer_service.map_values(df)
+    df, changelog = staff_normalizer.map_values(df)
     normalized_unique_values_count = len(
         {
             (

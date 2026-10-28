@@ -243,7 +243,7 @@ def export_annual_articles_by_top_publishers(
             "source.publisher.name": {"$ne": None},
         },
     }
-    return work_repository.get_works_with_source_by_affiliation(affiliation_id, query_params, pipeline_params)
+    return work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
 
 
 def export_most_used_title_words(affiliation_id: str) -> Calculations:
@@ -258,7 +258,7 @@ def export_articles_by_publisher(
         "work_project": ["source.id", "source.publisher.name", "source.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
-    return work_repository.get_works_with_source_by_affiliation(affiliation_id, query_params, pipeline_params)
+    return work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
 
 
 def export_products_by_subject(
@@ -317,7 +317,7 @@ def export_articles_by_scimago_quartile(
         "work_project": ["source.id", "source.name", "date_published", "source.ranking"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
-    return work_repository.get_works_with_source_by_affiliation(affiliation_id, query_params, pipeline_params)
+    return work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
 
 
 def export_articles_by_publishing_institution(
@@ -329,7 +329,7 @@ def export_articles_by_publishing_institution(
         "work_project": ["source.id", "source.name", "source.publisher.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
-    works = work_repository.get_works_with_source_by_affiliation(affiliation_id, query_params, pipeline_params)
+    works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
     return works, institution
 
 
@@ -356,7 +356,7 @@ def export_annual_apc_expenses(
             "source.apc.currency": {"$exists": True, "$ne": None},
         },
     }
-    return work_repository.get_works_with_source_by_affiliation(affiliation_id, query_params, pipeline_params)
+    return work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
 
 
 AFFILIATION_PLOT_EXPORTERS: dict[str, PlotExporter] = {

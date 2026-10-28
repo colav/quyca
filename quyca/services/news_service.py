@@ -9,7 +9,7 @@ from quyca.parsers import news_parser
 def get_news_by_person(person_id: str, query_params: QueryParams, current_url: str) -> dict:
     start_time = time.time()
     news = news_repository.get_news_by_person(person_id, query_params)
-    total_results = news_repository.news_count_by_person(person_id)
+    total_results = news_repository.get_news_count_by_person(person_id)
     return build_metadata(
         news,
         total_results,
@@ -24,8 +24,8 @@ def get_news_by_affiliation(
     affiliation_id: str, affiliation_type: str, query_params: QueryParams, current_url: str
 ) -> dict:
     start_time = time.time()
-    news = news_repository.get_news_by_affiliation(affiliation_id, affiliation_type, query_params)
-    total_results = news_repository.news_count_by_affiliation(affiliation_id, affiliation_type)
+    news = news_repository.get_news_by_affiliation(affiliation_id, query_params)
+    total_results = news_repository.get_news_count_by_affiliation(affiliation_id)
     return build_metadata(
         news,
         total_results,
