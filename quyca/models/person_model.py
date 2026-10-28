@@ -1,7 +1,7 @@
 from typing import Any, Optional
 from bson import ObjectId
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from quyca.domain.models.base_model import (
+from quyca.models.base_model import (
     PyObjectId,
     CitationsCount,
     Updated,

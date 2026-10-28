@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 
 
-from quyca.domain.models.base_model import (
+from quyca.models.base_model import (
     CitationsCount,
     Topic,
     Type,

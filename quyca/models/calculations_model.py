@@ -1,6 +1,6 @@
 from typing import Iterable
 from pydantic import BaseModel, Field
-from quyca.domain.models.base_model import PyObjectId
+from quyca.models.base_model import PyObjectId
 
 
 class Node(BaseModel):

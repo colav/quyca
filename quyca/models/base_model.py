@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, field_validator, Field, conint, model_validator
 from bson import ObjectId
 
-from quyca.domain.constants.clean_source import clean_nan
-from quyca.domain.normalizers.authors_count import parse_authors_count
+from quyca.constants.clean_source import clean_nan
+from quyca.normalizers.authors_count import parse_authors_count
 
 
 class PyObjectId(ObjectId):

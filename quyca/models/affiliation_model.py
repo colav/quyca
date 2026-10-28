@@ -2,7 +2,7 @@ from typing import Any
 from bson import ObjectId
 from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
 
-from quyca.domain.models.base_model import (
+from quyca.models.base_model import (
     Type,
     Updated,
     ExternalUrl,
