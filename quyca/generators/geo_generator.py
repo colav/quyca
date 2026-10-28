@@ -2,7 +2,7 @@ from typing import Generator
 
 from pymongo.command_cursor import CommandCursor
 
-from quyca.domain.models.geo_model import Geo
+from quyca.models.geo_model import Geo
 
 
 def get(cursor: CommandCursor) -> Generator:

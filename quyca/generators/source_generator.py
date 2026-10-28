@@ -2,7 +2,7 @@ from typing import Generator
 
 from pymongo.command_cursor import CommandCursor
 
-from quyca.domain.models.source_model import Source
+from quyca.models.source_model import Source
 
 
 def get(cursor: CommandCursor) -> Generator:

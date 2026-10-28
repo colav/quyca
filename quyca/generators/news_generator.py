@@ -1,6 +1,6 @@
 from typing import Generator
 from pymongo.command_cursor import CommandCursor
-from quyca.domain.models.news_model import News
+from quyca.models.news_model import News
 
 
 def get(cursor: CommandCursor) -> Generator:
