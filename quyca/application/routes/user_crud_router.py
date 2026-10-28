@@ -2,11 +2,10 @@ from typing import Any
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import verify_jwt_in_request, get_jwt, get_jwt_identity
 from sentry_sdk import capture_exception
-from quyca.application.usecases.user_crud import UserCrudUseCase
+from quyca.domain.services import user_service
 from quyca.domain.exceptions.not_entity_exception import NotEntityException
 
 user_crud_router = Blueprint("user_crud_app_router", __name__)
-usecase = UserCrudUseCase()
 
 
 def check_admin_permission() -> tuple[dict[str, Any] | None, int | None]:
@@ -46,7 +45,7 @@ def create_user(email: str) -> tuple[Any, int]:
         ror_id = data.get("ror_id")
         role = data.get("role")
 
-        result = usecase.create_user(email, institution, ror_id, role, data)
+        result = user_service.create_user(email, institution, ror_id, role, data)
 
         if not result.get("success") and "ya existe" in result.get("msg", "").lower():
             return jsonify(result), 409
@@ -67,7 +66,7 @@ def list_users() -> tuple[Any, int]:
         return jsonify(error_response), status
 
     try:
-        result = usecase.get_all_users()
+        result = user_service.get_all_users()
         return jsonify({"success": True, "data": result}), 200
     except Exception as e:
         capture_exception(e)
@@ -82,7 +81,7 @@ def deactivate_user(email: str) -> tuple[Any, int]:
 
     try:
         email = email.strip().lower()
-        result = usecase.deactivate_user(email)
+        result = user_service.deactivate_user(email)
         return jsonify(result), 200
 
     except NotEntityException as e:
@@ -100,7 +99,7 @@ def activate_user(email: str) -> tuple[Any, int]:
 
     try:
         email = email.strip().lower()
-        result = usecase.activate_user(email)
+        result = user_service.activate_user(email)
         return jsonify(result), 200
 
     except NotEntityException as e:
@@ -120,7 +119,7 @@ def update_password(email: str) -> tuple[Any, int]:
     try:
         email = email.strip().lower()
 
-        result = usecase.update_password(email)
+        result = user_service.update_password(email)
         return jsonify(result), 200
     except NotEntityException as e:
         return jsonify({"success": False, "msg": str(e)}), 400
@@ -145,7 +144,7 @@ def edit_user(email: str) -> tuple[Any, int]:
         if not new_email and not new_role:
             return jsonify({"success": False, "msg": "Debes enviar al menos email o rol."}), 400
 
-        result = usecase.update_user_info(old_email, new_email or old_email, new_role or "", data)
+        result = user_service.update_user_info(old_email, new_email or old_email, new_role or "", data)
         if not result.get("success") and "role 'admin'" in result.get("msg", "").lower():
             return jsonify(result), 403
         return jsonify(result), (200 if result.get("success") else 400)
@@ -178,7 +177,7 @@ def regenerate_apikey(email: str) -> tuple[Any, int]:
         data = request.get_json(silent=True) or {}
         expires = data.get("expires")
 
-        result = usecase.create_or_regenerate_apikey(email.lower(), expires)
+        result = user_service.regenerate_apikey(email.lower(), expires)
         return jsonify(result), 200
 
     except NotEntityException as e:
@@ -211,7 +210,7 @@ def update_apikey_expiration(email: str) -> tuple[Any, int]:
         data = request.get_json(silent=True) or {}
         expires = data.get("expires")
 
-        result = usecase.update_apikey_expiration(email, expires)
+        result = user_service.update_apikey_expiration(email, expires)
         return jsonify(result), 200
 
     except NotEntityException as e:
@@ -240,7 +239,7 @@ def delete_apikey(email: str) -> tuple[Any, int]:
         return jsonify({"success": False, "msg": "No tienes permiso para eliminar el API Key de otro usuario."}), 403
 
     try:
-        result = usecase.delete_apikey(email)
+        result = user_service.delete_apikey(email)
         return jsonify(result), 200
 
     except NotEntityException as e:

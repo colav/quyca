@@ -5,9 +5,7 @@ from sentry_sdk import capture_exception
 from flask_jwt_extended import set_access_cookies, unset_jwt_cookies
 
 from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.infrastructure.repositories.user_repository import UserRepositoryMongo
-from quyca.infrastructure.security.jwt_token_service import JwtTokenService
-from quyca.application.usecases.login_user import LoginUserUseCase
+from quyca.domain.services import auth_service
 
 user_auth_router = Blueprint("user_auth_app_router", __name__)
 
@@ -22,11 +20,7 @@ def login() -> Tuple[Response, int]:
         if not email or not password:
             return jsonify({"success": False, "msg": "correo y contraseña requeridos"}), 400
 
-        repo = UserRepositoryMongo()
-        token_service = JwtTokenService()
-        usecase = LoginUserUseCase(user_repo=repo, token_service=token_service)
-
-        result = usecase.execute(email, password)
+        result = auth_service.login(email, password)
 
         status_code = 200 if result.get("success") else 401
 
