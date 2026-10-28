@@ -1,5 +1,4 @@
 import time
-from typing import Dict
 
 from quyca.models.base_model import QueryParams
 from quyca.parsers import affiliation_parser
@@ -22,43 +21,37 @@ from quyca.repositories import (
     search_source_filters_repository,
     search_work_filters_repository,
 )
+from quyca.validators import search_validator
 
 
-def search_persons(query_params: QueryParams, current_url: str) -> Dict:
+def search_persons(query_params: QueryParams, current_url: str) -> dict:
+    search_validator.validate_sort(query_params.sort)
     start_time = time.time()
-    pipeline_params = build_person_pipeline_params(query_params.view)
-    persons = search_repository.search_persons(query_params, pipeline_params)
+    persons = search_repository.search_persons(query_params, build_person_pipeline_params(query_params.view))
     total_count = search_repository.search_count_persons(query_params)
     return build_metadata(
-        persons,
-        total_count,
-        query_params,
-        start_time,
-        current_url,
-        parser=search_parser.parse_persons_search,
+        persons, total_count, query_params, start_time, current_url, parser=search_parser.parse_persons_search
     )
 
 
-def search_works(query_params: QueryParams, current_url: str) -> Dict:
+def search_works(query_params: QueryParams, current_url: str) -> dict:
+    search_validator.validate_sort(query_params.sort)
+    search_validator.validate_years(query_params.years)
     start_time = time.time()
-    pipeline_params = build_work_pipeline_params(query_params.view)
-    works = search_repository.search_works(query_params, pipeline_params)
+    works = search_repository.search_works(query_params, build_work_pipeline_params(query_params.view))
     works_data = get_entity_data(works, query_params.view)
     total_count = search_repository.search_count_works(query_params)
     return build_metadata(
-        works_data,
-        total_count,
-        query_params,
-        start_time,
-        current_url,
-        parser=search_parser.parse_works_search,
+        works_data, total_count, query_params, start_time, current_url, parser=search_parser.parse_works_search
     )
 
 
-def search_affiliations(query_params: QueryParams, affiliation_type: str, current_url: str) -> Dict:
+def search_affiliations(query_params: QueryParams, affiliation_type: str, current_url: str) -> dict:
+    search_validator.validate_sort(query_params.sort)
     start_time = time.time()
-    pipeline_params = build_affiliation_pipeline_params(query_params.view)
-    affiliations = search_repository.search_affiliations(affiliation_type, query_params, pipeline_params)
+    affiliations = search_repository.search_affiliations(
+        affiliation_type, query_params, build_affiliation_pipeline_params(query_params.view)
+    )
     total_count = search_repository.search_count_affiliations(query_params, affiliation_type)
     return build_metadata(
         affiliations,
@@ -70,54 +63,41 @@ def search_affiliations(query_params: QueryParams, affiliation_type: str, curren
     )
 
 
-def search_sources(query_params: QueryParams, current_url: str) -> Dict:
+def search_sources(query_params: QueryParams, current_url: str) -> dict:
+    search_validator.validate_sort(query_params.sort)
     start_time = time.time()
-    pipeline_params = build_sources_pipeline_params(query_params.view)
-    sources = search_repository.search_sources(query_params, pipeline_params)
+    sources = search_repository.search_sources(query_params, build_sources_pipeline_params(query_params.view))
     total_count = search_repository.search_count_sources(query_params)
     return build_metadata(
-        sources,
-        total_count,
-        query_params,
-        start_time,
-        current_url,
-        parser=search_parser.parse_sources_search,
+        sources, total_count, query_params, start_time, current_url, parser=search_parser.parse_sources_search
     )
 
 
-def search_patents(query_params: QueryParams, current_url: str) -> Dict:
+def search_patents(query_params: QueryParams, current_url: str) -> dict:
+    search_validator.validate_sort(query_params.sort)
     start_time = time.time()
-    pipeline_params = build_patents_pipeline_params(query_params.view)
-    patents = search_repository.search_patents(query_params, pipeline_params)
+    patents = search_repository.search_patents(query_params, build_patents_pipeline_params(query_params.view))
     patents_data = get_entity_data(patents, query_params.view)
     total_count = search_repository.search_count_patents(query_params)
     return build_metadata(
-        patents_data,
-        total_count,
-        query_params,
-        start_time,
-        current_url,
-        parser=search_parser.parse_patents_search,
+        patents_data, total_count, query_params, start_time, current_url, parser=search_parser.parse_patents_search
     )
 
 
-def search_projects(query_params: QueryParams, current_url: str) -> Dict:
+def search_projects(query_params: QueryParams, current_url: str) -> dict:
+    search_validator.validate_sort(query_params.sort)
     start_time = time.time()
-    pipeline_params = build_projects_pipeline_params(query_params.view)
-    projects = search_repository.search_projects(query_params, pipeline_params)
+    projects = search_repository.search_projects(query_params, build_projects_pipeline_params(query_params.view))
     projects_data = get_entity_data(projects, query_params.view)
     total_count = search_repository.search_count_projects(query_params)
     return build_metadata(
-        projects_data,
-        total_count,
-        query_params,
-        start_time,
-        current_url,
-        parser=search_parser.parse_projects_search,
+        projects_data, total_count, query_params, start_time, current_url, parser=search_parser.parse_projects_search
     )
 
 
-def search_geo(query_params: QueryParams, geo_type: str, current_url: str) -> Dict:
+def search_geo(query_params: QueryParams, geo_type: str, current_url: str) -> dict:
+    search_validator.validate_geo_type(geo_type)
+    search_validator.validate_sort(query_params.sort)
     start_time = time.time()
     geolocations = search_repository.search_geo(query_params, geo_type)
     total_count = search_repository.search_count_geo(query_params, geo_type)
@@ -131,16 +111,16 @@ def search_geo(query_params: QueryParams, geo_type: str, current_url: str) -> Di
     )
 
 
-def search_works_available_filters(query_params: QueryParams) -> Dict:
+def search_works_available_filters(query_params: QueryParams) -> dict:
+    search_validator.validate_years(query_params.years)
     available_filters = search_work_filters_repository.get_works_available_filters(query_params)
     return work_parser.parse_available_filters(available_filters)
 
 
-def search_affiliations_available_filters(affiliation_type: str, query_params: QueryParams) -> Dict:
+def search_affiliations_available_filters(affiliation_type: str, query_params: QueryParams) -> dict:
     available_filters = search_affiliation_filters_repository.get_affiliations_available_filters(
         affiliation_type, query_params
     )
-
     return affiliation_parser.parse_available_affiliation_filters(available_filters)
 
 
