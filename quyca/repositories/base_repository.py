@@ -1,4 +1,20 @@
+from pymongo.collection import Collection
+
 from quyca.models.base_model import QueryParams
+
+
+def text_search_match(keywords: str | None) -> list[dict]:
+    """
+        `$text` must be the first stage of a pipeline, so every search pipeline starts from this list.
+    """
+    return [{"$match": {"$text": {"$search": keywords}}}] if keywords else []
+
+
+def count(collection: Collection, match_stages: list[dict]) -> int:
+    if not match_stages:
+        return int(collection.estimated_document_count())
+    result = next(collection.aggregate([*match_stages, {"$count": "total"}]), {"total": 0})
+    return int(result["total"])
 
 
 def set_search_end_stages(pipeline: list, query_params: QueryParams, pipeline_params: dict | None = None) -> list:
