@@ -18,25 +18,23 @@ from quyca.application.routes.user_crud_router import user_crud_router
 from quyca.application.routes.work_router import work_router
 from quyca.application.routes.me_router import me_router
 
-from quyca.config import settings
-
 router = Blueprint("router", __name__)
 
-router.register_blueprint(search_router, url_prefix=f"{settings.API_URL_PREFIX}/search")
-router.register_blueprint(affiliation_router, url_prefix=f"{settings.API_URL_PREFIX}/affiliation")
-router.register_blueprint(person_router, url_prefix=f"{settings.API_URL_PREFIX}/person")
-router.register_blueprint(source_router, url_prefix=f"{settings.API_URL_PREFIX}/source")
-router.register_blueprint(work_router, url_prefix=f"{settings.API_URL_PREFIX}/work")
-router.register_blueprint(patent_router, url_prefix=f"{settings.API_URL_PREFIX}/patent")
-router.register_blueprint(project_router, url_prefix=f"{settings.API_URL_PREFIX}/project")
-router.register_blueprint(geo_router, url_prefix=f"{settings.API_URL_PREFIX}/geo")
-router.register_blueprint(apc_router, url_prefix=f"{settings.API_URL_PREFIX}/apc")
-router.register_blueprint(completer_router, url_prefix=f"{settings.API_URL_PREFIX}/completer")
-router.register_blueprint(user_auth_router, url_prefix=f"{settings.API_URL_PREFIX}")
-router.register_blueprint(me_router, url_prefix=f"{settings.API_URL_PREFIX}")
-router.register_blueprint(user_crud_router, url_prefix=f"{settings.API_URL_PREFIX}")
-router.register_blueprint(submit_router, url_prefix=f"{settings.API_URL_PREFIX}/submit")
+router.register_blueprint(search_router, url_prefix="/search")
+router.register_blueprint(affiliation_router, url_prefix="/affiliation")
+router.register_blueprint(person_router, url_prefix="/person")
+router.register_blueprint(source_router, url_prefix="/source")
+router.register_blueprint(work_router, url_prefix="/work")
+router.register_blueprint(patent_router, url_prefix="/patent")
+router.register_blueprint(project_router, url_prefix="/project")
+router.register_blueprint(geo_router, url_prefix="/geo")
+router.register_blueprint(apc_router, url_prefix="/apc")
+router.register_blueprint(completer_router, url_prefix="/completer")
+router.register_blueprint(user_auth_router)
+router.register_blueprint(me_router)
+router.register_blueprint(user_crud_router)
+router.register_blueprint(submit_router, url_prefix="/submit")
 
-router.register_blueprint(info_router, url_prefix=f"{settings.API_URL_PREFIX}")
-router.register_blueprint(ping_router, url_prefix=f"{settings.API_URL_PREFIX}")
-router.register_blueprint(docs_router, url_prefix=f"{settings.API_URL_PREFIX}")
+router.register_blueprint(info_router)
+router.register_blueprint(ping_router)
+router.register_blueprint(docs_router)
