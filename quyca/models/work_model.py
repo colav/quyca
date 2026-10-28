@@ -73,15 +73,6 @@ class Abstract(BaseModel):
     source: str | None = None
 
 
-class AuthorWork(Author):
-    """
-    The difference with Author is that in the work the author is marked with a type of author (ex: advisor, co-advisor, author etc..)
-    this value is only assigned in the work.
-    """
-
-    type: str | None = None
-
-
 class Work(BaseModel):
     model_config = ConfigDict(json_encoders={ObjectId: str})
 
