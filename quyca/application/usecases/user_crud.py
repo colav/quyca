@@ -1,8 +1,6 @@
 from typing import Any, Optional, List, cast
 from quyca.domain.services.user_service import UserCrudService
 from quyca.infrastructure.repositories.user_crud_repository import UserCrudRepository
-from quyca.infrastructure.notifications.notification import StaffNotification
-from quyca.infrastructure.repositories.gmail_repository import GmailRepository
 
 
 class UserCrudUseCase:
@@ -15,9 +13,7 @@ class UserCrudUseCase:
     def _ensure_service(self) -> UserCrudService:
         """Creates the service instance if not already initialized."""
         if self.service is None:
-            gmail_repo = GmailRepository()
-            notifier = StaffNotification(gmail_repo)
-            self.service = UserCrudService(self.repo, notifier)
+            self.service = UserCrudService(self.repo)
 
         return self.service
 

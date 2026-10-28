@@ -4,7 +4,7 @@ from quyca.domain.models.user_model import User
 from quyca.infrastructure.security.password_hasher import hash_password
 from quyca.domain.repositories.user_crud_repository_interface import IUserCrudRepository
 from quyca.domain.exceptions.not_entity_exception import NotEntityException
-from quyca.infrastructure.notifications.notification import StaffNotification
+from quyca.infrastructure.notifications import notification
 
 """
 Application service for admin user management (create, list, toggle, reset, edit).
@@ -14,9 +14,8 @@ Application service for admin user management (create, list, toggle, reset, edit
 class UserCrudService:
     """Application service for administrative user management."""
 
-    def __init__(self, user_repo: IUserCrudRepository, notifier: StaffNotification) -> None:
+    def __init__(self, user_repo: IUserCrudRepository) -> None:
         self.user_repo = user_repo
-        self.notifier = notifier
 
     def _generate_password(self, length: int = 10) -> str:
         """Generates a random alphanumeric password."""
@@ -112,7 +111,7 @@ class UserCrudService:
 
         subject = "Tu cuenta en la plataforma ImpactU ha sido creada exitosamente."
 
-        self.notifier.send_custom_email(subject, role, institution, email, raw_password, ror_id=ror_id)
+        notification.send_custom_email(subject, role, institution, email, raw_password, ror_id=ror_id)
 
         return {
             "success": True,
@@ -157,7 +156,7 @@ class UserCrudService:
 
         subject = "Tu contraseña ha sido restablecida"
 
-        self.notifier.send_email_change_password(
+        notification.send_email_change_password(
             email=email, subject=subject, password=new_password, institution=user.institution, ror_id=user.id
         )
         return {"success": True, "msg": f"La contraseña de {email} se actualizó correctamente."}
@@ -201,7 +200,7 @@ class UserCrudService:
             self.user_repo.update_password(updated_user.email, hashed)
 
             subject = "Tu cuenta en la plataforma ImpactU ha sido creada exitosamente."
-            self.notifier.send_custom_email(
+            notification.send_custom_email(
                 subject=subject,
                 role=updated_user.role,
                 institution=updated_user.institution,
