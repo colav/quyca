@@ -66,129 +66,133 @@ LABEL_COLOR_PAIRS = [
 ]
 
 
-class GmailRepository:
-    """Sends HTML emails with attachments using the Gmail API."""
+SCOPES: list[str] = [
+    "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/gmail.modify",
+]
 
-    SCOPES: list[str] = [
-        "https://www.googleapis.com/auth/gmail.send",
-        "https://www.googleapis.com/auth/gmail.modify",
-    ]
 
-    def __init__(self) -> None:
-        credentials_path = current_app.config.get("GOOGLE_CREDENTIALS")
-        if not credentials_path:
-            raise ValueError("GOOGLE_CREDENTIALS no está configurado")
-        if not os.path.exists(credentials_path):
-            raise FileNotFoundError(f"No se encontró el archivo {credentials_path}")
+def _get_service() -> Any:
+    """Loads the OAuth token from GOOGLE_CREDENTIALS and builds the Gmail API client."""
+    credentials_path = current_app.config.get("GOOGLE_CREDENTIALS")
+    if not credentials_path:
+        raise ValueError("GOOGLE_CREDENTIALS no está configurado")
+    if not os.path.exists(credentials_path):
+        raise FileNotFoundError(f"No se encontró el archivo {credentials_path}")
 
-        with open(credentials_path, "rb") as f:
-            creds = pickle.load(f)
+    with open(credentials_path, "rb") as f:
+        creds = pickle.load(f)
 
-        if getattr(creds, "expired", False) and getattr(creds, "refresh_token", None):
-            creds.refresh(Request())
+    if getattr(creds, "expired", False) and getattr(creds, "refresh_token", None):
+        creds.refresh(Request())
 
-        scopes = set(getattr(creds, "scopes", []) or [])
-        if not scopes or not set(self.SCOPES).issubset(scopes):
-            raise ValueError(f"El token no tiene permisos necesarios: {self.SCOPES}")
+    scopes = set(getattr(creds, "scopes", []) or [])
+    if not scopes or not set(SCOPES).issubset(scopes):
+        raise ValueError(f"El token no tiene permisos necesarios: {SCOPES}")
 
-        self.service = build("gmail", "v1", credentials=creds)
+    return build("gmail", "v1", credentials=creds)
 
-    def get_color_from_ror(self, ror_id: str) -> dict[str, str]:
-        """Selects a deterministic label color based on ror_id."""
-        num = int(hashlib.md5(ror_id.encode("utf-8")).hexdigest(), 16)
-        index = num % len(LABEL_COLOR_PAIRS)
-        return LABEL_COLOR_PAIRS[index]
 
-    def _ensure_label(self, name: str, ror_id: str) -> str:
-        """Ensures a hierarchical Gmail label exists and returns its id."""
-        labels_service = self.service.users().labels()
-        existing = {lbl["name"]: lbl["id"] for lbl in labels_service.list(userId="me").execute().get("labels", [])}
+def get_color_from_ror(ror_id: str) -> dict[str, str]:
+    """Selects a deterministic label color based on ror_id."""
+    num = int(hashlib.md5(ror_id.encode("utf-8")).hexdigest(), 16)
+    index = num % len(LABEL_COLOR_PAIRS)
+    return LABEL_COLOR_PAIRS[index]
 
-        parts = name.split("/")
-        current_path = ""
-        label_id: str = ""
 
-        for part in parts:
-            current_path = part if current_path == "" else f"{current_path}/{part}"
+def _ensure_label(service: Any, name: str, ror_id: str) -> str:
+    """Ensures a hierarchical Gmail label exists and returns its id."""
+    labels_service = service.users().labels()
+    existing = {lbl["name"]: lbl["id"] for lbl in labels_service.list(userId="me").execute().get("labels", [])}
 
-            if current_path in existing:
-                label_id = existing[current_path]
-                continue
+    parts = name.split("/")
+    current_path = ""
+    label_id: str = ""
 
-            color: dict[str, str] = self.get_color_from_ror(ror_id)
+    for part in parts:
+        current_path = part if current_path == "" else f"{current_path}/{part}"
 
-            body: dict[str, Any] = {
-                "name": current_path,
-                "labelListVisibility": "labelShow",
-                "messageListVisibility": "show",
-            }
+        if current_path in existing:
+            label_id = existing[current_path]
+            continue
 
-            if color:
-                body["color"] = color
+        color: dict[str, str] = get_color_from_ror(ror_id)
 
-            created = labels_service.create(userId="me", body=body).execute()
-            label_id = created["id"]
-            existing[current_path] = label_id
+        body: dict[str, Any] = {
+            "name": current_path,
+            "labelListVisibility": "labelShow",
+            "messageListVisibility": "show",
+        }
 
-        return label_id
+        if color:
+            body["color"] = color
 
-    def _add_label_to_message(self, message_id: str, label_name: str, ror_id: str) -> None:
-        """Adds a label to an already sent Gmail message."""
-        label_id = self._ensure_label(label_name, ror_id)
+        created = labels_service.create(userId="me", body=body).execute()
+        label_id = created["id"]
+        existing[current_path] = label_id
 
-        self.service.users().messages().modify(
-            userId="me",
-            id=message_id,
-            body={"addLabelIds": [label_id]},
-        ).execute()
+    return label_id
 
-    def send_email(self, to_email: str, subject: str, body_html: str, attachments: list[dict]) -> dict[str, Any]:
-        """Sends an HTML email with optional attachments."""
-        message = MIMEMultipart()
-        message["to"] = to_email
-        message["subject"] = subject
-        message.attach(MIMEText(body_html, "html", "utf-8"))
 
-        for att in attachments:
-            part = MIMEBase(*att["mime"].split("/"))
-            part.set_payload(att["bytes"].getvalue())
-            encoders.encode_base64(part)
-            part.add_header("Content-Disposition", f'attachment; filename="{att["filename"]}"')
-            message.attach(part)
+def _add_label_to_message(service: Any, message_id: str, label_name: str, ror_id: str) -> None:
+    """Adds a label to an already sent Gmail message."""
+    label_id = _ensure_label(service, label_name, ror_id)
 
-        raw = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
+    service.users().messages().modify(
+        userId="me",
+        id=message_id,
+        body={"addLabelIds": [label_id]},
+    ).execute()
 
-        try:
-            sent = self.service.users().messages().send(userId="me", body={"raw": raw}).execute()
-            return {"success": True, "id": sent.get("id")}
-        except HttpError as e:
-            return {"success": False, "error": str(e)}
 
-    def send_labeled_email(
-        self,
-        to_email: str,
-        subject: str,
-        body_html: str,
-        attachments: list[dict],
-        institution: str,
-        tipo: str,
-        ror_id: str,
-    ) -> dict[str, Any]:
-        """Sends an email and applies an institution/type Gmail label."""
-        result = self.send_email(to_email, subject, body_html, attachments)
+def _send_email(service: Any, to_email: str, subject: str, body_html: str, attachments: list[dict]) -> dict[str, Any]:
+    """Sends an HTML email with optional attachments."""
+    message = MIMEMultipart()
+    message["to"] = to_email
+    message["subject"] = subject
+    message.attach(MIMEText(body_html, "html", "utf-8"))
 
-        if not result.get("success"):
-            return result
+    for att in attachments:
+        part = MIMEBase(*att["mime"].split("/"))
+        part.set_payload(att["bytes"].getvalue())
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", f'attachment; filename="{att["filename"]}"')
+        message.attach(part)
 
-        message_id = result.get("id")
-        if not isinstance(message_id, str):
-            return result
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode("utf-8")
 
-        label_name = f"{institution}/{tipo}"
+    try:
+        sent = service.users().messages().send(userId="me", body={"raw": raw}).execute()
+        return {"success": True, "id": sent.get("id")}
+    except HttpError as e:
+        return {"success": False, "error": str(e)}
 
-        try:
-            self._add_label_to_message(message_id, label_name, ror_id)
-        except Exception as e:
-            result["label_error"] = str(e)
 
+def send_labeled_email(
+    to_email: str,
+    subject: str,
+    body_html: str,
+    attachments: list[dict],
+    institution: str,
+    tipo: str,
+    ror_id: str,
+) -> dict[str, Any]:
+    """Sends an email and applies an institution/type Gmail label."""
+    service = _get_service()
+    result = _send_email(service, to_email, subject, body_html, attachments)
+
+    if not result.get("success"):
         return result
+
+    message_id = result.get("id")
+    if not isinstance(message_id, str):
+        return result
+
+    label_name = f"{institution}/{tipo}"
+
+    try:
+        _add_label_to_message(service, message_id, label_name, ror_id)
+    except Exception as e:
+        result["label_error"] = str(e)
+
+    return result

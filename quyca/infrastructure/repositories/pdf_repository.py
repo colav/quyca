@@ -4,38 +4,33 @@ from xhtml2pdf import pisa
 from datetime import datetime
 from typing import List, Dict, Any
 from zoneinfo import ZoneInfo
-from quyca.domain.repositories.pdf_repository_interface import IPDFRepository
 
 
-class PDFRepository(IPDFRepository):
-    """Renders validation reports (HTML) into PDF files."""
+def generate_quality_report(
+    errors: List[Dict[str, Any]],
+    warnings: List[Dict[str, Any]],
+    duplicados: List[Dict[str, Any]] | None,
+    institution: str,
+    filename: str,
+    upload_date: str,
+    user: str,
+    normalized_changes: List[Dict[str, Any]] | None = None,
+    has_nombre_completo: bool = False,
+) -> io.BytesIO:
+    """Generates the Staff PDF report with errors/warnings/duplicates."""
+    report_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
 
-    def generate_quality_report(
-        self,
-        errors: List[Dict[str, Any]],
-        warnings: List[Dict[str, Any]],
-        duplicados: List[Dict[str, Any]] | None,
-        institution: str,
-        filename: str,
-        upload_date: str,
-        user: str,
-        normalized_changes: List[Dict[str, Any]] | None = None,
-        has_nombre_completo: bool = False,
-    ) -> io.BytesIO:
-        """Generates the Staff PDF report with errors/warnings/duplicates."""
-        report_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
+    name_rows = ""
 
-        name_rows = ""
-
-        if has_nombre_completo:
-            name_rows = """
+    if has_nombre_completo:
+        name_rows = """
                 <tr>
                     <td>nombre_completo</td>
                     <td>Nombre completo del autor</td>
                 </tr>
             """
-        else:
-            name_rows = """
+    else:
+        name_rows = """
                 <tr>
                     <td>primer_apellido</td>
                     <td>Primer apellido del autor</td>
@@ -50,9 +45,9 @@ class PDFRepository(IPDFRepository):
                 </tr>
             """
 
-        if errors:
-            title = "Reporte de Calidad de Datos"
-            intro = f"""
+    if errors:
+        title = "Reporte de Calidad de Datos"
+        intro = f"""
                 <h2><li>Corrección de errores en la información cargada</li></h2>
                 <p>
                     Este reporte tiene como objetivo concientizar sobre la importancia de la calidad de los datos.
@@ -98,14 +93,14 @@ class PDFRepository(IPDFRepository):
                 </p>
             """
 
-        else:
-            title = "Reporte de Subida Exitoso"
-            intro = """
+    else:
+        title = "Reporte de Subida Exitoso"
+        intro = """
                 <p>
                     El archivo fue cargado correctamente, pero se detectaron observaciones que deben ser tenidas en cuenta.
                 </p>
             """
-        html = f"""
+    html = f"""
         <html>
             <head>
                 <style>
@@ -193,8 +188,8 @@ class PDFRepository(IPDFRepository):
                 <b>Usuario responsable:</b> {user}</p>
                 {intro}
         """
-        if errors:
-            html += """
+    if errors:
+        html += """
                     <h2><li> Errores Encontrados<li></h2>
                     <table>
                         <tr>
@@ -204,11 +199,11 @@ class PDFRepository(IPDFRepository):
                         </tr>
             """
 
-            for err in errors:
-                columna_e = err.get("columna", "")
-                detalle_e = err.get("detalle", "")
-                total_e = err.get("total_filas", 0)
-                html += f"""
+        for err in errors:
+            columna_e = err.get("columna", "")
+            detalle_e = err.get("detalle", "")
+            total_e = err.get("total_filas", 0)
+            html += f"""
                     <tr>
                         <td> {columna_e} </td>
                         <td> {detalle_e} </td>
@@ -216,9 +211,9 @@ class PDFRepository(IPDFRepository):
                     </tr>
                 """
 
-            html += "</table>"
-        if warnings:
-            html += """
+        html += "</table>"
+    if warnings:
+        html += """
                 <h2><li> Advertencias Encontradas</li></h2>
                 <table>
                     <tr>
@@ -229,12 +224,12 @@ class PDFRepository(IPDFRepository):
                     </tr>
             """
 
-            for warn in warnings:
-                columna_w = warn.get("columna", "")
-                detalle_w = warn.get("detalle", "")
-                valor_w = warn.get("valor", "")
-                total_w = warn.get("total_filas", 0)
-                html += f"""
+        for warn in warnings:
+            columna_w = warn.get("columna", "")
+            detalle_w = warn.get("detalle", "")
+            valor_w = warn.get("valor", "")
+            total_w = warn.get("total_filas", 0)
+            html += f"""
                     <tr>
                         <td> {columna_w} </td>
                         <td> {detalle_w} </td>
@@ -242,54 +237,54 @@ class PDFRepository(IPDFRepository):
                         <td> {total_w} </td>
                     </tr>
                 """
-            html += "</table>"
+        html += "</table>"
 
-        if duplicados and len(duplicados) > 0:
-            html += f"<h2><li>Duplicados</li></h2><p>Se detectaron {len(duplicados)} registros duplicados.</p>"
-            eje = duplicados[:2]
-            html += "<p><b>Ejemplo de duplicados:</b></p><ul>"
-            for dup in eje:
-                row = dup.get("row") or {}
-                if has_nombre_completo:
-                    name_preview = {
-                        "nombre_completo": row.get("nombre_completo"),
-                    }
-                else:
-                    name_preview = {
-                        "primer_apellido": row.get("primer_apellido"),
-                        "nombres": row.get("nombres"),
-                    }
-                preview = {
-                    "identificación": row.get("identificación"),
-                    **name_preview,
-                    "jornada_laboral": row.get("jornada_laboral"),
-                    "....": "....",
-                    "unidad_académica": row.get("unidad_académica"),
+    if duplicados and len(duplicados) > 0:
+        html += f"<h2><li>Duplicados</li></h2><p>Se detectaron {len(duplicados)} registros duplicados.</p>"
+        eje = duplicados[:2]
+        html += "<p><b>Ejemplo de duplicados:</b></p><ul>"
+        for dup in eje:
+            row = dup.get("row") or {}
+            if has_nombre_completo:
+                name_preview = {
+                    "nombre_completo": row.get("nombre_completo"),
                 }
-                html += f"<li>{preview}</li>"
-            html += "</ul>"
+            else:
+                name_preview = {
+                    "primer_apellido": row.get("primer_apellido"),
+                    "nombres": row.get("nombres"),
+                }
+            preview = {
+                "identificación": row.get("identificación"),
+                **name_preview,
+                "jornada_laboral": row.get("jornada_laboral"),
+                "....": "....",
+                "unidad_académica": row.get("unidad_académica"),
+            }
+            html += f"<li>{preview}</li>"
+        html += "</ul>"
 
-        if normalized_changes:
-            grouped_changes: dict[str, dict[str, Any]] = {}
-            for change in normalized_changes:
-                column = str(change.get("columna", ""))
-                original_value = str(change.get("valor_original", ""))
-                normalized_value = str(change.get("valor_normalizado", ""))
-                key = f"{column}::{normalized_value}"
+    if normalized_changes:
+        grouped_changes: dict[str, dict[str, Any]] = {}
+        for change in normalized_changes:
+            column = str(change.get("columna", ""))
+            original_value = str(change.get("valor_original", ""))
+            normalized_value = str(change.get("valor_normalizado", ""))
+            key = f"{column}::{normalized_value}"
 
-                if key not in grouped_changes:
-                    grouped_changes[key] = {
-                        "column": column,
-                        "normalized_value": normalized_value,
-                        "original_values": [],
-                        "row_count": 0,
-                    }
+            if key not in grouped_changes:
+                grouped_changes[key] = {
+                    "column": column,
+                    "normalized_value": normalized_value,
+                    "original_values": [],
+                    "row_count": 0,
+                }
 
-                if original_value and original_value not in grouped_changes[key]["original_values"]:
-                    grouped_changes[key]["original_values"].append(original_value)
-                grouped_changes[key]["row_count"] += 1
+            if original_value and original_value not in grouped_changes[key]["original_values"]:
+                grouped_changes[key]["original_values"].append(original_value)
+            grouped_changes[key]["row_count"] += 1
 
-            html += """
+        html += """
                 <h2><li>Normalizaciones aplicadas</li></h2>
                 <p>
                     El sistema normalizó algunos valores para alinearlos con los catálogos oficiales.
@@ -304,11 +299,11 @@ class PDFRepository(IPDFRepository):
                     </tr>
             """
 
-            for item in grouped_changes.values():
-                originals = "<br>".join(html_lib.escape(value) for value in item["original_values"][:3])
-                normalized_value = html_lib.escape(item["normalized_value"])
-                column = html_lib.escape(item["column"])
-                html += f"""
+        for item in grouped_changes.values():
+            originals = "<br>".join(html_lib.escape(value) for value in item["original_values"][:3])
+            normalized_value = html_lib.escape(item["normalized_value"])
+            column = html_lib.escape(item["column"])
+            html += f"""
                     <tr>
                         <td>{column}</td>
                         <td>{originals}</td>
@@ -317,9 +312,9 @@ class PDFRepository(IPDFRepository):
                     </tr>
                 """
 
-            html += "</table>"
+        html += "</table>"
 
-        html += """
+    html += """
         <h2><li>Uso de los filtros en la columna <i>estado_de_validación</i></li></h2>
         <p>
             En el archivo Excel adjunto, cada fila tiene un estado que indica el resultado de su validación.
@@ -373,27 +368,27 @@ class PDFRepository(IPDFRepository):
         </body></html>
         """
 
-        pdf_bytes = io.BytesIO()
-        pisa.CreatePDF(io.StringIO(html), dest=pdf_bytes)
-        pdf_bytes.seek(0)
-        return pdf_bytes
+    pdf_bytes = io.BytesIO()
+    pisa.CreatePDF(io.StringIO(html), dest=pdf_bytes)
+    pdf_bytes.seek(0)
+    return pdf_bytes
 
-    def generate_quality_report_ciarp(
-        self,
-        errors: List[Dict[str, Any]],
-        warnings: Dict[str, Any],
-        duplicados: List[Dict[str, Any]] | None,
-        institution: str,
-        filename: str,
-        upload_date: str,
-        user: str,
-    ) -> io.BytesIO:
-        """Generates the CIARP PDF report (with warnings summary)."""
-        report_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
 
-        if errors:
-            title = "Reporte de Calidad de Datos"
-            intro = """
+def generate_quality_report_ciarp(
+    errors: List[Dict[str, Any]],
+    warnings: Dict[str, Any],
+    duplicados: List[Dict[str, Any]] | None,
+    institution: str,
+    filename: str,
+    upload_date: str,
+    user: str,
+) -> io.BytesIO:
+    """Generates the CIARP PDF report (with warnings summary)."""
+    report_date = datetime.now(ZoneInfo("America/Bogota")).strftime("%d/%m/%Y %H:%M")
+
+    if errors:
+        title = "Reporte de Calidad de Datos"
+        intro = """
                 <h2><li>Corrección de errores en la información cargada</li></h2>
                 <p>
                     Este reporte tiene como objetivo concientizar sobre la importancia de la calidad de los datos.
@@ -447,14 +442,14 @@ class PDFRepository(IPDFRepository):
                 </p>
             """
 
-        else:
-            title = "Reporte de Subida Exitoso"
-            intro = """
+    else:
+        title = "Reporte de Subida Exitoso"
+        intro = """
                 <p>
                     El archivo fue cargado correctamente, pero se detectaron observaciones que deben ser tenidas en cuenta.
                 </p>
             """
-        html = f"""
+    html = f"""
         <html>
             <head>
                 <style>
@@ -542,8 +537,8 @@ class PDFRepository(IPDFRepository):
                 <b>Usuario responsable:</b> {user}</p>
                 {intro}
         """
-        if errors:
-            html += """
+    if errors:
+        html += """
                     <h2><li> Errores Encontrados<li></h2>
                     <table>
                         <tr>
@@ -553,11 +548,11 @@ class PDFRepository(IPDFRepository):
                         </tr>
             """
 
-            for err in errors:
-                columna_e = err.get("columna", "")
-                detalle_e = err.get("detalle", "")
-                total_e = err.get("total_filas", 0)
-                html += f"""
+        for err in errors:
+            columna_e = err.get("columna", "")
+            detalle_e = err.get("detalle", "")
+            total_e = err.get("total_filas", 0)
+            html += f"""
                     <tr>
                         <td> {columna_e} </td>
                         <td> {detalle_e} </td>
@@ -565,32 +560,32 @@ class PDFRepository(IPDFRepository):
                     </tr>
                 """
 
-            html += "</table>"
-        if warnings:
-            total_adv = int(warnings.get("total_advertencias", 0))
-            html += f"""
+        html += "</table>"
+    if warnings:
+        total_adv = int(warnings.get("total_advertencias", 0))
+        html += f"""
                 <h3>Advertencias</h3>
                 <p><strong>Total de advertencias:</strong> {total_adv}</p>
             """
 
-        if duplicados and len(duplicados) > 0:
-            html += f"<h2><li>Duplicados</li></h2><p>Se detectaron {len(duplicados)} registros duplicados.</p>"
-            eje = duplicados[:2]
-            html += "<p><b>Ejemplo de duplicados:</b></p><ul>"
-            for dup in eje:
-                row = dup.get("row") or {}
-                preview = {
-                    "identificación": row.get("identificación"),
-                    "primer_apellido": row.get("primer_apellido"),
-                    "nombres": row.get("nombres"),
-                    "jornada_laboral": row.get("jornada_laboral"),
-                    "....": "....",
-                    "unidad_académica": row.get("unidad_académica"),
-                }
-                html += f"<li>{preview}</li>"
-            html += "</ul>"
+    if duplicados and len(duplicados) > 0:
+        html += f"<h2><li>Duplicados</li></h2><p>Se detectaron {len(duplicados)} registros duplicados.</p>"
+        eje = duplicados[:2]
+        html += "<p><b>Ejemplo de duplicados:</b></p><ul>"
+        for dup in eje:
+            row = dup.get("row") or {}
+            preview = {
+                "identificación": row.get("identificación"),
+                "primer_apellido": row.get("primer_apellido"),
+                "nombres": row.get("nombres"),
+                "jornada_laboral": row.get("jornada_laboral"),
+                "....": "....",
+                "unidad_académica": row.get("unidad_académica"),
+            }
+            html += f"<li>{preview}</li>"
+        html += "</ul>"
 
-        html += """
+    html += """
         <h2><li>Uso de los filtros en la columna <i>estado_de_validación</i></li></h2>
         <p>
             En el archivo Excel adjunto, cada fila tiene un estado que indica el resultado de su validación.
@@ -644,7 +639,7 @@ class PDFRepository(IPDFRepository):
         </body></html>
         """
 
-        pdf_bytes = io.BytesIO()
-        pisa.CreatePDF(io.StringIO(html), dest=pdf_bytes)
-        pdf_bytes.seek(0)
-        return pdf_bytes
+    pdf_bytes = io.BytesIO()
+    pisa.CreatePDF(io.StringIO(html), dest=pdf_bytes)
+    pdf_bytes.seek(0)
+    return pdf_bytes
