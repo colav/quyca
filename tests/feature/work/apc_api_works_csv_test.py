@@ -79,4 +79,6 @@ def test_apc_affiliation_unknown_id_returns_csv_header_only(client):
     assert response.status_code == 200
     assert response.content_type == "text/csv"
     assert response.headers["Content-Disposition"] == "attachment; filename=affiliation.csv"
-    assert response.get_data(as_text=True) == ",".join(FIELDNAMES) + "\n"
+    reader = csv.reader(io.StringIO(response.get_data(as_text=True)))
+    assert next(reader) == FIELDNAMES
+    assert list(reader) == []

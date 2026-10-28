@@ -9,7 +9,7 @@ from flask.testing import FlaskClient
 from werkzeug.datastructures import FileStorage
 
 from quyca.models.staff_report_model import StaffReport
-from quyca.normalizers import staff_normalizer_service
+from quyca.normalizers import staff_normalizer
 from quyca.validators import name_validator
 from quyca.validators import staff_validator
 from quyca.validators import unit_validator
@@ -468,7 +468,7 @@ def test_staff_normalizer_maps_new_investigator_categories() -> None:
         }
     )
 
-    mapped_df, changelog = staff_normalizer_service.map_values(df)
+    mapped_df, changelog = staff_normalizer.map_values(df)
 
     assert mapped_df["categoría_laboral"].tolist() == [
         "instructor asociado",
@@ -493,7 +493,7 @@ def test_staff_normalizer_formats_datetime_values() -> None:
         }
     )
 
-    cleaned = staff_normalizer_service.clean(df)
+    cleaned = staff_normalizer.clean(df)
 
     assert cleaned.loc[0, "fecha_nacimiento"] == "02/08/1983"
     assert cleaned.loc[0, "fecha_inicial_vinculación"] == "15/08/2021"
@@ -509,7 +509,7 @@ def test_staff_normalizer_coerces_safe_numeric_text_fields() -> None:
         }
     )
 
-    cleaned = staff_normalizer_service.clean(df)
+    cleaned = staff_normalizer.clean(df)
 
     assert cleaned.loc[0, "identificación"] == 168
     assert cleaned.loc[0, "código_unidad_académica"] == "12100"
@@ -520,7 +520,7 @@ def test_staff_normalizer_coerces_safe_numeric_text_fields() -> None:
 def test_staff_normalizer_coerces_float_like_identification_text() -> None:
     df = pd.DataFrame({"identificación": ["168.0"]})
 
-    cleaned = staff_normalizer_service.clean(df)
+    cleaned = staff_normalizer.clean(df)
 
     assert cleaned.loc[0, "identificación"] == 168
     assert cleaned["identificación"].dtype.kind in {"i", "u"}
@@ -686,7 +686,7 @@ def test_staff_normalizer_maps_out_of_catalog_to_desconocido_and_hides_cosmetic_
         }
     )
 
-    mapped_df, changelog = staff_normalizer_service.map_values(df)
+    mapped_df, changelog = staff_normalizer.map_values(df)
 
     assert mapped_df["categoría_laboral"].tolist() == ["profesor investigador titular", "desconocido"]
     assert mapped_df["sexo"].tolist() == ["hombre", "desconocido"]
