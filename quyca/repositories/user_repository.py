@@ -8,20 +8,20 @@ from quyca.security.password_hasher import verify_password
 users_collection = impactu_database["users"]
 
 
-def _to_user(doc: dict) -> User:
+def _to_user(document: dict) -> User:
     """Builds a User from a users document fetched without the password hash."""
     return User(
-        id=str(doc["_id"]),
-        email=doc["email"],
+        id=str(document["_id"]),
+        email=document["email"],
         password=None,
-        institution=doc["institution"],
-        role=doc["role"],
-        is_active=doc.get("is_active", True),
-        apikey=doc.get("apikey"),
+        institution=document["institution"],
+        role=document["role"],
+        is_active=document.get("is_active", True),
+        apikey=document.get("apikey"),
     )
 
 
-def get_by_email_and_pass(email: str, password: str) -> User:
+def get_user_by_email_and_password(email: str, password: str) -> User:
     """Validates credentials and returns the user data."""
     email = email.strip().lower()
 
@@ -50,7 +50,7 @@ def get_by_email_and_pass(email: str, password: str) -> User:
     )
 
 
-def create(user: User) -> None:
+def create_user(user: User) -> None:
     """Inserts a new user if the email is not already registered."""
     email = user.email.strip().lower()
     existing = users_collection.find_one({"email": email}, {"password": 0})
@@ -70,12 +70,12 @@ def create(user: User) -> None:
     )
 
 
-def get_all() -> List[User]:
+def get_all_users() -> List[User]:
     """Returns all users without exposing password hashes."""
     return [_to_user(u) for u in users_collection.find({}, {"password": 0})]
 
 
-def update_password(email: str, new_password_hash: str) -> User:
+def update_user_password(email: str, new_password_hash: str) -> User:
     """Updates the password hash for a user and returns the updated user."""
     result = users_collection.update_one({"email": email.lower()}, {"$set": {"password": new_password_hash}})
 
@@ -88,7 +88,7 @@ def update_password(email: str, new_password_hash: str) -> User:
     return _to_user(updated)
 
 
-def deactivate(email: str) -> None:
+def deactivate_user(email: str) -> None:
     """Sets is_active=False for the given email."""
     email = email.lower()
     user = users_collection.find_one({"email": email})
@@ -98,7 +98,7 @@ def deactivate(email: str) -> None:
     users_collection.update_one({"email": email}, {"$set": {"is_active": False}})
 
 
-def activate(email: str) -> None:
+def activate_user(email: str) -> None:
     """Sets is_active=True for the given email."""
     email = email.lower()
     user = users_collection.find_one({"email": email})
@@ -136,7 +136,7 @@ def update_user_info(old_email: str, new_email: str, new_role: str) -> Optional[
     return _to_user(updated)
 
 
-def find_by_ror_id(ror_id: str) -> Optional[User]:
+def get_user_by_ror_id(ror_id: str) -> Optional[User]:
     """Finds a user by their ROR id (stored as _id)."""
     doc = users_collection.find_one({"_id": ror_id}, {"password": 0})
     if not doc:

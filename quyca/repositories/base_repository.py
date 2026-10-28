@@ -1,5 +1,6 @@
 from pymongo.collection import Collection
 
+from quyca.constants.institutions import institutions_list
 from quyca.models.base_model import QueryParams
 
 
@@ -8,6 +9,12 @@ def text_search_match(keywords: str | None) -> list[dict]:
     `$text` must be the first stage of a pipeline, so every search pipeline starts from this list.
     """
     return [{"$match": {"$text": {"$search": keywords}}}] if keywords else []
+
+
+def affiliation_match(affiliation_id: str, affiliation_type: str) -> dict:
+    """Documents with an author in the affiliation, provided some author affiliation has that type."""
+    types = institutions_list if affiliation_type == "institution" else [affiliation_type]
+    return {"authors.affiliations.id": affiliation_id, "authors.affiliations.types.type": {"$in": types}}
 
 
 def count(collection: Collection, match_stages: list[dict]) -> int:
@@ -20,7 +27,7 @@ def count(collection: Collection, match_stages: list[dict]) -> int:
 def set_search_end_stages(pipeline: list, query_params: QueryParams, pipeline_params: dict | None = None) -> list:
     if pipeline_params is None:
         pipeline_params = {}
-    set_sort(query_params.sort, pipeline, pipeline_params.get("collection"))
+    set_sort(pipeline, query_params.sort, pipeline_params.get("collection"))
     set_project(pipeline, pipeline_params.get("project"))
     set_pagination(pipeline, query_params)
     return pipeline
@@ -40,7 +47,7 @@ def set_project(pipeline: list, project: list | dict | None) -> None:
     pipeline.append({"$project": {"_id": 1, **{p: 1 for p in project}}})
 
 
-def set_sort(sort: str | None, pipeline: list, collection: str | None = None) -> None:
+def set_sort(pipeline: list, sort: str | None, collection: str | None = None) -> None:
     if not sort:
         return
     sort_field, direction_str = sort.split("_")

@@ -1,19 +1,33 @@
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any, Dict, List
 
 from bson import ObjectId
 from pymongo.command_cursor import CommandCursor
 
 from quyca.models.base_model import QueryParams
-from quyca.generators import work_generator
-from quyca.clients.mongo import database, calculations_database
+from quyca.clients.mongo import database
 from quyca.repositories import work_repository
 from quyca.repositories import affiliation_repository
+
+# Fields every plot pipeline keeps so the product filters still apply after the projection.
+FILTERS_PROJECT_FIELDS = [
+    "types.source",
+    "types.type",
+    "types.code",
+    "year_published",
+    "open_access.open_access_status",
+    "subjects.subjects.level",
+    "subjects.subjects.name",
+    "primary_topic.id",
+    "authors.affiliations.addresses.country_code",
+    "groups.ranking.rank",
+    "authors.ranking.rank",
+]
 
 
 def get_affiliations_impactu_works_count_by_institution(
     institution_id: str, relation_type: str, query_params: QueryParams
 ) -> CommandCursor:
-    affiliation_ids = affiliation_ids_for_institution(institution_id, relation_type)
+    affiliation_ids = get_affiliation_ids_by_institution(institution_id, relation_type)
     match_initial: dict[str, Any] = {
         "$match": {
             "authors.affiliations.id": {"$in": affiliation_ids},
@@ -74,7 +88,7 @@ def get_departments_scienti_works_count_by_faculty(affiliation_id: str, query_pa
 def get_groups_impactu_works_count_by_faculty_or_department(
     affiliation_id: str, query_params: QueryParams
 ) -> CommandCursor:
-    group_ids = group_ids_for_faculty_or_department(affiliation_id)
+    group_ids = get_group_ids_by_faculty_or_department(affiliation_id)
     static_fields = [
         "citations_count",
         "types.source",
@@ -115,7 +129,7 @@ def get_groups_impactu_works_count_by_faculty_or_department(
 def get_affiliations_citations_count_by_institution(
     institution_id: str, relation_type: str, query_params: QueryParams
 ) -> CommandCursor:
-    affiliation_ids = affiliation_ids_for_institution(institution_id, relation_type)
+    affiliation_ids = get_affiliation_ids_by_institution(institution_id, relation_type)
     static_fields = [
         "authors.affiliations.id",
         "authors.affiliations.name",
@@ -154,7 +168,7 @@ def get_departments_citations_count_by_faculty(affiliation_id: str, query_params
 def get_groups_citations_count_by_faculty_or_department(
     affiliation_id: str, query_params: QueryParams
 ) -> CommandCursor:
-    group_ids = group_ids_for_faculty_or_department(affiliation_id)
+    group_ids = get_group_ids_by_faculty_or_department(affiliation_id)
     static_fields = [
         "groups.name",
         "groups.id",
@@ -182,7 +196,7 @@ def get_groups_citations_count_by_faculty_or_department(
 def get_affiliations_apc_expenses_by_institution(
     institution_id: str, relation_type: str, query_params: QueryParams
 ) -> CommandCursor:
-    affiliation_ids = affiliation_ids_for_institution(institution_id, relation_type)
+    affiliation_ids = get_affiliation_ids_by_institution(institution_id, relation_type)
     static_fields = [
         "authors.affiliations.id",
         "authors.affiliations.name",
@@ -206,7 +220,7 @@ def get_departments_apc_expenses_by_faculty(affiliation_id: str, query_params: Q
 
 
 def get_groups_apc_expenses_by_faculty_or_department(affiliation_id: str, query_params: QueryParams) -> CommandCursor:
-    group_ids = group_ids_for_faculty_or_department(affiliation_id)
+    group_ids = get_group_ids_by_faculty_or_department(affiliation_id)
     static_fields = [
         "groups.id",
         "groups.name",
@@ -228,7 +242,7 @@ def get_h_index_by_institution(institution_id: str, relation_type: str) -> Comma
 
 
 def get_h_index_by_faculty_or_department(affiliation_id: str) -> CommandCursor:
-    group_ids = group_ids_for_faculty_or_department(affiliation_id)
+    group_ids = get_group_ids_by_faculty_or_department(affiliation_id)
     return affiliation_repository.get_h_index_by_ids(group_ids)
 
 
@@ -305,34 +319,6 @@ def get_active_authors_by_age_range(affiliation_id: str, query_params: QueryPara
         {"$project": {"_id": 0, "birthdate": 1}},
     ]
     return database["person"].aggregate(pipeline_person)
-
-
-def get_products_by_author_age_and_person(person_id: str, query_params: QueryParams) -> CommandCursor:
-    pipeline: List[Dict[str, Any]] = [
-        {"$match": {"authors.id": person_id}},
-    ]
-    work_repository.set_product_filters(pipeline, query_params)
-    pipeline += [
-        {"$project": {"authors": 1, "date_published": 1, "year_published": 1}},
-        {
-            "$lookup": {
-                "from": "person",
-                "localField": "authors.id",
-                "foreignField": "_id",
-                "pipeline": [{"$project": {"birthdate": 1}}],
-                "as": "author",
-            }
-        },
-        {"$unwind": "$author"},
-        {
-            "$project": {
-                "work.date_published": "$date_published",
-                "work.year_published": "$year_published",
-                "birthdate": "$author.birthdate",
-            }
-        },
-    ]
-    return database["works"].aggregate(pipeline)
 
 
 def get_coauthorship_by_country_map_by_affiliation(affiliation_id: str, query_params: QueryParams) -> list:
@@ -485,66 +471,6 @@ def get_coauthorship_by_colombian_department_map_by_person(person_id: str, query
     return data
 
 
-def get_collaboration_network(affiliation_id: str) -> CommandCursor:
-    pipeline: List[Dict[str, Any]] = [
-        {"$match": {"_id": affiliation_id}},
-        {"$project": {"coauthorship_network": 1}},
-        {
-            "$lookup": {
-                "from": "affiliations_edges",
-                "localField": "_id",
-                "foreignField": "_id",
-                "as": "complement",
-            }
-        },
-        {"$unwind": "$complement"},
-        {
-            "$project": {
-                "coauthorship_network": {
-                    "nodes": "$coauthorship_network.nodes",
-                    "edges": {
-                        "$concatArrays": [
-                            "$coauthorship_network.edges",
-                            "$complement.coauthorship_network.edges",
-                        ]
-                    },
-                }
-            }
-        },
-    ]
-    return calculations_database["affiliations"].aggregate(pipeline)
-
-
-def get_works_rankings_by_person(person_id: str, query_params: QueryParams) -> Tuple[Generator, int]:
-    pipeline: List[Dict[str, Any]] = [
-        {"$match": {"authors.id": person_id}},
-    ]
-    work_repository.set_product_filters(pipeline, query_params)
-    pipeline += [
-        {
-            "$project": {
-                "_id": 1,
-                "source.id": 1,
-                "date_published": 1,
-                "source.ranking": 1,
-            }
-        },
-    ]
-    count_pipeline: List[Dict[str, Any]] = [
-        {"$match": {"authors.id": person_id}},
-    ]
-    work_repository.set_product_filters(count_pipeline, query_params)
-
-    count_pipeline += [
-        {"$count": "total_results"},
-    ]
-
-    total_results = next(database["works"].aggregate(count_pipeline), {"total_results": 0})["total_results"]
-
-    works = database["works"].aggregate(pipeline)
-    return work_generator.get(works), total_results
-
-
 def get_annual_scimago_quartile_by_source(source_id: str) -> CommandCursor:
     pipeline: List[Dict[str, Any]] = [
         {"$match": {"_id": ObjectId(source_id)}},
@@ -624,77 +550,15 @@ def get_products_by_database_by_person(person_id: str, query_params: QueryParams
     return results
 
 
-def pipeline_to_filter_for_affiliation(pipeline: list[dict[str, Any]], sources: list[str]) -> dict[str, Any]:
-    filters: list[dict[str, Any]] = []
-    valid_sources = ["minciencias", "openalex", "scholar", "scienti"]
-
-    for stage in pipeline:
-        if "$match" in stage:
-            filters.append(stage["$match"])
-
-    expr_filter = {
-        "$expr": {
-            "$setEquals": [
-                {"$setIntersection": ["$updated.source", valid_sources]},
-                sources,
-            ]
-        }
-    }
-
-    filters.append(expr_filter)
-    return {"$and": filters} if filters else expr_filter
-
-
-def pipeline_to_filter_for_person(pipeline: list[dict[str, Any]], person_id: str, sources: list[str]) -> dict[str, Any]:
-    filters: list[dict[str, Any]] = [{"authors.id": person_id}]
-    valid_sources = ["minciencias", "openalex", "scholar", "scienti"]
-
-    if len(sources) == 1:
-        filters.append({"updated.source": sources[0]})
-    else:
-        filters.append({"$expr": {"$setEquals": [{"$setIntersection": ["$updated.source", valid_sources]}, sources]}})
-    for stage in pipeline:
-        if "$match" in stage:
-            filters.append(stage["$match"])
-
-    return {"$and": filters}
-
-
-def project_pipeline_params_for_filter() -> Dict[str, List[str]]:
-    pipeline_params = {
-        "filters_project": [
-            "types.source",
-            "types.type",
-            "types.code",
-            "year_published",
-            "open_access.open_access_status",
-            "subjects.subjects.level",
-            "subjects.subjects.name",
-            "primary_topic.id",
-            "authors.affiliations.addresses.country_code",
-            "groups.ranking.rank",
-            "authors.ranking.rank",
-        ]
-    }
-    return pipeline_params
-
-
-def affiliation_ids_for_institution(institution_id: str, relation_type: str) -> List[str]:
+def get_affiliation_ids_by_institution(institution_id: str, relation_type: str) -> List[str]:
     affiliations = affiliation_repository.get_affiliations_by_institution(institution_id, relation_type)
     return [affiliation.id for affiliation in affiliations] if affiliations else []
 
 
-def group_ids_for_faculty_or_department(affiliation_id: str) -> List[str]:
+def get_group_ids_by_faculty_or_department(affiliation_id: str) -> List[str]:
     groups = affiliation_repository.get_groups_by_faculty_or_department(affiliation_id)
     return [group.id for group in groups] if groups else []
 
 
 def build_project_stage(dynamic_fields: list[str]) -> dict:
-    pipeline_params = project_pipeline_params_for_filter()
-    static_fields = pipeline_params.get("filters_project") or []
-    project = {field: 1 for field in static_fields}
-
-    if dynamic_fields:
-        project.update({field: 1 for field in dynamic_fields})
-
-    return {"$project": project}
+    return {"$project": {field: 1 for field in FILTERS_PROJECT_FIELDS + dynamic_fields}}

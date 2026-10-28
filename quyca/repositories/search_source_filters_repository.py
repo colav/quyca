@@ -11,7 +11,7 @@ def build_sources_match(query_params: QueryParams) -> list[dict]:
     return pipeline
 
 
-def search_sources_available_filters(query_params: QueryParams) -> dict:
+def get_sources_available_filters(query_params: QueryParams) -> dict:
     pipeline = build_sources_match(query_params)
     pipeline += [
         {

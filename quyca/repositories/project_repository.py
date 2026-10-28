@@ -1,14 +1,13 @@
-from typing import Any, Dict, Generator, List
+from typing import Generator
 
 from bson import ObjectId
 
+from quyca.generators import project_generator
 from quyca.models.base_model import QueryParams
 from quyca.models.project_model import Project
-from quyca.constants.institutions import institutions_list
-from quyca.generators import project_generator
+from quyca.repositories import base_repository
 from quyca.clients.mongo import database
 from quyca.exceptions.not_entity_exception import NotEntityException
-from quyca.repositories import base_repository
 
 
 def get_project_by_id(project_id: str) -> Project:
@@ -24,35 +23,23 @@ def get_projects_by_affiliation(
     query_params: QueryParams,
     pipeline_params: dict | None = None,
 ) -> Generator:
-    types = institutions_list if affiliation_type == "institution" else [affiliation_type]
-    if pipeline_params is None:
-        pipeline_params = {}
-    pipeline: List[Dict[str, Any]] = [
-        {"$match": {"authors.affiliations.id": affiliation_id}},
-        {"$match": {"authors.affiliations.types.type": {"$in": types}}},
-    ]
-    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
-    cursor = database["projects"].aggregate(pipeline)
-    return project_generator.get(cursor)
+    match = base_repository.affiliation_match(affiliation_id, affiliation_type)
+    return _get_projects([{"$match": match}], query_params, pipeline_params)
 
 
-def get_projects_count_by_affiliation(affiliation_id: str) -> int:
-    pipeline: List[Dict[str, Any]] = [{"$match": {"authors.affiliations.id": affiliation_id}}, {"$count": "total"}]
-    return next(database["projects"].aggregate(pipeline), {"total": 0}).get("total", 0)
+def get_projects_count_by_affiliation(affiliation_id: str, affiliation_type: str) -> int:
+    match = base_repository.affiliation_match(affiliation_id, affiliation_type)
+    return base_repository.count(database["projects"], [{"$match": match}])
 
 
 def get_projects_by_person(person_id: str, query_params: QueryParams, pipeline_params: dict | None = None) -> Generator:
-    if pipeline_params is None:
-        pipeline_params = {}
-    pipeline = [
-        {"$match": {"authors.id": person_id}},
-    ]
-    base_repository.set_search_end_stages(pipeline, query_params, pipeline_params)
-    cursor = database["projects"].aggregate(pipeline)
-    return project_generator.get(cursor)
+    return _get_projects([{"$match": {"authors.id": person_id}}], query_params, pipeline_params)
 
 
 def get_projects_count_by_person(person_id: str) -> int:
-    pipeline: List[Dict[str, Any]] = [{"$match": {"authors.id": person_id}}, {"$count": "total"}]
-    result = next(database["projects"].aggregate(pipeline), {"total": 0})
-    return result.get("total", 0)
+    return base_repository.count(database["projects"], [{"$match": {"authors.id": person_id}}])
+
+
+def _get_projects(match_stages: list[dict], query_params: QueryParams, pipeline_params: dict | None) -> Generator:
+    pipeline = base_repository.set_search_end_stages(match_stages, query_params, pipeline_params)
+    return project_generator.get(database["projects"].aggregate(pipeline))
