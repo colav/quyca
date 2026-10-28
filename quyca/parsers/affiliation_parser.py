@@ -53,7 +53,7 @@ def parse_affiliation_location_filter(
             normalized_locations[label] = {
                 "count": 0,
                 "label": label,
-                "value": value,
+                "value": label,
             }
 
         current_count = normalized_locations[label]["count"]
