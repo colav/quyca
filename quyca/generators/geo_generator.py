@@ -7,11 +7,4 @@ from quyca.models.geo_model import Geo
 
 def get(cursor: CommandCursor) -> Generator:
     for document in cursor:
-        try:
-            if isinstance(document, Geo):
-                yield document
-            else:
-                yield Geo(**document)
-        except Exception as e:
-            print("Validation error while parsing Geolocation document _id=%s", e)
-            raise
+        yield document if isinstance(document, Geo) else Geo(**document)
