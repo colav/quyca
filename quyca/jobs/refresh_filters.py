@@ -13,6 +13,7 @@ Run it after every ETL load and on deploy:
     python -m quyca.jobs.refresh_filters
 """
 
+
 def main() -> None:
     start = time.time()
     filters = search_work_filters_repository.compute_works_available_filters([])

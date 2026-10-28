@@ -1,10 +1,10 @@
 import csv
 from io import BytesIO, StringIO
-from typing import Generator
+from typing import Generator, Iterable
 from openpyxl import Workbook
 
 
-def write_csv(rows: Generator[dict, None, None], columns: list[str]) -> Generator[str, None, None]:
+def write_csv(rows: Iterable[dict], columns: list[str]) -> Generator[str, None, None]:
     output = StringIO(newline="")
     writer = csv.DictWriter(output, fieldnames=columns, escapechar="\\", quoting=csv.QUOTE_MINIMAL)
     writer.writeheader()
@@ -19,7 +19,7 @@ def write_csv(rows: Generator[dict, None, None], columns: list[str]) -> Generato
         output.truncate(0)
 
 
-def write_excel(rows: Generator[dict, None, None], columns: list[str], sheet_name: str = "Data") -> BytesIO:
+def write_excel(rows: Iterable[dict], columns: list[str], sheet_name: str = "Data") -> BytesIO:
     output = BytesIO()
     workbook = Workbook(write_only=True)
     worksheet = workbook.create_sheet(sheet_name)

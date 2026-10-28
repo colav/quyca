@@ -30,11 +30,6 @@ NORMALIZED_TYPE_MAPPING = {
     "conference and proceedings": "conference",
 }
 
-SOURCE_TITLES = {
-    "openalex": "OpenAlex",
-    "scimago": "Scimago",
-    "scienti": "Scienti",
-}
 
 QUARTILE_MAPPING = {"-": "Sin cuartil"}
 

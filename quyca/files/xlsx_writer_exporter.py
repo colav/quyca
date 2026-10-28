@@ -7,12 +7,12 @@ def to_excel_bytes(df: pd.DataFrame) -> io.BytesIO:
     """Writes the dataframe to an in-memory XLSX file."""
     output = io.BytesIO()
 
-    def sort_identification(val: int) -> Tuple[int, Union[int, str]]:
+    def sort_identification(value: int) -> Tuple[int, Union[int, str]]:
         """Sort key that prioritizes numeric identification values."""
         try:
-            return (0, int(val))
+            return (0, int(value))
         except:
-            return (1, str(val))
+            return (1, str(value))
 
     with pd.ExcelWriter(output, engine="xlsxwriter") as write:
         if "identificación" in df.columns:
