@@ -1,7 +1,7 @@
 import pytest
 from flask.testing import FlaskClient
-from quyca.infrastructure.mongo import database
-from quyca.domain.constants.institutions import institutions_list
+from quyca.clients.mongo import database
+from quyca.constants.institutions import institutions_list
 
 affiliation_institution = database["affiliations"].find_one(
     {"products_count": {"$gt": 100}, "types.type": {"$in": institutions_list}}

@@ -8,13 +8,13 @@ import pandas as pd
 from flask.testing import FlaskClient
 from werkzeug.datastructures import FileStorage
 
-from quyca.domain.models.staff_report_model import StaffReport
-from quyca.domain.normalizers import staff_normalizer_service
-from quyca.domain.validators import name_validator
-from quyca.domain.validators import staff_validator
-from quyca.domain.validators import unit_validator
-from quyca.domain.services.submit import staff_service
-from quyca.infrastructure.repositories import pdf_repository
+from quyca.models.staff_report_model import StaffReport
+from quyca.normalizers import staff_normalizer_service
+from quyca.validators import name_validator
+from quyca.validators import staff_validator
+from quyca.validators import unit_validator
+from quyca.services import staff_service
+from quyca.files import pdf_report
 
 
 def auth_cookie(client: FlaskClient) -> None:
@@ -51,7 +51,7 @@ def test_staff_upload_invalid_token(client: FlaskClient) -> None:
 def test_staff_upload_with_invalid_columns(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.staff_service.handle_staff_upload") as mock_service:
+    with patch("quyca.services.staff_service.handle_staff_upload") as mock_service:
         mock_service.return_value = (
             {
                 "success": False,
@@ -78,7 +78,7 @@ def test_staff_upload_with_invalid_columns(client: FlaskClient) -> None:
 def test_staff_upload_empty_file(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.staff_service.handle_staff_upload") as mock_service:
+    with patch("quyca.services.staff_service.handle_staff_upload") as mock_service:
         mock_service.return_value = (
             {"success": False, "msg": "El archivo cargado está vacío. Verifique que contenga información."},
             400,
@@ -98,7 +98,7 @@ def test_staff_upload_empty_file(client: FlaskClient) -> None:
 def test_staff_upload_success(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.staff_service.handle_staff_upload") as mock_service:
+    with patch("quyca.services.staff_service.handle_staff_upload") as mock_service:
         mock_service.return_value = (
             {"success": True, "errors": 0, "duplicates": 1, "pdf_base64": "JVBERi0xLjQKJ..."},
             200,
@@ -203,7 +203,7 @@ def test_save_staff_usecase_uses_same_folder_with_original_prefix() -> None:
 
     df = pd.DataFrame({"name": ["Ada"]})
 
-    with patch("quyca.infrastructure.repositories.file_repository.save_file", file_repo.save_file):
+    with patch("quyca.repositories.file_repository.save_file", file_repo.save_file):
         result = staff_service.save_staff_files(
             ror_id="u1",
             institution="Test Institution",
@@ -225,7 +225,7 @@ def test_save_staff_usecase_uses_same_folder_with_original_prefix() -> None:
 def test_staff_upload_storage_failure_returns_500(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.staff_service.handle_staff_upload") as mock_service:
+    with patch("quyca.services.staff_service.handle_staff_upload") as mock_service:
         mock_service.return_value = (
             {"success": False, "msg": "Error al guardar el archivo", "pdf_base64": "JVBERi0xLjQKJ..."},
             500,
@@ -259,13 +259,13 @@ def test_staff_process_uploads_annotated_excel_on_column_errors() -> None:
     source.seek(0)
 
     with patch(
-        "quyca.infrastructure.repositories.pdf_repository.generate_quality_report",
+        "quyca.files.pdf_report.generate_quality_report",
         report_service.pdf_repo.generate_quality_report,
-    ), patch("quyca.infrastructure.annotators.annotator.annotate", report_service.annotator.annotate), patch(
-        "quyca.infrastructure.exporters.xlsx_writer_exporter.to_excel_bytes",
+    ), patch("quyca.files.annotator.annotate", report_service.annotator.annotate), patch(
+        "quyca.files.xlsx_writer_exporter.to_excel_bytes",
         report_service.xlsx_exporter.to_excel_bytes,
     ), patch(
-        "quyca.infrastructure.notifications.notification.send_report", notification_service.send_report
+        "quyca.services.notification_service.send_report", notification_service.send_report
     ):
         result = staff_service.process_staff_file(
             source,
@@ -300,7 +300,7 @@ def test_staff_report_service_attaches_excel_even_when_clean() -> None:
     xlsx_exporter.to_excel_bytes.return_value = io.BytesIO(b"excel-bytes")
 
     with patch(
-        "quyca.domain.validators.staff_validator.validate_dataframe",
+        "quyca.validators.staff_validator.validate_dataframe",
         return_value=StaffReport(
             total_errors=0,
             total_duplicates=0,
@@ -312,11 +312,11 @@ def test_staff_report_service_attaches_excel_even_when_clean() -> None:
         ),
     ):
         with patch(
-            "quyca.infrastructure.repositories.pdf_repository.generate_quality_report",
+            "quyca.files.pdf_report.generate_quality_report",
             pdf_repo.generate_quality_report,
-        ), patch("quyca.infrastructure.annotators.annotator.annotate", annotator.annotate), patch(
-            "quyca.infrastructure.exporters.xlsx_writer_exporter.to_excel_bytes", xlsx_exporter.to_excel_bytes
-        ):
+        ), patch(
+            "quyca.files.annotator.annotate", annotator.annotate
+        ), patch("quyca.files.xlsx_writer_exporter.to_excel_bytes", xlsx_exporter.to_excel_bytes):
             report, attachments = staff_service.generate_staff_report(
                 pd.DataFrame({"identificación": ["1"]}),
                 "TestInstitution",
@@ -343,7 +343,7 @@ def test_staff_report_service_attaches_pdf_when_normalizations_exist() -> None:
     pdf_repo.generate_quality_report.return_value = io.BytesIO(b"pdf-bytes")
 
     with patch(
-        "quyca.domain.validators.staff_validator.validate_dataframe",
+        "quyca.validators.staff_validator.validate_dataframe",
         return_value=StaffReport(
             total_errors=0,
             total_duplicates=0,
@@ -355,11 +355,11 @@ def test_staff_report_service_attaches_pdf_when_normalizations_exist() -> None:
         ),
     ):
         with patch(
-            "quyca.infrastructure.repositories.pdf_repository.generate_quality_report",
+            "quyca.files.pdf_report.generate_quality_report",
             pdf_repo.generate_quality_report,
-        ), patch("quyca.infrastructure.annotators.annotator.annotate", annotator.annotate), patch(
-            "quyca.infrastructure.exporters.xlsx_writer_exporter.to_excel_bytes", xlsx_exporter.to_excel_bytes
-        ):
+        ), patch(
+            "quyca.files.annotator.annotate", annotator.annotate
+        ), patch("quyca.files.xlsx_writer_exporter.to_excel_bytes", xlsx_exporter.to_excel_bytes):
             report, attachments = staff_service.generate_staff_report(
                 pd.DataFrame({"identificación": ["1"]}),
                 "TestInstitution",
@@ -561,8 +561,8 @@ def test_pdf_report_includes_normalization_section() -> None:
         dest.write(b"pdf-bytes")
         return type("Result", (), {"err": False})()
 
-    with patch("quyca.infrastructure.repositories.pdf_repository.pisa.CreatePDF", side_effect=fake_create_pdf):
-        pdf_repository.generate_quality_report(
+    with patch("quyca.files.pdf_report.pisa.CreatePDF", side_effect=fake_create_pdf):
+        pdf_report.generate_quality_report(
             errors=[],
             warnings=[],
             duplicados=[],
@@ -602,7 +602,7 @@ def test_staff_upload_no_file(client: FlaskClient) -> None:
 def test_staff_upload_with_errors(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.staff_service.handle_staff_upload") as mock_service:
+    with patch("quyca.services.staff_service.handle_staff_upload") as mock_service:
         mock_service.return_value = (
             {"success": False, "errors": 3, "duplicates": 0, "pdf_base64": "JVBERi0xLjQKJ..."},
             400,
@@ -623,7 +623,7 @@ def test_staff_upload_with_errors(client: FlaskClient) -> None:
 def test_staff_upload_with_duplicates(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.staff_service.handle_staff_upload") as mock_service:
+    with patch("quyca.services.staff_service.handle_staff_upload") as mock_service:
         mock_service.return_value = (
             {"success": True, "errors": 0, "duplicates": 2, "pdf_base64": "JVBERi0xLjQKJ..."},
             200,
@@ -643,7 +643,7 @@ def test_staff_upload_with_duplicates(client: FlaskClient) -> None:
 def test_staff_upload_email_failed(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.staff_service.handle_staff_upload") as mock_service:
+    with patch("quyca.services.staff_service.handle_staff_upload") as mock_service:
         mock_service.side_effect = Exception("Email service down")
 
         response = client.post(
@@ -759,7 +759,7 @@ def test_staff_validator_accepts_catalog_aliases_and_desconocido_without_noise()
 
 
 def test_file_repository_fallback_local(tmp_path: Path) -> None:
-    from quyca.infrastructure.repositories import file_repository
+    from quyca.repositories import file_repository
 
     class DummyDriveRepo:
         def get_or_create_folder(self, *args: Any, **kwargs: Any) -> str:
@@ -779,14 +779,10 @@ def test_file_repository_fallback_local(tmp_path: Path) -> None:
     app = flask.Flask(__name__)
     app.config["LOCAL_STORAGE_PATH"] = str(tmp_path)
 
-    with app.app_context(), patch(
-        "quyca.infrastructure.repositories.google_drive_repository.get_service", return_value=MagicMock()
-    ), patch(
-        "quyca.infrastructure.repositories.google_drive_repository.get_or_create_folder",
+    with app.app_context(), patch("quyca.clients.google_drive.get_service", return_value=MagicMock()), patch(
+        "quyca.clients.google_drive.get_or_create_folder",
         drive.get_or_create_folder,
-    ), patch(
-        "quyca.infrastructure.repositories.google_drive_repository.upload_file", drive.upload_file
-    ):
+    ), patch("quyca.clients.google_drive.upload_file", drive.upload_file):
         result = file_repository.save_file(dummy_file, "123", "TestInstitution", "staff")
 
     assert result["success"] is True

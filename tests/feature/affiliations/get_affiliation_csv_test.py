@@ -1,6 +1,6 @@
 import io
 
-from quyca.infrastructure.mongo import database
+from quyca.clients.mongo import database
 from unittest.mock import patch
 
 ENDPOINT = "/affiliation"
@@ -46,7 +46,7 @@ def test_get_csv_works_by_group(client):
     assert response.status_code == 200
 
 
-@patch("quyca.domain.services.export.export_service.get_works_csv_by_affiliation")
+@patch("quyca.services.export_service.get_works_csv_by_affiliation")
 def test_get_works_csv_by_affiliation_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 
@@ -56,7 +56,7 @@ def test_get_works_csv_by_affiliation_returns_400_on_error(mock_service, client)
     assert response.get_json() == {"error": "boom"}
 
 
-@patch("quyca.domain.services.export.export_service.get_works_excel_by_affiliation")
+@patch("quyca.services.export_service.get_works_excel_by_affiliation")
 def test_get_works_excel_by_affiliation_success(mock_service, client):
     mock_service.return_value = io.BytesIO(b"fake-excel-bytes")
 
@@ -71,7 +71,7 @@ def test_get_works_excel_by_affiliation_success(mock_service, client):
     assert args[1] == "institution"
 
 
-@patch("quyca.domain.services.export.export_service.get_works_excel_by_affiliation")
+@patch("quyca.services.export_service.get_works_excel_by_affiliation")
 def test_get_works_excel_by_affiliation_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 
@@ -81,7 +81,7 @@ def test_get_works_excel_by_affiliation_returns_400_on_error(mock_service, clien
     assert response.get_json() == {"error": "boom"}
 
 
-@patch("quyca.domain.services.export.export_service.get_works_excel_by_affiliation")
+@patch("quyca.services.export_service.get_works_excel_by_affiliation")
 def test_get_works_excel_by_affiliation_invalid_query_params_returns_400(mock_service, client):
     response = client.get(f"{ENDPOINT}/institution/123/research/products/excel?max=invalid")
 

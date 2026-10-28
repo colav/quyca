@@ -143,7 +143,7 @@ def test_search_sources_available_filters_with_params(client, query):
     assert isinstance(data, dict)
 
 
-@patch("quyca.domain.services.search.search_service.search_sources_available_filters")
+@patch("quyca.services.search_service.search_sources_available_filters")
 def test_get_search_sources_filters_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 

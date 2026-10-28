@@ -1,8 +1,8 @@
 from typing import Any
 from unittest.mock import patch, Mock
-from quyca.application.routes.user_crud_router import NotEntityException
+from quyca.api.user_crud_router import NotEntityException
 
-ROUTER = "quyca.application.routes.user_crud_router"
+ROUTER = "quyca.api.user_crud_router"
 
 
 def _headers() -> dict[str, str]:

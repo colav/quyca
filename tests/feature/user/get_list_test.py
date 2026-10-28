@@ -2,7 +2,7 @@ from typing import Any, cast
 from unittest.mock import Mock, patch
 from flask.testing import FlaskClient
 
-ROUTER_MOD = "quyca.application.routes.user_crud_router"
+ROUTER_MOD = "quyca.api.user_crud_router"
 
 
 def auth_cookie(client: FlaskClient, role: str = "admin") -> None:

@@ -1,5 +1,5 @@
 from bson import ObjectId
-from quyca.infrastructure.mongo import database
+from quyca.clients.mongo import database
 from flask.testing import FlaskClient
 
 random_source = database["sources"].aggregate([{"$sample": {"size": 1}}]).next()

@@ -1,7 +1,7 @@
 from typing import Any
 from unittest.mock import patch, Mock
 
-ROUTER = "quyca.application.routes.user_crud_router"
+ROUTER = "quyca.api.user_crud_router"
 
 
 def _headers() -> dict[str, str]:

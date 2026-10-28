@@ -1,7 +1,7 @@
 from typing import List
 from unittest.mock import MagicMock, patch
 
-from quyca.infrastructure.repositories import info_repository
+from quyca.repositories import info_repository
 
 ENDPOINT = "/info/quality"
 

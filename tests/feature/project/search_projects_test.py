@@ -13,7 +13,7 @@ def test_search_projects_without_keywords(client) -> None:
     assert response.status_code == 200
 
 
-@patch("quyca.domain.services.search.search_service.search_projects")
+@patch("quyca.services.search_service.search_projects")
 def test_search_projects_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 

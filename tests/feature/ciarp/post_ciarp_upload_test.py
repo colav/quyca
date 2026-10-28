@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pandas as pd
 from flask.testing import FlaskClient
 
-from quyca.domain.validators import ciarp_validator
+from quyca.validators import ciarp_validator
 
 
 def auth_cookie(client: FlaskClient) -> None:
@@ -41,7 +41,7 @@ def test_ciarp_upload_invalid_token(client: FlaskClient) -> None:
 def test_ciarp_upload_with_invalid_columns(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.ciarp_service.handle_ciarp_upload") as mock_service:
+    with patch("quyca.services.ciarp_service.handle_ciarp_upload") as mock_service:
         mock_service.return_value = (
             {
                 "success": False,
@@ -68,7 +68,7 @@ def test_ciarp_upload_with_invalid_columns(client: FlaskClient) -> None:
 def test_ciarp_upload_empty_file(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.ciarp_service.handle_ciarp_upload") as mock_service:
+    with patch("quyca.services.ciarp_service.handle_ciarp_upload") as mock_service:
         mock_service.return_value = (
             {"success": False, "msg": "El archivo cargado está vacío. Verifique que contenga información."},
             400,
@@ -88,7 +88,7 @@ def test_ciarp_upload_empty_file(client: FlaskClient) -> None:
 def test_ciarp_upload_success(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.ciarp_service.handle_ciarp_upload") as mock_service:
+    with patch("quyca.services.ciarp_service.handle_ciarp_upload") as mock_service:
         mock_service.return_value = (
             {"success": True, "errors": 0, "duplicates": 1, "pdf_base64": "JVBERi0xLjQKJ..."},
             200,
@@ -119,7 +119,7 @@ def test_ciarp_upload_no_file(client: FlaskClient) -> None:
 def test_ciarp_upload_with_errors(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.ciarp_service.handle_ciarp_upload") as mock_service:
+    with patch("quyca.services.ciarp_service.handle_ciarp_upload") as mock_service:
         mock_service.return_value = (
             {"success": False, "errors": 3, "duplicates": 0, "pdf_base64": "JVBERi0xLjQKJ..."},
             400,
@@ -140,7 +140,7 @@ def test_ciarp_upload_with_errors(client: FlaskClient) -> None:
 def test_ciarp_upload_with_duplicates(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.ciarp_service.handle_ciarp_upload") as mock_service:
+    with patch("quyca.services.ciarp_service.handle_ciarp_upload") as mock_service:
         mock_service.return_value = (
             {"success": True, "errors": 0, "duplicates": 2, "pdf_base64": "JVBERi0xLjQKJ..."},
             200,
@@ -160,7 +160,7 @@ def test_ciarp_upload_with_duplicates(client: FlaskClient) -> None:
 def test_ciarp_upload_email_failed(client: FlaskClient) -> None:
     auth_cookie(client)
 
-    with patch("quyca.domain.services.submit.ciarp_service.handle_ciarp_upload") as mock_service:
+    with patch("quyca.services.ciarp_service.handle_ciarp_upload") as mock_service:
         mock_service.return_value = ({"success": False, "msg": "Fallo al enviar correo"}, 500)
 
         response = client.post(

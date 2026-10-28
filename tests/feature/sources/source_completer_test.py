@@ -3,18 +3,18 @@ from unittest.mock import patch
 import pytest
 
 from quyca.config import settings
-from quyca.infrastructure.repositories.completers import source_completer
+from quyca.repositories.completers import source_completer
 
 ENDPOINT = "/completer/sources"
 
 
-@patch("quyca.infrastructure.repositories.completers.es_database", None)
+@patch("quyca.repositories.completers.es_database", None)
 def test_source_completer_raises_when_es_not_initialized():
     with pytest.raises(RuntimeError, match="Elasticsearch client is not initialized"):
         source_completer("Nat")
 
 
-@patch("quyca.infrastructure.repositories.completers.es_database")
+@patch("quyca.repositories.completers.es_database")
 def test_source_completer_queries_expected_index_and_prefix(mock_es):
     mock_es.search.return_value = {"suggest": {"source_suggest": [{"options": []}]}}
 
@@ -25,7 +25,7 @@ def test_source_completer_queries_expected_index_and_prefix(mock_es):
     assert kwargs["body"]["suggest"]["source_suggest"]["prefix"] == "Nat"
 
 
-@patch("quyca.infrastructure.repositories.completers.es_database")
+@patch("quyca.repositories.completers.es_database")
 def test_source_completer_empty_options_returns_empty_list(mock_es):
     mock_es.search.return_value = {"suggest": {"source_suggest": [{"options": []}]}}
 
@@ -34,7 +34,7 @@ def test_source_completer_empty_options_returns_empty_list(mock_es):
     assert result == []
 
 
-@patch("quyca.infrastructure.repositories.completers.es_database")
+@patch("quyca.repositories.completers.es_database")
 def test_source_completer_sets_name_publisher_and_products_count(mock_es):
     mock_es.search.return_value = {
         "suggest": {
@@ -62,7 +62,7 @@ def test_source_completer_sets_name_publisher_and_products_count(mock_es):
     assert result[0]["products_count"] == 42
 
 
-@patch("quyca.infrastructure.repositories.completers.es_database")
+@patch("quyca.repositories.completers.es_database")
 def test_source_completer_applies_defaults_when_fields_missing(mock_es):
     mock_es.search.return_value = {"suggest": {"source_suggest": [{"options": [{"_id": "1", "_source": {}}]}]}}
 
@@ -73,7 +73,7 @@ def test_source_completer_applies_defaults_when_fields_missing(mock_es):
     assert result[0]["products_count"] == 0
 
 
-@patch("quyca.infrastructure.repositories.completers.source_completer")
+@patch("quyca.repositories.completers.source_completer")
 def test_get_source_completion_returns_completer_result(mock_completer, client):
     mock_completer.return_value = [{"_id": "1", "name": "Nature", "publisher": "Springer", "products_count": 42}]
 
@@ -84,7 +84,7 @@ def test_get_source_completion_returns_completer_result(mock_completer, client):
     mock_completer.assert_called_once_with("Nat")
 
 
-@patch("quyca.infrastructure.repositories.completers.source_completer")
+@patch("quyca.repositories.completers.source_completer")
 def test_get_source_completion_returns_400_on_error(mock_completer, client):
     mock_completer.side_effect = RuntimeError("Elasticsearch client is not initialized")
 

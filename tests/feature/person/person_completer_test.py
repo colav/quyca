@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from quyca.config import settings
-from quyca.infrastructure.repositories.completers import person_completer
+from quyca.repositories.completers import person_completer
 
 """
 Tests for the person completer. Using the AAA (Arrange, Act, Assert) pattern with pytest.
@@ -18,13 +18,13 @@ Tests for the person completer. Using the AAA (Arrange, Act, Assert) pattern wit
 ENDPOINT = "/completer/person"
 
 
-@patch("quyca.infrastructure.repositories.completers.es_database", None)
+@patch("quyca.repositories.completers.es_database", None)
 def test_person_completer_raises_when_es_not_initialized():
     with pytest.raises(RuntimeError, match="Elasticsearch client is not initialized"):
         person_completer("John")
 
 
-@patch("quyca.infrastructure.repositories.completers.es_database")
+@patch("quyca.repositories.completers.es_database")
 def test_person_completer_queries_expected_index_and_prefix(mock_es):
     mock_es.search.return_value = {"suggest": {"name_suggest": [{"options": []}]}}
 
@@ -35,7 +35,7 @@ def test_person_completer_queries_expected_index_and_prefix(mock_es):
     assert kwargs["body"]["suggest"]["name_suggest"]["prefix"] == "Al"
 
 
-@patch("quyca.infrastructure.repositories.completers.es_database")
+@patch("quyca.repositories.completers.es_database")
 def test_person_completer_empty_options_returns_empty_list(mock_es):
     mock_es.search.return_value = {"suggest": {"name_suggest": [{"options": []}]}}
 
@@ -44,7 +44,7 @@ def test_person_completer_empty_options_returns_empty_list(mock_es):
     assert result == []
 
 
-@patch("quyca.infrastructure.repositories.completers.es_database")
+@patch("quyca.repositories.completers.es_database")
 def test_person_completer_sets_longest_input_as_full_name(mock_es):
     mock_es.search.return_value = {
         "suggest": {
@@ -57,7 +57,7 @@ def test_person_completer_sets_longest_input_as_full_name(mock_es):
     assert result[0]["full_name"] == "John Doe"
 
 
-@patch("quyca.infrastructure.repositories.completers.es_database")
+@patch("quyca.repositories.completers.es_database")
 def test_person_completer_sets_full_name_per_option(mock_es):
     mock_es.search.return_value = {
         "suggest": {
@@ -79,7 +79,7 @@ def test_person_completer_sets_full_name_per_option(mock_es):
     assert result[1]["full_name"] == "Beto Ramirez"
 
 
-@patch("quyca.infrastructure.repositories.completers.person_completer")
+@patch("quyca.repositories.completers.person_completer")
 def test_get_person_completion_returns_completer_result(mock_completer, client):
     mock_completer.return_value = [{"_id": "1", "full_name": "Ana"}]
 
@@ -90,7 +90,7 @@ def test_get_person_completion_returns_completer_result(mock_completer, client):
     mock_completer.assert_called_once_with("An")
 
 
-@patch("quyca.infrastructure.repositories.completers.person_completer")
+@patch("quyca.repositories.completers.person_completer")
 def test_get_person_completion_returns_400_on_error(mock_completer, client):
     mock_completer.side_effect = RuntimeError("Elasticsearch client is not initialized")
 

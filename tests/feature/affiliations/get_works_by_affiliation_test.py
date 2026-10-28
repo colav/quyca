@@ -1,4 +1,4 @@
-from quyca.infrastructure.mongo import database
+from quyca.clients.mongo import database
 from unittest.mock import patch
 
 ENDPOINT = "/affiliation"
@@ -92,7 +92,7 @@ def test_get_works_by_group_with_filters(client):
     assert response.status_code == 200
 
 
-@patch("quyca.domain.services.work.work_service.get_works_by_affiliation")
+@patch("quyca.services.work_service.get_works_by_affiliation")
 def test_get_affiliation_research_products_returns_400_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 
