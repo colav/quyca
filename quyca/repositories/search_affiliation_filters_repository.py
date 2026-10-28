@@ -1,19 +1,21 @@
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from quyca.constants.geo_states_cities import AFFILIATION_CITY_MAPPING, AFFILIATION_STATE_MAPPING
 from quyca.models.base_model import QueryParams
 from quyca.constants.institutions import institutions_list
 from quyca.clients.mongo import database
+from quyca.repositories import base_repository
+
+
+def build_affiliations_match(affiliation_type: str, query_params: QueryParams) -> list[dict]:
+    types = institutions_list if affiliation_type == "institution" else [affiliation_type]
+    pipeline = base_repository.text_search_match(query_params.keywords) + [{"$match": {"types.type": {"$in": types}}}]
+    set_affiliation_filters(pipeline, query_params)
+    return pipeline
 
 
 def get_affiliations_available_filters(affiliation_type: str, query_params: QueryParams) -> Dict:
-    types = institutions_list if affiliation_type == "institution" else [affiliation_type]
-    pipeline: list[dict[str, Any]] = []
-    if query_params.keywords:
-        pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
-
-    pipeline.append({"$match": {"types.type": {"$in": types}}})
-    set_affiliation_filters(pipeline, query_params)
+    pipeline = build_affiliations_match(affiliation_type, query_params)
     pipeline += [
         {
             "$facet": {

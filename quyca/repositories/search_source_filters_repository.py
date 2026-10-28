@@ -1,16 +1,18 @@
 from datetime import datetime, timezone
-from typing import Any
 from quyca.constants.source_types import NORMALIZED_TYPE_MAPPING
 from quyca.models.base_model import QueryParams
 from quyca.clients.mongo import database
+from quyca.repositories import base_repository
+
+
+def build_sources_match(query_params: QueryParams) -> list[dict]:
+    pipeline = base_repository.text_search_match(query_params.keywords)
+    set_source_filters(pipeline, query_params)
+    return pipeline
 
 
 def search_sources_available_filters(query_params: QueryParams) -> dict:
-    pipeline: list[dict[str, Any]] = []
-    if query_params.keywords:
-        pipeline.append({"$match": {"$text": {"$search": query_params.keywords}}})
-    set_source_filters(pipeline, query_params)
-
+    pipeline = build_sources_match(query_params)
     pipeline += [
         {
             "$facet": {
@@ -59,7 +61,7 @@ def search_sources_available_filters(query_params: QueryParams) -> dict:
                     {"$sort": {"_id": 1}},
                 ],
                 "topics": [
-                    {"$match": {"topics": {"$exists": True, "$ne": None, "$ne": []}}},
+                    {"$match": {"topics": {"$exists": True, "$nin": [None, []]}}},
                     {"$project": {"topics": 1}},
                     {"$unwind": "$topics"},
                     {

@@ -1,38 +1,29 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Dict, List, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from quyca.models.base_model import QueryParams
 from quyca.normalizers.authors_count import parse_authors_count
 from quyca.clients.mongo import database
+from quyca.exceptions.invalid_param_exception import InvalidParamException
+from quyca.repositories import base_repository
 
 # Cache for global filters (no entity filter, no query params applied).
 # Populated on first request, cleared on container restart.
 _GLOBAL_FILTERS_CACHE: dict = {}
 
 
-def get_works_available_filters(query_params: QueryParams) -> Dict:
-    pipeline: List[Dict[str, Any]] = (
-        [{"$match": {"$text": {"$search": query_params.keywords}}}] if query_params.keywords else []
-    )
-    is_global = len(pipeline) == 0 and not any(
-        [
-            query_params.product_types,
-            query_params.years,
-            query_params.status,
-            query_params.topics,
-            query_params.countries,
-            query_params.groups_ranking,
-            query_params.authors_ranking,
-            query_params.authors_count,
-            query_params.institutions_type,
-            query_params.keywords,
-        ]
-    )
+def build_works_match(query_params: QueryParams) -> list[dict]:
+    pipeline = base_repository.text_search_match(query_params.keywords)
+    set_product_filters(pipeline, query_params)
+    return pipeline
 
+
+def get_works_available_filters(query_params: QueryParams) -> Dict:
+    pipeline = build_works_match(query_params)
+    is_global = not pipeline
     if is_global and _GLOBAL_FILTERS_CACHE:
         return _GLOBAL_FILTERS_CACHE
 
-    set_product_filters(pipeline, query_params)
     available_filters = {}
     collection = database["works"]
 
@@ -48,7 +39,6 @@ def get_works_available_filters(query_params: QueryParams) -> Dict:
                     "types.level": 1,
                 }
             },
-            {"$project": {"types.provenance": 0}},
             {"$unwind": "$types"},
             {
                 "$group": {
@@ -307,6 +297,10 @@ def set_product_type_filters(pipeline: list, type_filters: str | None) -> None:
             match_filters.append(
                 {"types": {"$elemMatch": {"source": params[0], "type": params[1], "code": {"$regex": "^" + params[2]}}}}
             )
+    if not match_filters:
+        raise InvalidParamException(
+            f"Invalid product_types '{type_filters}'. Expected source, source_type or scienti_type_code"
+        )
     pipeline += [{"$match": {"$or": match_filters}}]
 
 
@@ -394,8 +388,6 @@ def set_authors_ranking_filters(pipeline: list, authors_ranking: str | None) -> 
         return
 
     rankings = [ranking.strip() for ranking in authors_ranking.split(",") if ranking.strip()]
-
-    rankings = [r.strip() for r in authors_ranking.split(",") if r.strip()]
     pipeline.append({"$match": {"authors": {"$elemMatch": {"ranking": {"$elemMatch": {"rank": {"$in": rankings}}}}}}})
 
 
