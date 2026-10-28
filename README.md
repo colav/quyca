@@ -142,3 +142,7 @@ http://colav.udea.edu.co/
 ## Business Rules
 
 - Staff validation and normalization: docs/business-rules/staff-validation-normalization.md
+
+## Conventions
+
+- Naming of modules, functions and parameters: docs/conventions/naming.md
