@@ -3,7 +3,8 @@ from io import BytesIO
 from typing import Any, Generator
 
 from quyca.models.export_model import EXPORT_MODEL_BY_ENTITY, ExportEntity, WorkExportBase, export_columns
-from quyca.services.base_service import get_source_export_fields, set_title_and_language
+from quyca.models.base_model import APC
+from quyca.services.base_service import set_title_and_language
 from quyca.models.work_model import BiblioGraphicInfo, Work
 from quyca.constants.institutions import institutions_list
 from quyca.constants.openalex_types import openalex_types_dict
@@ -308,3 +309,49 @@ def parse_integer(value: Any) -> int | None:
             return int(value)
 
     return None
+
+
+def get_source_export_fields(work: Work) -> dict:
+    source = work.source
+
+    if not source:
+        return {
+            "source_name": None,
+            "source_apc": None,
+            "source_urls": None,
+            "scimago_quartile": None,
+        }
+
+    source_name = str(source.name) if source.name else None
+
+    source_apc = None
+    if isinstance(source.apc, APC):
+        if source.apc.charges and source.apc.currency:
+            source_apc = f"{source.apc.charges} / {source.apc.currency}"
+    elif isinstance(source.apc, str):
+        source_apc = source.apc or None
+
+    urls = {str(url.url) for url in (source.external_urls or []) if url.url}
+    source_urls = " | ".join(urls) if urls else None
+
+    scimago_quartile = None
+
+    if source.ranking and work.date_published is not None:
+        for ranking in source.ranking:
+            if (
+                ranking.source == "scimago Best Quartile"
+                and ranking.rank
+                and ranking.rank != "-"
+                and isinstance(ranking.from_date, int)
+                and isinstance(ranking.to_date, int)
+                and ranking.from_date <= work.date_published <= ranking.to_date
+            ):
+                scimago_quartile = str(ranking.rank)
+                break
+
+    return {
+        "source_name": source_name,
+        "source_apc": source_apc,
+        "source_urls": source_urls,
+        "scimago_quartile": scimago_quartile,
+    }

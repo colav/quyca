@@ -5,22 +5,6 @@ from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from quyca.models.base_model import QueryParams
 
-ALLOWED_FIELDS = {
-    "id",
-    "authors",
-    "titles",
-    "keywords",
-    "topics",
-    "subjects",
-    "source",
-    "types",
-    "year_published",
-    "citations_by_year",
-    "citations_count",
-    "updated",
-}
-
-
 Parser = Callable[[list], list]
 
 
@@ -75,15 +59,3 @@ def build_cursor(page: int, total_count: int, limit: int, current_url: str) -> d
     previous_url = build_url(page - 1) if page > 1 else None
 
     return {"next": next_url, "previous": previous_url}
-
-
-def parse_fields(fields: str | None) -> list[str] | None:
-    if not fields:
-        return None
-    requested = [field.strip() for field in fields.split(",") if field.strip()]
-    invalid = sorted(set(requested) - ALLOWED_FIELDS)
-    if invalid:
-        raise ValueError(
-            f"Campos no permitidos: {', '.join(invalid)}. Campos disponibles: {', '.join(sorted(ALLOWED_FIELDS))}."
-        )
-    return list(dict.fromkeys(requested))

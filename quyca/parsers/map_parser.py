@@ -117,7 +117,7 @@ def parse_coauthorship_by_country_map(data: list) -> dict:
     return {"plot": plot}
 
 
-def get_coauthorship_by_colombian_department_map(data: list) -> dict:
+def parse_coauthorship_by_colombian_department_map(data: list) -> dict:
     states = aggregate_coauthorship_by_colombian_department(data)
     for state_data in states.values():
         state_data["log_count"] = log(state_data["count"])
