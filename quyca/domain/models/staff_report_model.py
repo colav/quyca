@@ -1,15 +1,10 @@
-from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
-"""
-Domain entity that represents the validation result of a staff Excel file.
-Contains errors, warnings, and duplicates detected during validation.
-"""
+from pydantic import BaseModel
 
 
-@dataclass
-class StaffReport:
-    """Represents the validation result a Excel file."""
+class StaffReport(BaseModel):
+    """Validation result of an uploaded Excel file (Staff or CIARP): errors, warnings and duplicates."""
 
     total_errors: int
     total_duplicates: int

@@ -1,13 +1,13 @@
 import unicodedata
 from typing import List, Dict, Any, Tuple
-from .required_fields_validator import RequiredFieldsValidator
+from quyca.domain.validators import required_fields_validator
 from quyca.domain.models.staff_report_model import StaffReport
-from .document_validator import DocumentValidator
-from .academic_validator import AcademicValidator
-from .name_validator import NameValidator
-from .date_validator import DateValidator
-from .unit_validator import UnitValidator
-from .error_grouper import ErrorGrouper
+from quyca.domain.validators import document_validator
+from quyca.domain.validators import academic_validator
+from quyca.domain.validators import name_validator
+from quyca.domain.validators import date_validator
+from quyca.domain.validators import unit_validator
+from quyca.domain.validators import error_grouper
 import pandas as pd
 
 REQUIRED_COLUMNS = [
@@ -61,171 +61,167 @@ _NORMALIZED_REQUIRED = {_normalize(c): c for c in REQUIRED_COLUMNS}
 _NORMALIZED_EXTRA_ALLOWED = {_normalize(c) for c in EXTRA_ALLOWED}
 
 
-class StaffValidator:
-    """Validates Staff dataframe schema and row-level data."""
+def excel_row_index(idx: int) -> int:
+    """Converts dataframe index to Excel row number."""
+    return idx + 2
 
-    @staticmethod
-    def excel_row_index(idx: int) -> int:
-        """Converts dataframe index to Excel row number."""
-        return idx + 2
 
-    @staticmethod
-    def validate_columns(df: pd.DataFrame) -> Tuple[bool, List[str], List[str]]:
-        """Validates required and extra columns."""
-        raw_cols = [str(c).strip() for c in df.columns]
-        errors: List[str] = []
-        usecols: list[str] = []
-        matched_required: set[str] = set()
-        matched_optional: set[str] = set()
+def validate_columns(df: pd.DataFrame) -> Tuple[bool, List[str], List[str]]:
+    """Validates required and extra columns."""
+    raw_cols = [str(c).strip() for c in df.columns]
+    errors: List[str] = []
+    usecols: list[str] = []
+    matched_required: set[str] = set()
+    matched_optional: set[str] = set()
 
-        relaxed_required_map = {_relaxed_normalize(required): required for required in REQUIRED_COLUMNS}
+    relaxed_required_map = {_relaxed_normalize(required): required for required in REQUIRED_COLUMNS}
 
-        normalized_optional = {_normalize(column): column for column in OPTIONAL_COLUMNS}
+    normalized_optional = {_normalize(column): column for column in OPTIONAL_COLUMNS}
 
-        for idx, c in enumerate(raw_cols):
-            col = c.strip()
-            col_norm = _normalize(col)
-            col_relaxed = _relaxed_normalize(col)
+    for idx, c in enumerate(raw_cols):
+        col = c.strip()
+        col_norm = _normalize(col)
+        col_relaxed = _relaxed_normalize(col)
 
-            if idx == 0 and (col_norm.startswith("unnamed") or col == "" or col_norm == "index"):
-                continue
-
-            if col_norm.startswith("unnamed") or col == "":
-                if not df.iloc[:, idx].dropna(how="all").empty:
-                    errors.append(f"Columna sin nombre en posición {idx + 1}")
-                continue
-
-            # Columnas obligatorias
-            if col_norm in _NORMALIZED_REQUIRED:
-                canonical = _NORMALIZED_REQUIRED[col_norm]
-                matched_required.add(canonical)
-                usecols.append(canonical)
-                continue
-
-            if col_relaxed in relaxed_required_map:
-                canonical = relaxed_required_map[col_relaxed]
-                matched_required.add(canonical)
-                usecols.append(canonical)
-                continue
-
-            # Columnas opcionales
-            if col_norm in normalized_optional:
-                canonical = normalized_optional[col_norm]
-                matched_optional.add(canonical)
-                usecols.append(canonical)
-                continue
-
-            # Otras columnas permitidas
+        if idx == 0 and (col_norm.startswith("unnamed") or col == "" or col_norm == "index"):
             continue
 
-        # Si viene nombre_completo, primer_apellido, segundo_apellido
-        # y nombres dejan de ser obligatorias.
-        has_full_name = "nombre_completo" in matched_optional
+        if col_norm.startswith("unnamed") or col == "":
+            if not df.iloc[:, idx].dropna(how="all").empty:
+                errors.append(f"Columna sin nombre en posición {idx + 1}")
+            continue
 
-        required_for_file = [column for column in REQUIRED_COLUMNS if not (has_full_name and column in NAME_COLUMNS)]
+        # Columnas obligatorias
+        if col_norm in _NORMALIZED_REQUIRED:
+            canonical = _NORMALIZED_REQUIRED[col_norm]
+            matched_required.add(canonical)
+            usecols.append(canonical)
+            continue
 
-        missing = [column for column in required_for_file if column not in matched_required]
+        if col_relaxed in relaxed_required_map:
+            canonical = relaxed_required_map[col_relaxed]
+            matched_required.add(canonical)
+            usecols.append(canonical)
+            continue
 
-        if missing:
-            errors.append(f"Columnas faltantes: {', '.join(missing)}")
+        # Columnas opcionales
+        if col_norm in normalized_optional:
+            canonical = normalized_optional[col_norm]
+            matched_optional.add(canonical)
+            usecols.append(canonical)
+            continue
 
-        return (
-            len(errors) == 0,
-            errors,
-            usecols,
-        )
+        # Otras columnas permitidas
+        continue
 
-    @staticmethod
-    def validate_row(row: dict, index: int) -> dict:
-        """Validates a single Staff row."""
-        errors: List[Dict[str, Any]] = []
-        warnings: List[Dict[str, Any]] = []
+    # Si viene nombre_completo, primer_apellido, segundo_apellido
+    # y nombres dejan de ser obligatorias.
+    has_full_name = "nombre_completo" in matched_optional
 
-        errors.extend(RequiredFieldsValidator.validate(row, index))
+    required_for_file = [column for column in REQUIRED_COLUMNS if not (has_full_name and column in NAME_COLUMNS)]
 
-        document_type: str = str(row.get("tipo_documento"))
-        identification: str = str(row.get("identificación"))
+    missing = [column for column in required_for_file if column not in matched_required]
 
-        errors.extend(DocumentValidator.validate(document_type, identification, index))
+    if missing:
+        errors.append(f"Columnas faltantes: {', '.join(missing)}")
 
-        errors.extend(NameValidator.validate(row, index))
+    return (
+        len(errors) == 0,
+        errors,
+        usecols,
+    )
 
-        for field in ["fecha_nacimiento", "fecha_inicial_vinculación", "fecha_final_vinculación"]:
-            date_value = row.get(field)
-            if isinstance(date_value, str) and date_value.strip().lower() == "desconocido":
-                warnings.append(
+
+def validate_row(row: dict, index: int) -> dict:
+    """Validates a single Staff row."""
+    errors: List[Dict[str, Any]] = []
+    warnings: List[Dict[str, Any]] = []
+
+    errors.extend(required_fields_validator.validate(row, index))
+
+    document_type: str = str(row.get("tipo_documento"))
+    identification: str = str(row.get("identificación"))
+
+    errors.extend(document_validator.validate(document_type, identification, index))
+
+    errors.extend(name_validator.validate(row, index))
+
+    for field in ["fecha_nacimiento", "fecha_inicial_vinculación", "fecha_final_vinculación"]:
+        date_value = row.get(field)
+        if isinstance(date_value, str) and date_value.strip().lower() == "desconocido":
+            warnings.append(
+                {
+                    "fila": index,
+                    "columna": field,
+                    "detalle": f"{field} fuera de catálogo, se normalizó a desconocido",
+                    "valor": date_value,
+                }
+            )
+        err = date_validator.validate(row.get(field), field, index)
+        if err:
+            errors.append(err)
+
+    e, w = academic_validator.validate(row, index)
+    errors.extend(e)
+    warnings.extend(w)
+
+    errors.extend(unit_validator.validate(row, index))
+
+    return {"errors": errors, "warnings": warnings}
+
+
+def validate_dataframe(df: pd.DataFrame) -> StaffReport:
+    """Validates the full Staff dataframe and detects duplicates."""
+    errors: List[Dict[str, Any]] = []
+    warnings: List[Dict[str, Any]] = []
+    _NORMALIZED_OPTIONAL = {_normalize(c): c for c in OPTIONAL_COLUMNS}
+    # Rename columns to canonical names so row validators always find the right keys
+    rename_map = {}
+
+    for col in df.columns:
+        normalized = _normalize(col)
+        if normalized in _NORMALIZED_REQUIRED:
+            rename_map[col] = _NORMALIZED_REQUIRED[normalized]
+        elif normalized in _NORMALIZED_OPTIONAL:
+            rename_map[col] = _NORMALIZED_OPTIONAL[normalized]
+
+    df = df.rename(columns=rename_map)
+
+    df = df.dropna(how="all").reset_index(drop=True)
+    df = df[~df.apply(lambda row: row.astype(str).str.strip().eq("").all(), axis=1)]
+    df = df.apply(lambda x: str(x).strip() if isinstance(x, str) else x)
+    df = df.apply(lambda x: str(int(x)) if isinstance(x, float) and x.is_integer() else x)
+
+    for idx, row in df.iterrows():
+        r = validate_row(row.to_dict(), idx)
+        errors.extend(r["errors"])
+        warnings.extend(r["warnings"])
+
+    dedupe_cols = [c for c in df.columns if c in REQUIRED_COLUMNS]
+
+    duplicate_info: List[Dict[str, Any]] = []
+    total_dups = 0
+
+    if dedupe_cols:
+        dup_mask = df.duplicated(subset=dedupe_cols, keep=False)
+
+        if dup_mask.any():
+            total_dups = int(dup_mask.sum())
+            for idx, row in df[dup_mask].iterrows():
+                duplicate_info.append(
                     {
-                        "fila": index,
-                        "columna": field,
-                        "detalle": f"{field} fuera de catálogo, se normalizó a desconocido",
-                        "valor": date_value,
+                        "index": int(idx),
+                        "index_excel": excel_row_index(int(idx)),
+                        "row": row.to_dict(),
                     }
                 )
-            err = DateValidator.validate(row.get(field), field, index)
-            if err:
-                errors.append(err)
 
-        e, w = AcademicValidator.validate(row, index)
-        errors.extend(e)
-        warnings.extend(w)
-
-        errors.extend(UnitValidator.validate(row, index))
-
-        return {"errors": errors, "warnings": warnings}
-
-    @staticmethod
-    def validate_dataframe(df: pd.DataFrame) -> StaffReport:
-        """Validates the full Staff dataframe and detects duplicates."""
-        errors: List[Dict[str, Any]] = []
-        warnings: List[Dict[str, Any]] = []
-        _NORMALIZED_OPTIONAL = {_normalize(c): c for c in OPTIONAL_COLUMNS}
-        # Rename columns to canonical names so row validators always find the right keys
-        rename_map = {}
-
-        for col in df.columns:
-            normalized = _normalize(col)
-            if normalized in _NORMALIZED_REQUIRED:
-                rename_map[col] = _NORMALIZED_REQUIRED[normalized]
-            elif normalized in _NORMALIZED_OPTIONAL:
-                rename_map[col] = _NORMALIZED_OPTIONAL[normalized]
-
-        df = df.rename(columns=rename_map)
-
-        df = df.dropna(how="all").reset_index(drop=True)
-        df = df[~df.apply(lambda row: row.astype(str).str.strip().eq("").all(), axis=1)]
-        df = df.apply(lambda x: str(x).strip() if isinstance(x, str) else x)
-        df = df.apply(lambda x: str(int(x)) if isinstance(x, float) and x.is_integer() else x)
-
-        for idx, row in df.iterrows():
-            r = StaffValidator.validate_row(row.to_dict(), idx)
-            errors.extend(r["errors"])
-            warnings.extend(r["warnings"])
-
-        dedupe_cols = [c for c in df.columns if c in REQUIRED_COLUMNS]
-
-        duplicate_info: List[Dict[str, Any]] = []
-        total_dups = 0
-
-        if dedupe_cols:
-            dup_mask = df.duplicated(subset=dedupe_cols, keep=False)
-
-            if dup_mask.any():
-                total_dups = int(dup_mask.sum())
-                for idx, row in df[dup_mask].iterrows():
-                    duplicate_info.append(
-                        {
-                            "index": int(idx),
-                            "index_excel": StaffValidator.excel_row_index(int(idx)),
-                            "row": row.to_dict(),
-                        }
-                    )
-
-        return StaffReport(
-            total_errors=len(errors),
-            total_duplicates=total_dups,
-            errors=errors,
-            grouped_errors=ErrorGrouper.group_errors(errors),
-            warnings=warnings,
-            grouped_warnings=ErrorGrouper.group_warnings(warnings),
-            duplicates=duplicate_info,
-        )
+    return StaffReport(
+        total_errors=len(errors),
+        total_duplicates=total_dups,
+        errors=errors,
+        grouped_errors=error_grouper.group_errors(errors),
+        warnings=warnings,
+        grouped_warnings=error_grouper.group_warnings(warnings),
+        duplicates=duplicate_info,
+    )

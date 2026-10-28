@@ -137,161 +137,161 @@ def _is_valid_short_date(value: str) -> bool:
         return False
 
 
-class StaffNormalizerService:
-    """Cleans and semantically normalizes a Staff DataFrame."""
+# ------------------------------------------------------------------
+# Phase 1 — structural cleaning (always runs)
+# ------------------------------------------------------------------
 
-    # ------------------------------------------------------------------
-    # Phase 1 — structural cleaning (always runs)
-    # ------------------------------------------------------------------
 
-    def clean(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Strips whitespace from headers and string cells.
-        Converts Excel numeric dates to DD/MM/YYYY strings.
-        """
-        df = df.copy()
+def clean(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Strips whitespace from headers and string cells.
+    Converts Excel numeric dates to DD/MM/YYYY strings.
+    """
+    df = df.copy()
 
-        # Normalize column names
-        df.columns = [_normalize_header(c) for c in df.columns]
+    # Normalize column names
+    df.columns = [_normalize_header(c) for c in df.columns]
 
-        # Strip string cells
-        df = df.apply(lambda col: col.map(lambda v: v.strip() if isinstance(v, str) else v))
+    # Strip string cells
+    df = df.apply(lambda col: col.map(lambda v: v.strip() if isinstance(v, str) else v))
 
-        # Convert Excel serial dates in known date columns
-        for field in _DATE_FIELDS:
-            if field in df.columns:
-                df[field] = df[field].apply(self._parse_date)
+    # Convert Excel serial dates in known date columns
+    for field in _DATE_FIELDS:
+        if field in df.columns:
+            df[field] = df[field].apply(_parse_date)
 
-        # Convert numeric-looking identifiers/codes to real numeric values when safe.
-        for field in _NUMERIC_TEXT_FIELDS:
-            if field in df.columns:
-                df[field] = df[field].apply(self._coerce_numeric_scalar)
+    # Convert numeric-looking identifiers/codes to real numeric values when safe.
+    for field in _NUMERIC_TEXT_FIELDS:
+        if field in df.columns:
+            df[field] = df[field].apply(_coerce_numeric_scalar)
 
-        # Extract IDs from URLs for identifier fields
-        for field, extractor in _IDENTIFIER_EXTRACTORS.items():
-            if field in df.columns:
-                df[field] = df[field].apply(
-                    lambda v: extractor(str(v).strip()) if isinstance(v, str) and str(v).strip() else v
-                )
+    # Extract IDs from URLs for identifier fields
+    for field, extractor in _IDENTIFIER_EXTRACTORS.items():
+        if field in df.columns:
+            df[field] = df[field].apply(
+                lambda v: extractor(str(v).strip()) if isinstance(v, str) and str(v).strip() else v
+            )
 
-        return df
+    return df
 
-    @staticmethod
-    def _parse_date(value: Any) -> Any:
-        """Converts Excel numeric date serials to DD/MM/YYYY; leaves other values unchanged."""
-        if isinstance(value, (pd.Timestamp, datetime, date)) and not pd.isna(value):
-            try:
-                return pd.Timestamp(value).strftime("%d/%m/%Y")
-            except Exception:
-                return value
 
-        if isinstance(value, (int, float)) and not pd.isna(value):
-            try:
-                parsed_date = pd.Timestamp("1899-12-30") + pd.Timedelta(days=int(value))
-                return parsed_date.strftime("%d/%m/%Y")
-            except Exception:
-                return value
-        return value
-
-    @staticmethod
-    def _coerce_numeric_scalar(value: Any) -> Any:
-        """Convert safe numeric-looking values to ints so Excel writes them as numeric cells."""
-        if pd.isna(value):
+def _parse_date(value: Any) -> Any:
+    """Converts Excel numeric date serials to DD/MM/YYYY; leaves other values unchanged."""
+    if isinstance(value, (pd.Timestamp, datetime, date)) and not pd.isna(value):
+        try:
+            return pd.Timestamp(value).strftime("%d/%m/%Y")
+        except Exception:
             return value
 
-        if isinstance(value, bool):
+    if isinstance(value, (int, float)) and not pd.isna(value):
+        try:
+            parsed_date = pd.Timestamp("1899-12-30") + pd.Timedelta(days=int(value))
+            return parsed_date.strftime("%d/%m/%Y")
+        except Exception:
             return value
+    return value
 
-        if isinstance(value, (int, float)):
-            if isinstance(value, float) and not value.is_integer():
-                return value
-            return int(value)
 
-        if isinstance(value, str):
-            stripped = value.strip()
-            if _INTEGER_TEXT_RE.match(stripped):
-                integer_part = stripped.split(".", 1)[0]
-                if len(integer_part) > 1 and integer_part.startswith("0"):
-                    return value
-                return int(float(stripped))
-
+def _coerce_numeric_scalar(value: Any) -> Any:
+    """Convert safe numeric-looking values to ints so Excel writes them as numeric cells."""
+    if pd.isna(value):
         return value
 
-    # ------------------------------------------------------------------
-    # Phase 2 — semantic mapping (only when no errors)
-    # ------------------------------------------------------------------
+    if isinstance(value, bool):
+        return value
 
-    def map_values(self, df: pd.DataFrame) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
-        """
-        Maps field variants to their canonical values.
-        Returns the normalized DataFrame and a changelog of every change made.
+    if isinstance(value, (int, float)):
+        if isinstance(value, float) and not value.is_integer():
+            return value
+        return int(value)
 
-        Changelog entry:
-            {
-                "fila": int,           # 0-based DataFrame index
-                "fila_excel": int,     # 1-based Excel row (header = row 1)
-                "columna": str,
-                "valor_original": str,
-                "valor_normalizado": str,
-            }
-        """
-        df = df.copy()
-        changelog: list[dict[str, Any]] = []
+    if isinstance(value, str):
+        stripped = value.strip()
+        if _INTEGER_TEXT_RE.match(stripped):
+            integer_part = stripped.split(".", 1)[0]
+            if len(integer_part) > 1 and integer_part.startswith("0"):
+                return value
+            return int(float(stripped))
 
-        for field, mapping in _NORMALIZED_FIELD_MAPS.items():
-            if field not in df.columns:
+    return value
+
+
+# ------------------------------------------------------------------
+# Phase 2 — semantic mapping (only when no errors)
+# ------------------------------------------------------------------
+
+
+def map_values(df: pd.DataFrame) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
+    """
+    Maps field variants to their canonical values.
+    Returns the normalized DataFrame and a changelog of every change made.
+
+    Changelog entry:
+        {
+            "fila": int,           # 0-based DataFrame index
+            "fila_excel": int,     # 1-based Excel row (header = row 1)
+            "columna": str,
+            "valor_original": str,
+            "valor_normalizado": str,
+        }
+    """
+    df = df.copy()
+    changelog: list[dict[str, Any]] = []
+
+    for field, mapping in _NORMALIZED_FIELD_MAPS.items():
+        if field not in df.columns:
+            continue
+
+        for idx, raw_value in df[field].items():
+            if pd.isna(raw_value) or str(raw_value).strip() == "":
                 continue
 
-            for idx, raw_value in df[field].items():
-                if pd.isna(raw_value) or str(raw_value).strip() == "":
-                    continue
+            raw_str = str(raw_value).strip()
+            lookup_key = _normalize_key(raw_str)
+            canonical = mapping.get(lookup_key)
 
-                raw_str = str(raw_value).strip()
-                lookup_key = _normalize_key(raw_str)
-                canonical = mapping.get(lookup_key)
+            if canonical is None and field in _MAP_TO_UNKNOWN_FIELDS:
+                canonical = _UNKNOWN_VALUE
 
-                if canonical is None and field in _MAP_TO_UNKNOWN_FIELDS:
-                    canonical = _UNKNOWN_VALUE
-
-                if canonical is not None and canonical != raw_str:
-                    df.at[idx, field] = canonical
-                    if _is_meaningful_change(raw_str, canonical):
-                        changelog.append(
-                            {
-                                "fila": int(idx),
-                                "fila_excel": int(idx) + 2,
-                                "columna": field,
-                                "valor_original": raw_str,
-                                "valor_normalizado": canonical,
-                            }
-                        )
-
-        # Date unknown mapping is intentionally conservative: only known
-        # "unknown" aliases are mapped; malformed date values remain for validators.
-        for field in _DATE_MAP_TO_UNKNOWN_FIELDS:
-            if field not in df.columns:
-                continue
-
-            for idx, raw_value in df[field].items():
-                if pd.isna(raw_value) or str(raw_value).strip() == "":
-                    continue
-
-                raw_str = str(raw_value).strip()
-                lookup_key = _normalize_key(raw_str)
-
-                if _is_valid_short_date(raw_str):
-                    continue
-
-                if lookup_key in _UNKNOWN_ALIASES and raw_str != _UNKNOWN_VALUE:
-                    df.at[idx, field] = _UNKNOWN_VALUE
+            if canonical is not None and canonical != raw_str:
+                df.at[idx, field] = canonical
+                if _is_meaningful_change(raw_str, canonical):
                     changelog.append(
                         {
                             "fila": int(idx),
                             "fila_excel": int(idx) + 2,
                             "columna": field,
                             "valor_original": raw_str,
-                            "valor_normalizado": _UNKNOWN_VALUE,
+                            "valor_normalizado": canonical,
                         }
                     )
 
-        return df, changelog
+    # Date unknown mapping is intentionally conservative: only known
+    # "unknown" aliases are mapped; malformed date values remain for validators.
+    for field in _DATE_MAP_TO_UNKNOWN_FIELDS:
+        if field not in df.columns:
+            continue
+
+        for idx, raw_value in df[field].items():
+            if pd.isna(raw_value) or str(raw_value).strip() == "":
+                continue
+
+            raw_str = str(raw_value).strip()
+            lookup_key = _normalize_key(raw_str)
+
+            if _is_valid_short_date(raw_str):
+                continue
+
+            if lookup_key in _UNKNOWN_ALIASES and raw_str != _UNKNOWN_VALUE:
+                df.at[idx, field] = _UNKNOWN_VALUE
+                changelog.append(
+                    {
+                        "fila": int(idx),
+                        "fila_excel": int(idx) + 2,
+                        "columna": field,
+                        "valor_original": raw_str,
+                        "valor_normalizado": _UNKNOWN_VALUE,
+                    }
+                )
+
+    return df, changelog
