@@ -14,10 +14,10 @@ def test_search_projects_without_keywords(client) -> None:
 
 
 @patch("quyca.services.search_service.search_projects")
-def test_search_projects_returns_400_on_error(mock_service, client):
+def test_search_projects_returns_500_on_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 
     response = client.get(f"{ENDPOINT}")
 
-    assert response.status_code == 400
-    assert response.get_json() == {"error": "boom"}
+    assert response.status_code == 500
+    assert response.get_json() == {"error": "Internal server error"}
