@@ -9,7 +9,7 @@ register_error_handlers(apc_router)
 
 @apc_router.route("/search", methods=["GET"])
 def get_apc_csv_by_search() -> Response:
-    return file_response(apc_service.get_apc_csv_by_search(parse_query_params().keywords), "search.csv", "text/csv")
+    return file_response(apc_service.get_apc_csv_by_search(parse_query_params()), "search.csv", "text/csv")
 
 
 @apc_router.route("/person/<person_id>", methods=["GET"])
