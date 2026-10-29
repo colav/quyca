@@ -1,6 +1,9 @@
 from typing import Any
 
+from quyca.exceptions.forbidden_exception import ForbiddenException
+from quyca.exceptions.invalid_param_exception import InvalidParamException
 from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.exceptions.unauthorized_exception import UnauthorizedException
 from quyca.parsers.user_parser import parse_user_claims
 from quyca.repositories import user_repository
 from quyca.security import jwt_token_service
@@ -12,17 +15,20 @@ SESION_ACTIVA = "sesion_activa"
 
 def login(email: str, password: str) -> dict:
     """Validates credentials and returns the user info plus an access token.
-    Raises NotEntityException for wrong credentials or a deactivated account."""
+    Raises UnauthorizedException for wrong credentials and ForbiddenException for a deactivated account."""
     email = (email or "").strip()
     password = password or ""
 
     if not email or not password:
-        return {"success": False, "msg": "correo y contraseña requeridos"}
+        raise InvalidParamException("correo y contraseña requeridos")
 
-    user = user_repository.get_user_by_email_and_password(email, password)
+    try:
+        user = user_repository.get_user_by_email_and_password(email, password)
+    except NotEntityException as e:
+        raise UnauthorizedException(str(e)) from e
 
     if not user.is_active:
-        raise NotEntityException("El usuario está desactivado. Contacte al administrador del sistema")
+        raise ForbiddenException("El usuario está desactivado. Contacte al administrador del sistema")
 
     parse_user = parse_user_claims(user)
 

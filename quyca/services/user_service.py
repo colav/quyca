@@ -3,6 +3,9 @@ import string
 import time
 from typing import Any, List
 
+from quyca.exceptions.conflict_exception import ConflictException
+from quyca.exceptions.forbidden_exception import ForbiddenException
+from quyca.exceptions.invalid_param_exception import InvalidParamException
 from quyca.exceptions.not_entity_exception import NotEntityException
 from quyca.models.user_model import User
 from quyca.services import notification_service
@@ -15,22 +18,19 @@ def create_user(
 ) -> dict[str, Any]:
     """Creates a new user and sends credentials via email."""
     if raw_payload is None:
-        raise NotEntityException("Payload requerido: institution, ror_id y role.")
+        raise InvalidParamException("Payload requerido: institution, ror_id y role.")
 
     _validate_create_user_payload(raw_payload)
 
     if role.lower() == "admin":
-        raise NotEntityException("No se pueden crear usuarios con el role 'admin'.")
+        raise ForbiddenException("No se pueden crear usuarios con el role 'admin'.")
 
     existing_by_ror = user_repository.get_user_by_ror_id(ror_id)
     if existing_by_ror:
-        return {
-            "success": False,
-            "msg": (
-                f"Para la institución: {existing_by_ror.institution} ya existe un correo registrado: "
-                f"{existing_by_ror.email}. Si deseas asignar un nuevo correo, edita el usuario existente."
-            ),
-        }
+        raise ConflictException(
+            f"Para la institución: {existing_by_ror.institution} ya existe un correo registrado: "
+            f"{existing_by_ror.email}. Si deseas asignar un nuevo correo, edita el usuario existente."
+        )
 
     raw_password = _generate_password()
     hashe_password = hash_password(raw_password)
@@ -82,14 +82,13 @@ def activate_user(email: str) -> dict[str, Any]:
 def update_password(email: str) -> dict[str, Any]:
     """Resets password, stores hash, and emails the new credentials."""
 
-    all_users = user_repository.get_all_users()
-    user = next((u for u in all_users if u.email == email), None)
+    user = user_repository.get_user_by_email(email)
 
     if not user:
         raise NotEntityException(f"El usuario con correo {email} no fue encontrado")
 
     if not user.is_active:
-        raise NotEntityException(f"Cuenta desactivada para el usuario {email}")
+        raise ForbiddenException(f"Cuenta desactivada para el usuario {email}")
 
     new_password = _generate_password()
     hashed = hash_password(new_password)
@@ -109,23 +108,22 @@ def update_user_info(old_email: str, new_email: str, new_role: str, raw_payload:
     _validate_edit_user_payload(raw_payload)
 
     if new_role and new_role.strip().lower() == "admin":
-        return {"success": False, "msg": "No se puede asignar el rol 'admin' a un usuario."}
-    current_user = user_repository.get_all_users()
-    current = next((u for u in current_user if u.email == old_email), None)
+        raise ForbiddenException("No se puede asignar el rol 'admin' a un usuario.")
+    current = user_repository.get_user_by_email(old_email)
     if not current:
-        return {"success": False, "msg": f"Usuario con correo {old_email} no encontrado."}
+        raise NotEntityException(f"Usuario con correo {old_email} no encontrado.")
 
     if not current.is_active:
-        raise NotEntityException(f"Cuenta desactivada para el usuario {old_email}")
+        raise ForbiddenException(f"Cuenta desactivada para el usuario {old_email}")
 
     if current.role.strip().lower() == "admin":
-        return {"success": False, "msg": "No se pueden editar los datos de este usuario"}
+        raise ForbiddenException("No se pueden editar los datos de este usuario")
 
     correo_cambiado = old_email.strip().lower() != new_email.strip().lower()
     role_cambiado = bool(new_role) and new_role.strip().lower() != current.role.strip().lower()
 
     if not correo_cambiado and not role_cambiado:
-        return {"success": False, "msg": "No se detectaron cambios para actualizar."}
+        raise InvalidParamException("No se detectaron cambios para actualizar.")
 
     updated_user = user_repository.update_user_info(old_email, new_email, new_role)
     if not updated_user:
@@ -210,7 +208,7 @@ def _validate_create_user_payload(payload: dict[str, Any]) -> None:
             msg_parts.append("Faltan: " + ",".join(sorted(missing)))
         if extra:
             msg_parts.append("Sobran: " + ", ".join(sorted(extra)))
-        raise NotEntityException(" | ".join(msg_parts))
+        raise InvalidParamException(" | ".join(msg_parts))
 
 
 def _validate_edit_user_payload(payload: dict[str, Any]) -> None:
@@ -219,12 +217,12 @@ def _validate_edit_user_payload(payload: dict[str, Any]) -> None:
     received = set(payload.keys())
 
     if not received:
-        raise NotEntityException("Debes enviar al menos email o role.")
+        raise InvalidParamException("Debes enviar al menos email o role.")
 
     extra = received - allowed
 
     if extra:
-        raise NotEntityException("Sobran: " + ", ".join(sorted(extra)))
+        raise InvalidParamException("Sobran: " + ", ".join(sorted(extra)))
 
 
 def _validate_apikey_expiration(expires: int | None) -> None:
@@ -233,12 +231,12 @@ def _validate_apikey_expiration(expires: int | None) -> None:
         return
 
     if not isinstance(expires, int):
-        raise NotEntityException("El campo 'expires' debe ser un timestamp entero o None")
+        raise InvalidParamException("El campo 'expires' debe ser un timestamp entero o None")
 
     current = int(time.time())
 
     if expires <= current:
-        raise NotEntityException("La fecha de expiración debe ser futura")
+        raise InvalidParamException("La fecha de expiración debe ser futura")
 
     if expires - current < 86400:
-        raise NotEntityException("La expiración mínima del API key es de 1 día")
+        raise InvalidParamException("La expiración mínima del API key es de 1 día")

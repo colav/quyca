@@ -1,63 +1,26 @@
-from typing import Tuple
-from flask import Blueprint, request, jsonify, Response
-from sentry_sdk import capture_exception
-
+from flask import Blueprint, Response, jsonify, request
 from flask_jwt_extended import set_access_cookies, unset_jwt_cookies
 
-from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.api.helpers import register_error_handlers
 from quyca.services import auth_service
 
 user_auth_router = Blueprint("user_auth_app_router", __name__)
+register_error_handlers(user_auth_router, message_key="msg")
 
 
 @user_auth_router.route("/login", methods=["POST"])
-def login() -> Tuple[Response, int]:
-    try:
-        data = request.get_json(force=True) or {}
-        email = (data.get("email") or "").strip()
-        password = data.get("password") or ""
-
-        if not email or not password:
-            return jsonify({"success": False, "msg": "correo y contraseña requeridos"}), 400
-
-        result = auth_service.login(email, password)
-
-        status_code = 200 if result.get("success") else 401
-
-        token = result.get("access_token", "")
-        response_body = {**result}
-
-        response_body.pop("access_token", None)
-
-        response = jsonify(response_body)
-        if status_code == 200 and token:
-            set_access_cookies(response, token)
-
-        return response, status_code
-
-    except NotEntityException as e:
-        msg = str(e)
-
-        if "desactivada" in msg.lower():
-            status = 403
-        else:
-            status = 401
-
-        return jsonify({"success": False, "msg": msg}), status
-
-    except Exception as e:
-        capture_exception(e)
-        return jsonify({"success": False, "msg": str("Error interno del servidor")}), 500
+def login() -> tuple[Response, int]:
+    data = request.get_json(force=True, silent=True) or {}
+    result = auth_service.login(data.get("email") or "", data.get("password") or "")
+    # The token only travels in the httpOnly cookie, never in the body.
+    token = result.pop("access_token")
+    response = jsonify(result)
+    set_access_cookies(response, token)
+    return response, 200
 
 
 @user_auth_router.route("/logout", methods=["POST"])
-def logout() -> Tuple[Response, int]:
-    try:
-        response = jsonify({"success": True, "msg": "Sesión cerrada correctamente"})
-        unset_jwt_cookies(response)
-
-        return response, 200
-
-    except Exception as e:
-        capture_exception(e)
-        return jsonify({"success": False, "msg": f"Error interno del servidor"}), 500
+def logout() -> tuple[Response, int]:
+    response = jsonify({"success": True, "msg": "Sesión cerrada correctamente"})
+    unset_jwt_cookies(response)
+    return response, 200
