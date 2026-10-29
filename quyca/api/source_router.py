@@ -12,7 +12,7 @@ register_error_handlers(source_router)
 
 @source_router.route("/<source_id>", methods=["GET"])
 def get_source_by_id(source_id: str) -> Response:
-    return jsonify(source_service.get_source_by_id(source_id))
+    return jsonify(source_service.get_source_by_id(source_id, parse_query_params()))
 
 
 @source_router.route("/<source_id>/products", methods=["GET"])
