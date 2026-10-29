@@ -5,8 +5,11 @@ from pydantic import ValidationError
 from sentry_sdk import capture_exception
 from werkzeug.exceptions import HTTPException
 
+from quyca.exceptions.conflict_exception import ConflictException
+from quyca.exceptions.forbidden_exception import ForbiddenException
 from quyca.exceptions.invalid_param_exception import InvalidParamException
 from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.exceptions.unauthorized_exception import UnauthorizedException
 from quyca.models.base_model import QueryParams
 
 CSV_CONTENT_TYPE = "text/csv; charset=utf-8"
@@ -27,16 +30,27 @@ def file_response(content: Iterable[str] | bytes, filename: str, content_type: s
     )
 
 
-def register_error_handlers(blueprint: Blueprint) -> None:
-    """Client errors answer 400 with their message, missing entities 404; anything else is reported to Sentry and answers 500."""
+ERROR_STATUSES: dict[type[Exception], int] = {
+    InvalidParamException: 400,
+    UnauthorizedException: 401,
+    ForbiddenException: 403,
+    NotEntityException: 404,
+    ConflictException: 409,
+}
 
-    @blueprint.errorhandler(InvalidParamException)
-    def handle_invalid_param(error: InvalidParamException) -> tuple[Response, int]:
-        return jsonify({"error": str(error)}), 400
 
-    @blueprint.errorhandler(NotEntityException)
-    def handle_not_entity(error: NotEntityException) -> tuple[Response, int]:
-        return jsonify({"error": str(error)}), 404
+def register_error_handlers(blueprint: Blueprint, message_key: str = "error") -> None:
+    """Known errors answer their status with their message; anything else is reported to Sentry and answers 500.
+
+    `message_key="msg"` is for the user and upload endpoints, whose clients read {"success": false, "msg": ...}.
+    """
+
+    def error_response(message: str, status: int) -> tuple[Response, int]:
+        body = {"error": message} if message_key == "error" else {"success": False, "msg": message}
+        return jsonify(body), status
+
+    for exception, status in ERROR_STATUSES.items():
+        blueprint.register_error_handler(exception, lambda error, status=status: error_response(str(error), status))
 
     @blueprint.errorhandler(Exception)
     def handle_unexpected_error(error: Exception) -> HTTPException | tuple[Response, int]:
@@ -44,4 +58,4 @@ def register_error_handlers(blueprint: Blueprint) -> None:
             return error
         current_app.logger.exception(error)
         capture_exception(error)
-        return jsonify({"error": "Internal server error"}), 500
+        return error_response("Internal server error" if message_key == "error" else "Error interno del servidor", 500)

@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+from quyca.exceptions.conflict_exception import ConflictException
 from quyca.exceptions.not_entity_exception import NotEntityException
 from quyca.models.user_model import User
 from quyca.clients.mongo import impactu_database
@@ -50,12 +51,17 @@ def get_user_by_email_and_password(email: str, password: str) -> User:
     )
 
 
+def get_user_by_email(email: str) -> Optional[User]:
+    document = users_collection.find_one({"email": email.strip().lower()}, {"password": 0})
+    return _to_user(document) if document else None
+
+
 def create_user(user: User) -> None:
     """Inserts a new user if the email is not already registered."""
     email = user.email.strip().lower()
     existing = users_collection.find_one({"email": email}, {"password": 0})
     if existing:
-        raise NotEntityException(f"El usuario con correo {email} ya existe.")
+        raise ConflictException(f"El usuario con correo {email} ya existe.")
 
     users_collection.insert_one(
         {
@@ -118,7 +124,7 @@ def update_user_info(old_email: str, new_email: str, new_role: str) -> Optional[
 
     if new_email and new_email != old_email:
         if users_collection.find_one({"email": new_email}):
-            raise NotEntityException(f"Ya existe un usuario con el correo {new_email}")
+            raise ConflictException(f"Ya existe un usuario con el correo {new_email}")
         update["email"] = new_email
 
     if new_role:
