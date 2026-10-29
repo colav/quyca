@@ -1,28 +1,17 @@
-from typing import Tuple
+from flask import Blueprint, Response, jsonify
 
-from flask import Blueprint, jsonify, Response
-from sentry_sdk import capture_exception
-
+from quyca.api.helpers import register_error_handlers
 from quyca.services import info_service
 
 info_router = Blueprint("info_router", __name__)
+register_error_handlers(info_router)
 
 
 @info_router.route("/info", methods=["GET"])
-def get_info() -> Response | Tuple[Response, int]:
-    try:
-        data = info_service.get_info()
-        return jsonify(data)
-    except Exception as e:
-        capture_exception(e)
-        return jsonify({"error": str(e)}), 400
+def get_info() -> Response:
+    return jsonify(info_service.get_info())
 
 
 @info_router.route("/info/quality", methods=["GET"])
-def get_quality_metrics() -> Response | Tuple[Response, int]:
-    try:
-        data = info_service.get_quality_metrics()
-        return jsonify(data)
-    except Exception as e:
-        capture_exception(e)
-        return jsonify({"error": str(e)}), 400
+def get_quality_metrics() -> Response:
+    return jsonify(info_service.get_quality_metrics())

@@ -1,21 +1,19 @@
 from typing import Any
+
 from quyca.constants.institutions import institutions_list
 from quyca.clients.mongo import database, impactu_database
 
 
 def get_last_db_update() -> int:
-    doc = database["log"].find_one(sort=[("time", -1)], projection={"time": 1})
-    if doc:
-        return int(doc["time"])
-    return 0
+    document = database["log"].find_one(sort=[("time", -1)], projection={"time": 1})
+    return int(document["time"]) if document else 0
 
 
-def get_entity_count(entity: str, affiliation_type: str | None = None) -> int:
-    if affiliation_type:
-        if affiliation_type == "institution":
-            return database[entity].count_documents({"types.type": {"$in": institutions_list}})
-        return database[entity].count_documents({"types.type": affiliation_type})
-    return database[entity].estimated_document_count()
+def get_entity_count(collection: str, affiliation_type: str | None = None) -> int:
+    if not affiliation_type:
+        return database[collection].estimated_document_count()
+    types = institutions_list if affiliation_type == "institution" else [affiliation_type]
+    return database[collection].count_documents({"types.type": {"$in": types}})
 
 
 def get_open_access_count() -> int:

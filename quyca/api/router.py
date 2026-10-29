@@ -3,7 +3,7 @@ from flask import Blueprint
 from quyca.api.affiliation_router import affiliation_router
 from quyca.api.apc_router import apc_router
 from quyca.api.completer_router import completer_router
-from quyca.api.docs_router import router as docs_router
+from quyca.api.docs_router import docs_router
 from quyca.api.geo_router import geo_router
 from quyca.api.info_router import info_router
 from quyca.api.patent_router import patent_router
