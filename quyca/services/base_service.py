@@ -6,7 +6,6 @@ from quyca.models.patent_model import Patent
 from quyca.models.project_model import Project
 from quyca.models.work_model import Work
 from quyca.repositories import person_repository
-from quyca.constants.sensitive_data import SENSITIVE_ID_SOURCES
 
 SUMMARY_AUTHORS_LIMIT = 10
 
@@ -61,7 +60,7 @@ def set_product_types(workable: Union[Work, Patent, Project]) -> None:
     workable.product_types = sorted(product_types, key=order)
 
 
-def set_authors_external_ids(workable: Union[Work, Patent, Project], filter_sensitive: bool = False) -> None:
+def set_authors_external_ids(workable: Union[Work, Patent, Project]) -> None:
     if not workable.authors:
         return
 
@@ -70,10 +69,7 @@ def set_authors_external_ids(workable: Union[Work, Patent, Project], filter_sens
 
     for author in workable.authors:
         if author.id:
-            external_ids = person_repository.get_person_external_ids(str(author.id))
-            if filter_sensitive:
-                external_ids = [eid for eid in external_ids if eid.source not in SENSITIVE_ID_SOURCES]
-            author.external_ids = external_ids
+            author.external_ids = person_repository.get_person_external_ids(str(author.id))
 
 
 def limit_authors(workable: Union[Work, Patent, Project], limit: int | None = None) -> None:
@@ -85,7 +81,7 @@ def limit_authors(workable: Union[Work, Patent, Project], limit: int | None = No
         workable.authors = workable.authors[:limit]
 
 
-def set_external_ids(workable: Union[Work, Patent, Project], filter_sensitive: bool = False) -> None:
+def set_external_ids(workable: Union[Work, Patent, Project]) -> None:
     if not workable.external_ids:
         return
 
@@ -111,11 +107,12 @@ def set_external_urls(workable: Union[Work, Patent, Project]) -> None:
         if urlparse(url).scheme and urlparse(url).netloc:
             new_external_urls.append(external_url)
         else:
-            if external_url.source in external_urls_dict.keys() and url != "":
+            source = external_url.source
+            if source is not None and source in external_urls_dict and url != "":
                 new_external_urls.append(
                     ExternalUrl(
-                        url=external_urls_dict[external_url.source].format(id=url),
-                        source=external_url.source,
+                        url=external_urls_dict[source].format(id=url),
+                        source=source,
                     )
                 )
     workable.external_urls = list(set(new_external_urls))

@@ -30,7 +30,7 @@ def get_work_by_id(work_id: str, query_params: QueryParams) -> dict:
     set_external_ids(work)
     set_external_urls(work)
     limit_authors(work)
-    set_authors_external_ids(work, filter_sensitive=True)
+    set_authors_external_ids(work)
     set_authors_affiliation_years(work)
     set_title_and_language(work)
     set_product_types(work)
@@ -60,7 +60,7 @@ def set_abstract(work: Work) -> None:
 def get_work_authors(work_id: str, query_params: QueryParams) -> dict:
     start_time = time.time()
     work = work_repository.get_work_by_id(work_id, {"project": ["authors"]})
-    set_authors_external_ids(work, filter_sensitive=True)
+    set_authors_external_ids(work)
     return build_entity_metadata(parse_authors(work, query_params.view), start_time)
 
 
