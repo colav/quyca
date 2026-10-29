@@ -1,11 +1,19 @@
 from math import ceil
 import time
-from typing import Callable, Iterable
+from typing import Any, Callable, Iterable
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from quyca.models.base_model import QueryParams
 
 Parser = Callable[[list], list]
+
+# Fields of each author in view=summary, the same ones the product cards show.
+AUTHOR_SUMMARY_INCLUDE = {
+    "id": True,
+    "full_name": True,
+    "type": True,
+    "affiliations": {"__all__": {"id", "name", "types"}},
+}
 
 
 def build_metadata(
@@ -30,6 +38,24 @@ def build_metadata(
         "cursor": build_cursor(page, total_count, limit, current_url),
     }
     return {"meta": meta, "data": data}
+
+
+def build_entity_metadata(data: dict | list, start_time: float) -> dict:
+    """Detail endpoints (one entity, or its authors) answer with the same meta block as the paginated lists."""
+    count = len(data) if isinstance(data, list) else 1
+    meta = {
+        "count": count,
+        "db_response_time_ms": int((time.time() - start_time) * 1000),
+        "page": 1,
+        "size": count,
+        "cursor": {"next": None, "previous": None},
+    }
+    return {"meta": meta, "data": data}
+
+
+def parse_authors(workable: Any, view: str) -> list:
+    include = {"authors": {"__all__": AUTHOR_SUMMARY_INCLUDE}} if view == "summary" else None
+    return workable.model_dump(include=include, exclude_none=view == "summary")["authors"]
 
 
 def build_cursor(page: int, total_count: int, limit: int, current_url: str) -> dict:

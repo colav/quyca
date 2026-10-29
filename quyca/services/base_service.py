@@ -1,4 +1,4 @@
-from typing import Generator, Iterator, Union
+from typing import Iterable, Iterator, Union
 from urllib.parse import urlparse
 from quyca.constants.external_urls import external_urls_dict
 from quyca.models.base_model import Title, ProductType, ExternalUrl, Type
@@ -11,7 +11,7 @@ from quyca.constants.sensitive_data import SENSITIVE_ID_SOURCES
 SUMMARY_AUTHORS_LIMIT = 10
 
 
-def get_entity_data(workables: Generator, view: str = "full") -> list:
+def get_entity_data(workables: Iterable, view: str = "full") -> list:
     authors_limit = SUMMARY_AUTHORS_LIMIT if view == "summary" else None
     data = []
     for workable in workables:
