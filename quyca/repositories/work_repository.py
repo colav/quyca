@@ -75,15 +75,23 @@ def get_works_available_filters_by_person(person_id: str, query_params: QueryPar
 
 
 def get_works_by_source(source_id: str, query_params: QueryParams, pipeline_params: dict | None = None) -> Generator:
-    return _get_works(_works_match({"source.id": ObjectId(source_id)}, query_params), query_params, pipeline_params)
+    return _get_works(
+        _works_match({"source.id": base_repository.to_object_id(source_id)}, query_params),
+        query_params,
+        pipeline_params,
+    )
 
 
 def get_works_count_by_source(source_id: str, query_params: QueryParams) -> int:
-    return base_repository.count(database["works"], _works_match({"source.id": ObjectId(source_id)}, query_params))
+    return base_repository.count(
+        database["works"], _works_match({"source.id": base_repository.to_object_id(source_id)}, query_params)
+    )
 
 
 def get_works_available_filters_by_source(source_id: str, query_params: QueryParams) -> dict:
-    return compute_works_available_filters(_works_match({"source.id": ObjectId(source_id)}, query_params))
+    return compute_works_available_filters(
+        _works_match({"source.id": base_repository.to_object_id(source_id)}, query_params)
+    )
 
 
 def get_works_by_geo(
