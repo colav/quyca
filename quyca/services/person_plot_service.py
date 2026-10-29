@@ -1,5 +1,6 @@
 from typing import Any
 from quyca.constants.articles_types import articles_types_list
+from quyca.exceptions.invalid_param_exception import InvalidParamException
 from quyca.models.base_model import QueryParams
 from quyca.parsers import bar_parser, map_parser, network_parser, pie_parser
 from quyca.repositories import calculations_repository
@@ -11,19 +12,13 @@ from quyca.repositories import work_repository
 
 
 def get_person_plot(person_id: str, query_params: QueryParams) -> dict[str, Any]:
-    plot_name = query_params.plot
-    if plot_name is None:
-        raise ValueError("El parámetro 'plot' no puede ser None.")
-
-    func_name = f"plot_{plot_name}"
-    func = globals().get(func_name)
-
+    func = globals().get(f"plot_{query_params.plot}")
     if not callable(func):
-        raise ValueError(f"No se encontró la función '{func_name}'.")
+        raise InvalidParamException(f"The plot '{query_params.plot}' is not available for person.")
 
     result = func(person_id, query_params)
     if not isinstance(result, dict):
-        raise TypeError(f"La función '{func_name}' debe retornar un dict, no {type(result)}.")
+        raise TypeError(f"La función 'plot_{query_params.plot}' debe retornar un dict, no {type(result)}.")
     return result
 
 
@@ -41,7 +36,7 @@ def plot_annual_citation_count(person_id: str, query_params: QueryParams) -> dic
 
 def plot_annual_apc_expenses(person_id: str, query_params: QueryParams) -> dict:
     pipeline_params = {
-        "work_project": [
+        "project": [
             "source.id",
             "source.name",
             "year_published",
@@ -63,7 +58,7 @@ def plot_annual_articles_open_access(person_id: str, query_params: QueryParams) 
 
 def plot_annual_articles_by_top_publishers(person_id: str, query_params: QueryParams) -> dict:
     pipeline_params = {
-        "work_project": [
+        "project": [
             "source.id",
             "source.name",
             "source.publisher.name",
@@ -87,7 +82,7 @@ def plot_most_used_title_words(person_id: str, query_params: QueryParams) -> dic
 
 def plot_articles_by_publisher(person_id: str, query_params: QueryParams) -> dict:
     pipeline_params = {
-        "work_project": ["source.id", "source.name", "source.publisher.name"],
+        "project": ["source.id", "source.name", "source.publisher.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
     works = work_repository.get_works_by_person(person_id, query_params, pipeline_params)
@@ -128,7 +123,7 @@ def plot_articles_by_scienti_category(person_id: str, query_params: QueryParams)
 
 def plot_articles_by_scimago_quartile(person_id: str, query_params: QueryParams) -> dict:
     pipeline_params = {
-        "work_project": [
+        "project": [
             "source.id",
             "source.name",
             "date_published",
@@ -144,25 +139,7 @@ def plot_articles_by_publishing_institution(
     person_id: str,
     query_params: QueryParams,
 ) -> dict:
-    person_pipeline_params = {
-        "project": [
-            "_id",
-            "full_name",
-            "affiliations",
-            "external_ids",
-            "citations_count",
-            "products_count",
-            "affiliations_data",
-            "logo",
-            "h_index",
-            "h5_index",
-        ]
-    }
-
-    person = person_repository.get_person_by_id(
-        person_id,
-        person_pipeline_params,
-    )
+    person = person_repository.get_person_by_id(person_id, {"project": ["full_name", "affiliations"]})
     institution = None
 
     if person.affiliations:
@@ -175,7 +152,7 @@ def plot_articles_by_publishing_institution(
                 break
 
     work_pipeline_params: dict[str, Any] = {
-        "work_project": ["source.id", "source.name", "source.publisher.name"],
+        "project": ["source.id", "source.name", "source.publisher.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
 
