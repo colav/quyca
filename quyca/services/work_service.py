@@ -17,6 +17,7 @@ from quyca.services.base_service import (
     set_external_ids,
 )
 from quyca.parsers import work_parser
+from quyca.validators import search_validator
 
 
 def get_work_by_id(work_id: str, query_params: QueryParams) -> dict:
@@ -65,8 +66,11 @@ def get_work_authors(work_id: str) -> dict:
 
 
 def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams, current_url: str) -> dict:
+    search_validator.validate_sort(query_params.sort)
+    search_validator.validate_years(query_params.years)
     start_time = time.time()
-    works = work_repository.get_works_by_affiliation(affiliation_id, query_params)
+    pipeline_params = build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
+    works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
     works_data = get_entity_data(works, query_params.view)
     total_results = work_repository.get_works_count_by_affiliation(affiliation_id, query_params)
     return build_metadata(
@@ -79,10 +83,9 @@ def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams, cur
     )
 
 
-def get_works_filters_by_affiliation(affiliation_id: str, affiliation_type: str, query_params: QueryParams) -> dict:
-    available_filters = work_repository.get_works_available_filters_by_affiliation(
-        affiliation_id, affiliation_type, query_params
-    )
+def get_works_filters_by_affiliation(affiliation_id: str, query_params: QueryParams) -> dict:
+    search_validator.validate_years(query_params.years)
+    available_filters = work_repository.get_works_available_filters_by_affiliation(affiliation_id, query_params)
     return work_parser.parse_available_filters(available_filters)
 
 

@@ -20,9 +20,7 @@ def get_news_by_person(person_id: str, query_params: QueryParams, current_url: s
     )
 
 
-def get_news_by_affiliation(
-    affiliation_id: str, affiliation_type: str, query_params: QueryParams, current_url: str
-) -> dict:
+def get_news_by_affiliation(affiliation_id: str, query_params: QueryParams, current_url: str) -> dict:
     start_time = time.time()
     news = news_repository.get_news_by_affiliation(affiliation_id, query_params)
     total_results = news_repository.get_news_count_by_affiliation(affiliation_id)
