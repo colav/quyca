@@ -6,8 +6,9 @@ from quyca.constants.open_access_status import open_access_status_dict
 from quyca.constants.product_types import source_titles
 
 
-def parse_works(works: list) -> list:
-    return [work.model_dump(exclude_none=True) for work in works]
+def parse_works(works: list, fields: list[str] | None = None) -> list:
+    include = {"id", *fields} if fields else None
+    return [work.model_dump(include=include, exclude_none=True) for work in works]
 
 
 def parse_work(work: Work) -> dict:

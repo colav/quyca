@@ -1,3 +1,4 @@
+from functools import partial
 import time
 
 from quyca.models.base_model import QueryParams
@@ -12,9 +13,8 @@ from quyca.constants.summary_rules import (
     PERSON_SUMMARY_FIELDS,
     PROJECT_SUMMARY_FIELDS,
     SOURCE_SUMMARY_FIELDS,
-    WORK_SUMMARY_FIELDS,
 )
-from quyca.services.base_service import build_pipeline_params, get_entity_data
+from quyca.services.base_service import build_pipeline_params, build_works_pipeline_params, get_entity_data
 from quyca.repositories import (
     search_affiliation_filters_repository,
     search_repository,
@@ -40,11 +40,16 @@ def search_works(query_params: QueryParams, current_url: str) -> dict:
     search_validator.validate_sort(query_params.sort)
     search_validator.validate_years(query_params.years)
     start_time = time.time()
-    works = search_repository.search_works(query_params, build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS))
+    works = search_repository.search_works(query_params, build_works_pipeline_params(query_params))
     works_data = get_entity_data(works, query_params.view)
     total_count = search_repository.search_count_works(query_params)
     return build_metadata(
-        works_data, total_count, query_params, start_time, current_url, parser=search_parser.parse_works_search
+        works_data,
+        total_count,
+        query_params,
+        start_time,
+        current_url,
+        parser=partial(search_parser.parse_works_search, fields=query_params.selected_fields),
     )
 
 

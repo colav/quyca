@@ -4,6 +4,7 @@ from bson import ObjectId
 
 from quyca.constants.clean_source import clean_nan
 from quyca.constants.sensitive_data import PUBLIC_PERSON_ID_SOURCES
+from quyca.constants.summary_rules import WORK_SELECTABLE_FIELDS
 from quyca.normalizers.authors_count import parse_authors_count
 
 
@@ -164,10 +165,6 @@ class APC(BaseModel):
     paid: Paid | None = None
 
 
-class Filter(BaseModel):
-    fields: str | None = None
-
-
 class QueryParams(BaseModel):
     limit: conint(ge=1, le=250) | None = Field(default=None, alias="max")  # type: ignore
     page: conint(ge=1) | None = None  # type: ignore
@@ -176,7 +173,7 @@ class QueryParams(BaseModel):
     authors_ranking: str | None = None
     cities: str | None = None
     countries: str | None = None
-    filter: Filter | None = None
+    fields: str | None = None
     groups_ranking: str | None = None
     institutions_type: str | None = None
     keywords: str | None = None
@@ -189,10 +186,25 @@ class QueryParams(BaseModel):
     states: str | None = None
     scimago_quartiles: str | None = None
     source_types: str | None = None
-    subjects: str | None = None
     topics: str | None = None
     view: Literal["full", "summary"] = "full"
     years: str | None = None
+
+    @field_validator("fields")
+    @classmethod
+    def validate_fields(cls, value: str | None) -> str | None:
+        if value is None or not value.strip():
+            return None
+        requested = [field.strip() for field in value.split(",") if field.strip()]
+        if invalid := sorted(set(requested) - WORK_SELECTABLE_FIELDS):
+            raise ValueError(
+                f"Invalid fields: {', '.join(invalid)}. Allowed fields: {', '.join(sorted(WORK_SELECTABLE_FIELDS))}"
+            )
+        return ",".join(dict.fromkeys(requested))
+
+    @property
+    def selected_fields(self) -> list[str] | None:
+        return self.fields.split(",") if self.fields else None
 
     @field_validator("authors_count")
     @classmethod

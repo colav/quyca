@@ -1,3 +1,22 @@
+# First-level work fields a client may pick with ?fields=. Nested fields (authors.full_name) are not offered: the
+# projection would have to rebuild every subdocument and lose the speed it is meant to give.
+WORK_SELECTABLE_FIELDS: frozenset[str] = frozenset(
+    {
+        "id",
+        "authors",
+        "titles",
+        "keywords",
+        "topics",
+        "subjects",
+        "source",
+        "types",
+        "year_published",
+        "citations_by_year",
+        "citations_count",
+        "updated",
+    }
+)
+
 WORK_SUMMARY_FIELDS: list[str] = [
     "_id",
     "author_count",

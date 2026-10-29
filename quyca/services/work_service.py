@@ -1,3 +1,4 @@
+from functools import partial
 import time
 
 from quyca.constants.summary_rules import WORK_SUMMARY_FIELDS
@@ -7,6 +8,7 @@ from quyca.parsers.base_parser import build_entity_metadata, build_metadata, par
 from quyca.repositories import work_repository
 from quyca.services.base_service import (
     build_pipeline_params,
+    build_works_pipeline_params,
     get_entity_data,
     limit_authors,
     set_authors_affiliation_years,
@@ -39,11 +41,12 @@ def get_work_by_id(work_id: str, query_params: QueryParams) -> dict:
 
 def get_work_by_doi(work_doi: str, query_params: QueryParams, current_url: str) -> dict:
     start_time = time.time()
-    pipeline_params = build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
+    pipeline_params = build_works_pipeline_params(query_params)
     works = list(work_repository.get_work_by_doi(work_doi, pipeline_params))
     if query_params.view == "summary":
         works = get_entity_data(works, "summary")
-    return build_metadata(works, len(works), query_params, start_time, current_url, work_parser.parse_works)
+    parser = partial(work_parser.parse_works, fields=query_params.selected_fields)
+    return build_metadata(works, len(works), query_params, start_time, current_url, parser)
 
 
 def set_abstract(work: Work) -> None:
@@ -68,7 +71,7 @@ def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams, cur
     search_validator.validate_sort(query_params.sort)
     search_validator.validate_years(query_params.years)
     start_time = time.time()
-    pipeline_params = build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
+    pipeline_params = build_works_pipeline_params(query_params)
     works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
     works_data = get_entity_data(works, query_params.view)
     total_results = work_repository.get_works_count_by_affiliation(affiliation_id, query_params)
@@ -78,7 +81,7 @@ def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams, cur
         query_params,
         start_time,
         current_url,
-        work_parser.parse_works,
+        partial(work_parser.parse_works, fields=query_params.selected_fields),
     )
 
 
@@ -92,7 +95,7 @@ def get_works_by_person(person_id: str, query_params: QueryParams, current_url: 
     search_validator.validate_sort(query_params.sort)
     search_validator.validate_years(query_params.years)
     start_time = time.time()
-    pipeline_params = build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
+    pipeline_params = build_works_pipeline_params(query_params)
     works = work_repository.get_works_by_person(person_id, query_params, pipeline_params)
     works_data = get_entity_data(works, query_params.view)
     total_results = work_repository.get_works_count_by_person(person_id, query_params)
@@ -102,7 +105,7 @@ def get_works_by_person(person_id: str, query_params: QueryParams, current_url: 
         query_params,
         start_time,
         current_url,
-        parser=work_parser.parse_works,
+        parser=partial(work_parser.parse_works, fields=query_params.selected_fields),
     )
 
 
@@ -116,7 +119,7 @@ def get_works_by_source(source_id: str, query_params: QueryParams, current_url: 
     search_validator.validate_sort(query_params.sort)
     search_validator.validate_years(query_params.years)
     start_time = time.time()
-    pipeline_params = build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
+    pipeline_params = build_works_pipeline_params(query_params)
     works = work_repository.get_works_by_source(source_id, query_params, pipeline_params)
     works_data = get_entity_data(works, query_params.view)
     total_results = work_repository.get_works_count_by_source(source_id, query_params)
@@ -126,7 +129,7 @@ def get_works_by_source(source_id: str, query_params: QueryParams, current_url: 
         query_params,
         start_time,
         current_url,
-        parser=work_parser.parse_works,
+        parser=partial(work_parser.parse_works, fields=query_params.selected_fields),
     )
 
 
@@ -138,7 +141,7 @@ def get_works_filters_by_source(source_id: str, query_params: QueryParams) -> di
 
 def get_works_by_geo(geo_type: str, geo_id: str, query_params: QueryParams, current_url: str) -> dict:
     start_time = time.time()
-    pipeline_params = build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
+    pipeline_params = build_works_pipeline_params(query_params)
     works = work_repository.get_works_by_geo(geo_type, geo_id, query_params, pipeline_params)
 
     works_data = get_entity_data(works, query_params.view)
@@ -149,5 +152,5 @@ def get_works_by_geo(geo_type: str, geo_id: str, query_params: QueryParams, curr
         query_params,
         start_time,
         current_url,
-        parser=work_parser.parse_works,
+        parser=partial(work_parser.parse_works, fields=query_params.selected_fields),
     )

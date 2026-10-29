@@ -1,8 +1,9 @@
 from typing import List
 
 
-def parse_works_search(works: List) -> List:
-    return [work.model_dump() for work in works]
+def parse_works_search(works: List, fields: List[str] | None = None) -> List:
+    include = {"id", *fields} if fields else None
+    return [work.model_dump(include=include) for work in works]
 
 
 def parse_persons_search(persons: List) -> List:

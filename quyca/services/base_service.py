@@ -1,7 +1,8 @@
 from typing import Iterable, Iterator, Union
 from urllib.parse import urlparse
 from quyca.constants.external_urls import external_urls_dict
-from quyca.models.base_model import Title, ProductType, ExternalUrl, Type
+from quyca.constants.summary_rules import WORK_SUMMARY_FIELDS
+from quyca.models.base_model import QueryParams, Title, ProductType, ExternalUrl, Type
 from quyca.models.patent_model import Patent
 from quyca.models.project_model import Project
 from quyca.models.work_model import Work
@@ -133,3 +134,10 @@ def set_authors_affiliation_years(workables: list | Work | Patent | Project) -> 
 def build_pipeline_params(view: str, summary_fields: list[str], **extra: str) -> dict:
     """The summary view only projects the fields its cards show."""
     return {"project": summary_fields, **extra} if view == "summary" else {}
+
+
+def build_works_pipeline_params(query_params: QueryParams) -> dict:
+    """?fields= projects exactly the requested fields at the end of the pipeline; without it the view decides."""
+    if fields := query_params.selected_fields:
+        return {"project": ["_id", *(field for field in fields if field != "id")]}
+    return build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
