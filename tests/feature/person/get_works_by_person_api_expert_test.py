@@ -12,10 +12,10 @@ def test_get_works_csv_by_person(client):
 
 
 @patch("quyca.services.news_service.get_news_by_person")
-def test_get_person_research_products_filters_returns_400_on_error(mock_service, client):
+def test_get_person_research_products_filters_returns_500_on_unexpected_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 
     response = client.get(f"/person/123/research/news")
 
-    assert response.status_code == 400
-    assert response.get_json() == {"error": "boom"}
+    assert response.status_code == 500
+    assert response.get_json() == {"error": "Internal server error"}
