@@ -12,8 +12,6 @@ from quyca.validators import country_validator
 from quyca.validators import unit_validator
 from quyca.validators import error_grouper
 
-EXTRA_ALLOWED = {"estado_de_validación", "observación"}
-
 WARNING_EMPTY_FIELDS = ["código_unidad_académica", "ranking"]
 
 REQUIRED_COLUMNS = [
@@ -67,7 +65,6 @@ def _coerce_integer_like(value: Any) -> Any:
 
 
 _NORMALIZED_REQUIRED = {normalize_key(c): c for c in REQUIRED_COLUMNS}
-_NORMALIZED_EXTRA_ALLOWED = {normalize_key(c) for c in EXTRA_ALLOWED}
 
 
 def validate_columns(df: pd.DataFrame) -> Tuple[bool, List[str], List[str]]:
@@ -97,12 +94,8 @@ def validate_columns(df: pd.DataFrame) -> Tuple[bool, List[str], List[str]]:
     if missing:
         errors.append(f"Columnas faltantes: {', '.join(missing)}")
 
-    # Return usecols using canonical names from REQUIRED_COLUMNS where possible
-    usecols = [
-        _NORMALIZED_REQUIRED.get(normalize_key(c), c)
-        for c in usecols
-        if normalize_key(c) not in _NORMALIZED_EXTRA_ALLOWED
-    ]
+    # Only the template columns are used, with their canonical names; any other column is ignored.
+    usecols = [_NORMALIZED_REQUIRED[normalize_key(c)] for c in usecols if normalize_key(c) in _NORMALIZED_REQUIRED]
 
     return (len(errors) == 0, errors, usecols)
 
