@@ -1,6 +1,8 @@
+from bson import ObjectId
 from pymongo.collection import Collection
 
 from quyca.constants.institutions import institutions_list
+from quyca.exceptions.invalid_param_exception import InvalidParamException
 from quyca.models.base_model import QueryParams
 
 
@@ -9,6 +11,13 @@ def text_search_match(keywords: str | None) -> list[dict]:
     `$text` must be the first stage of a pipeline, so every search pipeline starts from this list.
     """
     return [{"$match": {"$text": {"$search": keywords}}}] if keywords else []
+
+
+def to_object_id(value: str) -> ObjectId:
+    """Ids that come in the URL; a malformed one answers 400 instead of failing inside Mongo's driver."""
+    if not ObjectId.is_valid(value):
+        raise InvalidParamException(f"Invalid id '{value}'.")
+    return ObjectId(value)
 
 
 def affiliation_match(affiliation_id: str, affiliation_type: str) -> dict:
