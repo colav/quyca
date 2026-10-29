@@ -10,62 +10,11 @@ from quyca.clients.mongo import database
 
 
 def get_person_by_id(person_id: str, pipeline_params: dict) -> Person:
-    old_id = None
-    try:
-        old_id = ObjectId(person_id)
-    except Exception:
-        pass
+    # Persons migrated from ObjectId ids are still found by their old id.
+    ids = [{"_id": person_id}] + ([{"_id_old": ObjectId(person_id)}] if ObjectId.is_valid(person_id) else [])
+    match_stage = {"$match": {"$or": ids}}
 
-    match_stage = {"$match": {"$or": [{"_id": person_id}] + ([{"_id_old": old_id}] if old_id else [])}}
-
-    pipeline: List[Dict[str, Any]] = [
-        match_stage,
-        {
-            "$addFields": {
-                "filtered_affiliations": {
-                    "$filter": {
-                        "input": "$affiliations",
-                        "as": "affiliation",
-                        "cond": {"$eq": ["$$affiliation.end_date", -1]},
-                    }
-                }
-            }
-        },
-        {
-            "$addFields": {
-                "logo": {
-                    "$arrayElemAt": [
-                        {
-                            "$map": {
-                                "input": {
-                                    "$filter": {
-                                        "input": {
-                                            "$reduce": {
-                                                "input": "$affiliations",
-                                                "initialValue": [],
-                                                "in": {
-                                                    "$concatArrays": [
-                                                        "$$value",
-                                                        {"$ifNull": ["$$this.external_urls", []]},
-                                                    ]
-                                                },
-                                            }
-                                        },
-                                        "as": "ext",
-                                        "cond": {"$eq": ["$$ext.source", "logo"]},
-                                    }
-                                },
-                                "as": "logo_item",
-                                "in": "$$logo_item.url",
-                            }
-                        },
-                        0,
-                    ]
-                }
-            }
-        },
-    ]
-
+    pipeline: List[Dict[str, Any]] = [match_stage]
     base_repository.set_project(pipeline, pipeline_params.get("project"))
 
     person_cursor = database["person"].aggregate(pipeline)
