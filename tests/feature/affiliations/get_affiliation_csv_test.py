@@ -47,13 +47,13 @@ def test_get_csv_works_by_group(client):
 
 
 @patch("quyca.services.export_service.get_works_csv_by_affiliation")
-def test_get_works_csv_by_affiliation_returns_400_on_error(mock_service, client):
+def test_get_works_csv_by_affiliation_returns_500_on_unexpected_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 
     response = client.get(f"{ENDPOINT}/institution/123/research/products/csv")
 
-    assert response.status_code == 400
-    assert response.get_json() == {"error": "boom"}
+    assert response.status_code == 500
+    assert response.get_json() == {"error": "Internal server error"}
 
 
 @patch("quyca.services.export_service.get_works_excel_by_affiliation")
@@ -68,17 +68,17 @@ def test_get_works_excel_by_affiliation_success(mock_service, client):
     assert response.data == b"fake-excel-bytes"
     args, _ = mock_service.call_args
     assert args[0] == "123"
-    assert args[1] == "institution"
+    assert args[1].limit == 10
 
 
 @patch("quyca.services.export_service.get_works_excel_by_affiliation")
-def test_get_works_excel_by_affiliation_returns_400_on_error(mock_service, client):
+def test_get_works_excel_by_affiliation_returns_500_on_unexpected_error(mock_service, client):
     mock_service.side_effect = Exception("boom")
 
     response = client.get(f"{ENDPOINT}/institution/123/research/products/excel")
 
-    assert response.status_code == 400
-    assert response.get_json() == {"error": "boom"}
+    assert response.status_code == 500
+    assert response.get_json() == {"error": "Internal server error"}
 
 
 @patch("quyca.services.export_service.get_works_excel_by_affiliation")
