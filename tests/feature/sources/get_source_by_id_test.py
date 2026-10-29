@@ -251,3 +251,10 @@ def test_get_source_by_id_with_all_fields(client: FlaskClient) -> None:
         expected_fields = ["id", "names", "type", "external_ids"]
         for field in expected_fields:
             assert field in source_data
+
+
+def test_get_source_by_id_malformed_id_returns_404(client: FlaskClient) -> None:
+    response = client.get("/source/invalid_id_123")
+
+    assert response.status_code == 404
+    assert response.get_json() == {"error": "The source with id invalid_id_123 does not exist."}

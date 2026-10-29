@@ -15,7 +15,7 @@ def test_get_source_products_csv_basic(client: FlaskClient) -> None:
     response = client.get(f"/source/{random_source_id}/products/csv")
 
     assert response.status_code == 200
-    assert response.content_type == "text/csv"
+    assert response.content_type == "text/csv; charset=utf-8"
 
 
 def test_get_source_products_csv_headers(client: FlaskClient) -> None:
@@ -25,7 +25,7 @@ def test_get_source_products_csv_headers(client: FlaskClient) -> None:
     assert "Content-Disposition" in response.headers
     assert "attachment" in response.headers["Content-Disposition"]
     assert "filename=source_works.csv" in response.headers["Content-Disposition"]
-    assert response.content_type == "text/csv"
+    assert response.content_type == "text/csv; charset=utf-8"
 
 
 def test_get_source_products_csv_content_structure(client: FlaskClient) -> None:
