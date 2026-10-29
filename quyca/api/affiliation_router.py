@@ -17,7 +17,7 @@ register_error_handlers(affiliation_router)
 
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>", methods=["GET"])
 def get_affiliation_by_id(affiliation_type: str, affiliation_id: str) -> Response:
-    return jsonify(affiliation_service.get_affiliation_by_id(affiliation_id, affiliation_type))
+    return jsonify(affiliation_service.get_affiliation_by_id(affiliation_id, affiliation_type, parse_query_params()))
 
 
 @affiliation_router.route("/<affiliation_type>/<affiliation_id>/affiliations", methods=["GET"])

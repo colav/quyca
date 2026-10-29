@@ -1,12 +1,15 @@
+import time
 from typing import Iterable, cast
 
 from quyca.constants.institutions import institutions_list
+from quyca.constants.summary_rules import AFFILIATION_SUMMARY_FIELDS
 from quyca.models.affiliation_model import Affiliation, Relation
-from quyca.models.base_model import ExternalUrl
+from quyca.models.base_model import ExternalUrl, QueryParams
+from quyca.parsers.base_parser import build_entity_metadata
+from quyca.services.base_service import build_pipeline_params
 from quyca.repositories import person_repository
 from quyca.repositories import affiliation_repository
 
-# Relation types shown as the parents ("affiliations") of each affiliation type.
 UPPER_AFFILIATION_TYPES = {
     "faculty": institutions_list,
     "department": institutions_list + ["faculty"],
@@ -14,11 +17,14 @@ UPPER_AFFILIATION_TYPES = {
 }
 
 
-def get_affiliation_by_id(affiliation_id: str, affiliation_type: str) -> dict:
-    affiliation = affiliation_repository.get_affiliation_by_id(affiliation_id)
+def get_affiliation_by_id(affiliation_id: str, affiliation_type: str, query_params: QueryParams) -> dict:
+    start_time = time.time()
+    pipeline_params = build_pipeline_params(query_params.view, AFFILIATION_SUMMARY_FIELDS)
+    affiliation = affiliation_repository.get_affiliation_by_id(affiliation_id, pipeline_params)
     set_relation_external_urls(affiliation)
     set_upper_affiliations_and_logo(affiliation, affiliation_type)
-    return {"data": affiliation.model_dump(by_alias=True)}
+    data = affiliation.model_dump(by_alias=True, exclude_none=query_params.view == "summary")
+    return build_entity_metadata(data, start_time)
 
 
 def get_related_affiliations_by_affiliation(affiliation_id: str, affiliation_type: str) -> dict:

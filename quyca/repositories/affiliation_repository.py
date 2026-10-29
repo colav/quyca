@@ -9,8 +9,10 @@ from quyca.exceptions.not_entity_exception import NotEntityException
 from quyca.generators import affiliation_generator
 
 
-def get_affiliation_by_id(affiliation_id: str) -> Affiliation:
-    affiliation = database["affiliations"].find_one({"_id": affiliation_id}, {"works": 0})
+def get_affiliation_by_id(affiliation_id: str, pipeline_params: dict | None = None) -> Affiliation:
+    fields = (pipeline_params or {}).get("project")
+    projection = {field: 1 for field in fields} if fields else {"works": 0}
+    affiliation = database["affiliations"].find_one({"_id": affiliation_id}, projection)
     if not affiliation:
         raise NotEntityException(f"The affiliation with id {affiliation_id} does not exist.")
     return Affiliation(**affiliation)
