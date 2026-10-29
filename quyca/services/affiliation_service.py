@@ -4,7 +4,7 @@ from typing import Iterable, cast
 from quyca.constants.institutions import institutions_list
 from quyca.constants.summary_rules import AFFILIATION_SUMMARY_FIELDS
 from quyca.models.affiliation_model import Affiliation, Relation
-from quyca.models.base_model import ExternalUrl, QueryParams
+from quyca.models.base_model import QueryParams
 from quyca.parsers.base_parser import build_entity_metadata
 from quyca.services.base_service import build_pipeline_params
 from quyca.repositories import person_repository
@@ -22,7 +22,7 @@ def get_affiliation_by_id(affiliation_id: str, affiliation_type: str, query_para
     pipeline_params = build_pipeline_params(query_params.view, AFFILIATION_SUMMARY_FIELDS)
     affiliation = affiliation_repository.get_affiliation_by_id(affiliation_id, pipeline_params)
     set_relation_external_urls(affiliation)
-    set_upper_affiliations_and_logo(affiliation, affiliation_type)
+    set_upper_affiliations(affiliation, affiliation_type)
     data = affiliation.model_dump(by_alias=True, exclude_none=query_params.view == "summary")
     return build_entity_metadata(data, start_time)
 
@@ -63,18 +63,12 @@ def set_relation_external_urls(affiliation: Affiliation) -> None:
         relation.external_urls = related_external_urls or []
 
 
-def set_upper_affiliations_and_logo(affiliation: Affiliation, affiliation_type: str) -> None:
-    if affiliation_type == "institution" and (logo_url := _get_logo_url(affiliation.external_urls)):
-        affiliation.logo = logo_url
-
+def set_upper_affiliations(affiliation: Affiliation, affiliation_type: str) -> None:
+    """The frontend takes the logo of each upper affiliation from its external_urls."""
     upper_types = UPPER_AFFILIATION_TYPES.get(affiliation_type, [])
     upper_affiliations = [
         relation for relation in _get_relations(affiliation) if relation.types and relation.types[0].type in upper_types
     ]
-    for relation in upper_affiliations:
-        if relation.types and relation.types[0].type in institutions_list:
-            if logo_url := _get_logo_url(relation.external_urls):
-                affiliation.logo = logo_url
     affiliation.affiliations = cast(list[dict | Relation], upper_affiliations)
 
 
@@ -92,8 +86,3 @@ def _get_relations(affiliation: Affiliation) -> list[Relation]:
     if isinstance(relations, Relation):
         return [relations]
     return [relation for relation in relations if isinstance(relation, Relation)]
-
-
-def _get_logo_url(external_urls: list[ExternalUrl] | None) -> str | None:
-    logo_url = next((external_url.url for external_url in external_urls or [] if external_url.source == "logo"), None)
-    return str(logo_url) if logo_url else None

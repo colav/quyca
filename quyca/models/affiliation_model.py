@@ -81,7 +81,6 @@ class Affiliation(BaseModel):
     updated: list[Updated] | None = None
     year_established: int | None = None
     name: str | None = None
-    logo: str | None = None
     affiliations: list[dict | Relation] | None = None
     h_index: int | None = None
     h5_index: int | None = None

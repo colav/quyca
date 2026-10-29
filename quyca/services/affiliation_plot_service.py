@@ -42,7 +42,7 @@ def get_affiliation_plot(affiliation_id: str, affiliation_type: str, query_param
 
     func: Callable[[str, QueryParams], dict[str, Any] | None] | None = globals().get(f"plot_{plot_type}")
     if func is None:
-        return None
+        raise InvalidParamException(f"The plot '{plot_type}' is not available for affiliation '{affiliation_type}'.")
 
     result = func(affiliation_id, query_params)
     if not (result is None or isinstance(result, dict)):
