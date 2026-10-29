@@ -2,6 +2,8 @@ from unittest.mock import Mock, patch, ANY
 from flask.testing import FlaskClient
 from typing import Any, cast
 
+from quyca.exceptions.conflict_exception import ConflictException
+
 ROUTER_MOD = "quyca.api.user_crud_router"
 
 
@@ -62,10 +64,7 @@ def test_create_user_conflict(client: FlaskClient) -> None:
     auth_cookie(client, role="admin")
 
     usecase_mock = Mock()
-    usecase_mock.create_user.return_value = {
-        "success": False,
-        "msg": "Ya existe un correo registrado para esa universidad",
-    }
+    usecase_mock.create_user.side_effect = ConflictException("Ya existe un correo registrado para esa universidad")
 
     with patch(f"{ROUTER_MOD}.user_service", usecase_mock):
         resp = client.post(

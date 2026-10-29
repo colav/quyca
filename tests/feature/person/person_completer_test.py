@@ -91,10 +91,10 @@ def test_get_person_completion_returns_completer_result(mock_completer, client):
 
 
 @patch("quyca.repositories.completer_repository.get_person_completions")
-def test_get_person_completion_returns_400_on_error(mock_completer, client):
+def test_get_person_completion_returns_500_on_error(mock_completer, client):
     mock_completer.side_effect = RuntimeError("Elasticsearch client is not initialized")
 
     response = client.get(f"{ENDPOINT}/An")
 
-    assert response.status_code == 400
-    assert response.get_json() == {"error": "Elasticsearch client is not initialized"}
+    assert response.status_code == 500
+    assert response.get_json() == {"error": "Internal server error"}

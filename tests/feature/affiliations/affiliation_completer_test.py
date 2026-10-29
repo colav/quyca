@@ -101,10 +101,10 @@ def test_get_affiliation_completion_returns_completer_result(mock_completer, aff
 
 @pytest.mark.parametrize("affiliation_type, _settings_attr", AFFILIATION_TYPES)
 @patch("quyca.repositories.completer_repository.get_affiliation_completions")
-def test_get_affiliation_completion_returns_400_on_error(mock_completer, affiliation_type, _settings_attr, client):
+def test_get_affiliation_completion_returns_500_on_error(mock_completer, affiliation_type, _settings_attr, client):
     mock_completer.side_effect = ValueError("Elasticsearch database is not initialized")
 
     response = client.get(f"{ENDPOINT}/{affiliation_type}/Uni")
 
-    assert response.status_code == 400
-    assert response.get_json() == {"error": "Elasticsearch database is not initialized"}
+    assert response.status_code == 500
+    assert response.get_json() == {"error": "Internal server error"}

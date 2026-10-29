@@ -140,9 +140,8 @@ def test_get_affiliation_filters_topics_structure(client: FlaskClient) -> None:
 
         if len(data["topics"]) > 0:
             topic = data["topics"][0]
-            assert "label" in topic
-            assert "value" in topic
-            assert "count" in topic
+            assert {"value", "title", "count"} <= set(topic)
+            assert all({"value", "title", "count"} <= set(child) for child in topic.get("children", []))
 
 
 @pytest.mark.parametrize(
@@ -352,9 +351,8 @@ def test_get_person_filters_topics_structure(client: FlaskClient) -> None:
 
         if len(data["topics"]) > 0:
             topic = data["topics"][0]
-            assert "label" in topic
-            assert "value" in topic
-            assert "count" in topic
+            assert {"value", "title", "count"} <= set(topic)
+            assert all({"value", "title", "count"} <= set(child) for child in topic.get("children", []))
             assert isinstance(topic["count"], int)
 
 
