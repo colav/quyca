@@ -90,6 +90,8 @@ def get_works_filters_by_affiliation(affiliation_id: str, query_params: QueryPar
 
 
 def get_works_by_person(person_id: str, query_params: QueryParams, current_url: str) -> dict:
+    search_validator.validate_sort(query_params.sort)
+    search_validator.validate_years(query_params.years)
     start_time = time.time()
     pipeline_params = build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
     works = work_repository.get_works_by_person(person_id, query_params, pipeline_params)
@@ -106,6 +108,7 @@ def get_works_by_person(person_id: str, query_params: QueryParams, current_url: 
 
 
 def get_works_filters_by_person(person_id: str, query_params: QueryParams) -> dict:
+    search_validator.validate_years(query_params.years)
     available_filters = work_repository.get_works_available_filters_by_person(person_id, query_params)
     return work_parser.parse_available_filters(available_filters)
 
