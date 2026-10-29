@@ -114,7 +114,6 @@ class Person(BaseModel):
     h_index: int | None = None
     h5_index: int | None = None
 
-    affiliations_data: list[Affiliation] | None = None
     age: int | None = None
 
     @field_validator("external_ids")
@@ -130,7 +129,8 @@ class Person(BaseModel):
 
     @model_validator(mode="after")
     def calculate_age(self) -> "Person":
-        if self.birthdate:
+        # Kahi stores -1 when the birthdate is unknown.
+        if self.birthdate and self.birthdate != -1:
             try:
                 if isinstance(self.birthdate, int):
                     # If it is a timestamp in seconds
@@ -149,17 +149,4 @@ class Person(BaseModel):
                 print(e)
                 self.age = None
         self.birthdate = None  # delete birthdate to avoid sensitive data exposure
-        return self
-
-    @model_validator(mode="after")
-    def get_logo(self) -> "Person":
-        if self.affiliations_data:
-            external_urls = (
-                self.affiliations_data[0].external_urls
-                if self.affiliations_data[0] and self.affiliations_data[0].external_urls
-                else []
-            )
-            logo = next((x for x in external_urls if x.source == "logo"), None)
-            if logo:
-                self.logo = str(logo.url)
         return self

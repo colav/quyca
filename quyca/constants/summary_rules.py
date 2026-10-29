@@ -28,8 +28,6 @@ PERSON_SUMMARY_FIELDS: list[str] = [
     "external_ids",
     "citations_count",
     "products_count",
-    "affiliations_data",
-    "logo",
     "h_index",
     "h5_index",
 ]
