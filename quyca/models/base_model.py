@@ -215,15 +215,6 @@ class QueryParams(BaseModel):
         return self
 
 
-class Geography(BaseModel):
-    city: str | None = None
-    region: str | None = None
-    country: str | None = None
-    country_code: str | None = None
-    latitude: float | str | None = None
-    longitude: float | str | None = None
-
-
 class Affiliation(BaseModel):
     model_config = ConfigDict(json_encoders={ObjectId: str})
 
