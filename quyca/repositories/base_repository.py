@@ -41,7 +41,15 @@ def set_search_end_stages(pipeline: list, query_params: QueryParams, pipeline_pa
     set_sort(pipeline, query_params.sort, pipeline_params.get("collection"))
     set_project(pipeline, pipeline_params.get("project"))
     set_pagination(pipeline, query_params)
+    if authors_limit := pipeline_params.get("authors_limit"):
+        set_authors_limit(pipeline, authors_limit)
     return pipeline
+
+
+def set_authors_limit(pipeline: list, limit: int) -> None:
+    """Keeps the first `limit` authors. After the pagination, so filters, sort and count still see every author."""
+    authors = {"$cond": [{"$isArray": "$authors"}, {"$slice": ["$authors", limit]}, "$$REMOVE"]}
+    pipeline.append({"$set": {"authors": authors}})
 
 
 def set_pagination(pipeline: list, query_params: QueryParams) -> None:

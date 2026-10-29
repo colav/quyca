@@ -9,6 +9,8 @@ from quyca.models.work_model import Work
 from quyca.repositories import person_repository
 
 SUMMARY_AUTHORS_LIMIT = 10
+# As in OpenAlex: product listings show the first 100 authors; the work detail and /authors show all of them.
+LISTING_AUTHORS_LIMIT = 100
 
 
 def get_entity_data(workables: Iterable, view: str = "full") -> list:
@@ -137,7 +139,9 @@ def build_pipeline_params(view: str, summary_fields: list[str], **extra: str) ->
 
 
 def build_works_pipeline_params(query_params: QueryParams) -> dict:
-    """?fields= projects exactly the requested fields at the end of the pipeline; without it the view decides."""
+    """?fields= projects exactly the requested fields at the end of the pipeline; without it the view decides.
+    `authors_limit` only applies to listings (set_search_end_stages); a work looked up by DOI keeps all its authors."""
+    authors_limit = SUMMARY_AUTHORS_LIMIT if query_params.view == "summary" else LISTING_AUTHORS_LIMIT
     if fields := query_params.selected_fields:
-        return {"project": ["_id", *(field for field in fields if field != "id")]}
-    return build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
+        return {"project": ["_id", *(field for field in fields if field != "id")], "authors_limit": authors_limit}
+    return {**build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS), "authors_limit": authors_limit}
