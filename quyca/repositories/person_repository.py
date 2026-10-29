@@ -7,6 +7,7 @@ from quyca.repositories import base_repository
 from quyca.exceptions.not_entity_exception import NotEntityException
 from quyca.models.person_model import Person
 from quyca.clients.mongo import database
+from quyca.constants.sensitive_data import PUBLIC_PERSON_ID_SOURCES
 
 
 def get_person_by_id(person_id: str, pipeline_params: dict) -> Person:
@@ -48,7 +49,8 @@ def get_person_external_ids(person_id: str) -> list[ExternalId]:
     if not data:
         return []
 
-    return [ExternalId(**eid) for eid in data.get("external_ids", [])]
+    external_ids = data.get("external_ids", [])
+    return [ExternalId(**eid) for eid in external_ids if eid.get("source") in PUBLIC_PERSON_ID_SOURCES]
 
 
 def get_affiliation_years(person_ids: Iterable[str]) -> Dict[str, Dict[str, List[int]]]:

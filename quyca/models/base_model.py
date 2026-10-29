@@ -1,9 +1,9 @@
 from typing import Any, Generator, Literal
-from datetime import datetime, timezone
 from pydantic import BaseModel, ConfigDict, field_validator, Field, conint, model_validator
 from bson import ObjectId
 
 from quyca.constants.clean_source import clean_nan
+from quyca.constants.sensitive_data import PUBLIC_PERSON_ID_SOURCES
 from quyca.normalizers.authors_count import parse_authors_count
 
 
@@ -234,12 +234,6 @@ class Affiliation(BaseModel):
     h5_index: int | None = None
 
 
-class BirthPlace(BaseModel):
-    city: str | None = None
-    country: str | None = None
-    state: str | None = None
-
-
 class Author(BaseModel):
     model_config = ConfigDict(json_encoders={ObjectId: str})
 
@@ -247,10 +241,6 @@ class Author(BaseModel):
     affiliations: list[Affiliation] | None = Field(default_factory=list[Affiliation])
     full_name: str | None = None
 
-    birth_country: str | None = None
-    age: int | None = None
-    birthdate: int | str | None = None
-    birthplace: BirthPlace | None = None
     countries: list[str] | None = None
     first_names: list[str] | None = None
     last_names: list[str] | None = None
@@ -263,16 +253,10 @@ class Author(BaseModel):
 
     @field_validator("external_ids")
     @classmethod
-    def delete_sensitive_external_ids(cls, value: list | None) -> list | None:
+    def keep_public_external_ids(cls, value: list | None) -> list | None:
         if value is None:
             return value
-        return list(
-            filter(
-                lambda external_id: external_id.source
-                not in ["Cédula de Ciudadanía", "Cédula de Extranjería", "Passport"],
-                value,
-            )
-        )
+        return [external_id for external_id in value if external_id.source in PUBLIC_PERSON_ID_SOURCES]
 
     @field_validator("affiliations", mode="before")
     @classmethod
@@ -284,20 +268,6 @@ class Author(BaseModel):
         if isinstance(value, list):
             return [v for v in value if isinstance(v, dict) and v is not None]
         return value
-
-    @model_validator(mode="after")
-    def compute_age_and_remove_birthdate(self) -> "Author":
-        if self.birthdate:
-            try:
-                birth_ts = int(self.birthdate)
-                birth_date = datetime.fromtimestamp(birth_ts, tz=timezone.utc).date()
-                today = datetime.now(tz=timezone.utc).date()
-                age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
-                self.age = age
-            except Exception:
-                self.age = None
-        self.birthdate = None
-        return self
 
 
 class Group(BaseModel):

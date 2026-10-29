@@ -1,6 +1,6 @@
 from typing import Any, Optional
 from bson import ObjectId
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from quyca.models.base_model import (
     PyObjectId,
     CitationsCount,
@@ -11,9 +11,8 @@ from quyca.models.base_model import (
     Subject,
     Ranking,
     ExternalUrl,
-    BirthPlace,
 )
-from datetime import datetime, date
+from quyca.constants.sensitive_data import PUBLIC_PERSON_ID_SOURCES
 
 
 class Affiliation(BaseModel):
@@ -94,8 +93,6 @@ class Person(BaseModel):
     id: str | PyObjectId = Field(alias="_id")
     affiliations: list[Affiliation] | None = Field(default_factory=list)
     aliases: list[str] | None = Field(default_factory=list)
-    birthdate: int | str | None = None
-    birthplace: BirthPlace | None = None
     citations_count: list[CitationsCount] | None = Field(default_factory=list)
     degrees: list[Degree] | None = Field(default_factory=list)
     external_ids: list[ExternalId] | None = Field(default_factory=list)
@@ -104,7 +101,6 @@ class Person(BaseModel):
     initials: str | list[str] | None = None
     keywords: list | None = Field(default_factory=list)
     last_names: list[str] | None = Field(default_factory=list)
-    marital_status: str | None = None
     products_count: int | None = None
     ranking: list[Ranking] | None = Field(default_factory=list)
     related_works: list[RelatedWork] | None = Field(default_factory=list)
@@ -114,39 +110,7 @@ class Person(BaseModel):
     h_index: int | None = None
     h5_index: int | None = None
 
-    age: int | None = None
-
     @field_validator("external_ids")
     @classmethod
-    def delete_sensitive_external_ids(cls, value: list) -> list:
-        return list(
-            filter(
-                lambda external_id: external_id.source
-                not in ["Cédula de Ciudadanía", "Cédula de Extranjería", "Passport"],
-                value,
-            )
-        )
-
-    @model_validator(mode="after")
-    def calculate_age(self) -> "Person":
-        # Kahi stores -1 when the birthdate is unknown.
-        if self.birthdate and self.birthdate != -1:
-            try:
-                if isinstance(self.birthdate, int):
-                    # If it is a timestamp in seconds
-                    birth_date = datetime.fromtimestamp(self.birthdate).date()
-                elif isinstance(self.birthdate, str):
-                    # Try to parse as date YYYY-MM-DD
-                    birth_date = datetime.fromisoformat(self.birthdate).date()
-                else:
-                    return self
-
-                today = date.today()
-                self.age = (
-                    today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
-                )
-            except Exception as e:
-                print(e)
-                self.age = None
-        self.birthdate = None  # delete birthdate to avoid sensitive data exposure
-        return self
+    def keep_public_external_ids(cls, value: list) -> list:
+        return [external_id for external_id in value if external_id.source in PUBLIC_PERSON_ID_SOURCES]
