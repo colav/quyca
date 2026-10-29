@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Iterable, cast
 
 from quyca.constants.institutions import institutions_list
 from quyca.models.affiliation_model import Affiliation, Relation
@@ -22,33 +22,25 @@ def get_affiliation_by_id(affiliation_id: str, affiliation_type: str) -> dict:
 
 
 def get_related_affiliations_by_affiliation(affiliation_id: str, affiliation_type: str) -> dict:
-    data = {}
+    data: dict[str, list] = {}
     if affiliation_type == "institution":
-        faculties = affiliation_repository.get_affiliations_by_institution(affiliation_id, "faculty")
-        departments = affiliation_repository.get_affiliations_by_institution(affiliation_id, "department")
-        groups = affiliation_repository.get_affiliations_by_institution(affiliation_id, "group")
-        data["faculties"] = [faculty.model_dump(include={"id", "name"}) for faculty in faculties]
-        data["departments"] = [department.model_dump(include={"id", "name"}) for department in departments]
-        data["groups"] = [group.model_dump(include={"id", "name"}) for group in groups]
-        if len(data["faculties"]) == 0 and len(data["departments"]) == 0:
-            authors = person_repository.get_persons_by_affiliation(affiliation_id)
-            data["authors"] = [author.model_dump(include={"id", "full_name"}) for author in authors]
-
-    elif affiliation_type == "faculty":
-        departments = affiliation_repository.get_departments_by_faculty(affiliation_id)
-        groups = affiliation_repository.get_groups_by_faculty_or_department(affiliation_id)
-        authors = person_repository.get_persons_by_affiliation(affiliation_id)
-        data["departments"] = [department.model_dump(include={"id", "name"}) for department in departments]
-        data["groups"] = [group.model_dump(include={"id", "name"}) for group in groups]
-        data["authors"] = [author.model_dump(include={"id", "full_name"}) for author in authors]
-    elif affiliation_type == "department":
-        groups = affiliation_repository.get_groups_by_faculty_or_department(affiliation_id)
-        authors = person_repository.get_persons_by_affiliation(affiliation_id)
-        data["groups"] = [group.model_dump(include={"id", "name"}) for group in groups]
-        data["authors"] = [author.model_dump(include={"id", "full_name"}) for author in authors]
-    elif affiliation_type == "group":
-        authors = person_repository.get_persons_by_affiliation(affiliation_id)
-        data["authors"] = [author.model_dump(include={"id", "full_name"}) for author in authors]
+        for relation_type, key in (("faculty", "faculties"), ("department", "departments"), ("group", "groups")):
+            data[key] = _dump_affiliations(
+                affiliation_repository.get_affiliations_by_parent(affiliation_id, relation_type)
+            )
+        # Only institutions without faculties or departments list their authors.
+        if data["faculties"] or data["departments"]:
+            return data
+    elif affiliation_type not in UPPER_AFFILIATION_TYPES:
+        return data
+    if affiliation_type == "faculty":
+        data["departments"] = _dump_affiliations(
+            affiliation_repository.get_affiliations_by_parent(affiliation_id, "department")
+        )
+    if affiliation_type in ("faculty", "department"):
+        data["groups"] = _dump_affiliations(affiliation_repository.get_groups_by_faculty_or_department(affiliation_id))
+    authors = person_repository.get_persons_by_affiliation(affiliation_id)
+    data["authors"] = [author.model_dump(include={"id", "full_name"}) for author in authors]
     return data
 
 
@@ -78,6 +70,10 @@ def set_upper_affiliations_and_logo(affiliation: Affiliation, affiliation_type: 
             if logo_url := _get_logo_url(relation.external_urls):
                 affiliation.logo = logo_url
     affiliation.affiliations = cast(list[dict | Relation], upper_affiliations)
+
+
+def _dump_affiliations(affiliations: Iterable[Affiliation]) -> list[dict]:
+    return [affiliation.model_dump(include={"id", "name"}) for affiliation in affiliations]
 
 
 def _get_relations(affiliation: Affiliation) -> list[Relation]:

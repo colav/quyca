@@ -10,46 +10,34 @@ from quyca.generators import affiliation_generator
 
 
 def get_affiliation_by_id(affiliation_id: str) -> Affiliation:
-    pipeline: list[Mapping[str, Any]] = [{"$match": {"_id": affiliation_id}}, {"$project": {"works": 0}}]
-    try:
-        affiliation_data = database["affiliations"].aggregate(pipeline).next()
-    except:
+    affiliation = database["affiliations"].find_one({"_id": affiliation_id}, {"works": 0})
+    if not affiliation:
         raise NotEntityException(f"The affiliation with id {affiliation_id} does not exist.")
-    return Affiliation(**affiliation_data)
+    return Affiliation(**affiliation)
 
 
-def get_affiliations_by_institution(institution_id: str, relation_type: str) -> Generator[Affiliation, None, None]:
-    pipeline = [
-        {
-            "$match": {
-                "relations.id": institution_id,
-                "types.type": relation_type,
-            }
-        }
-    ]
+def get_affiliations_by_parent(parent_id: str, affiliation_type: str) -> Generator[Affiliation, None, None]:
+    """Affiliations of a type related to a parent, e.g. the faculties of an institution or the departments of a faculty."""
+    pipeline: list[dict[str, Any]] = [{"$match": {"relations.id": parent_id, "types.type": affiliation_type}}]
     set_project(pipeline, ["_id", "names"])
-    affiliations = database["affiliations"].aggregate(pipeline)
-    return affiliation_generator.get(affiliations)
-
-
-def get_departments_by_faculty(faculty_id: str) -> Generator:
-    return get_affiliations_by_institution(faculty_id, "department")
+    return affiliation_generator.get(database["affiliations"].aggregate(pipeline))
 
 
 def get_groups_by_faculty_or_department(affiliation_id: str) -> Generator[Affiliation, None, None]:
-    institution_id = (
-        database["affiliations"]
-        .aggregate(
+    """Groups of the same institution that share persons with the faculty or department."""
+    relation = next(
+        database["affiliations"].aggregate(
             [
                 {"$match": {"_id": affiliation_id}},
                 {"$unwind": "$relations"},
                 {"$match": {"relations.types.type": "education"}},
             ]
-        )
-        .next()
-        .get("relations", {})
-        .get("id", None)
+        ),
+        None,
     )
+    if relation is None:
+        return
+    institution_id = relation.get("relations", {}).get("id")
     pipeline: list[Mapping[str, Any]] = [
         {
             "$match": {
@@ -65,8 +53,7 @@ def get_groups_by_faculty_or_department(affiliation_id: str) -> Generator[Affili
         },
         {"$group": {"_id": "$affiliations.id", "names": {"$push": "$affiliations.name"}}},
     ]
-    groups = database["person"].aggregate(pipeline)
-    return affiliation_generator.get(groups)
+    yield from affiliation_generator.get(database["person"].aggregate(pipeline))
 
 
 def get_h_index_by_institution(institution_id: str, relation_type: str) -> CommandCursor:
