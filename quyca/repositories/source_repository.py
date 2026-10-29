@@ -10,25 +10,9 @@ from quyca.repositories import search_source_filters_repository
 
 
 def get_source_by_id(source_id: str) -> Source:
-    """
-    Parameters:
-    -----------
-    source_id : str
-        The unique identifier of the source to be retrieved.
-    Returns:
-    --------
-    Source
-        The Source object corresponding to the provided source_id.
-    Raises:
-    -------
-    NotEntityException
-        If no source with the given source_id exists in the database.
-    """
-    source_object_id = ObjectId(source_id)
-
-    pipeline: list[dict[str, Any]] = [
-        {"$match": {"_id": source_object_id}},
-    ]
+    if not ObjectId.is_valid(source_id):
+        raise NotEntityException(f"The source with id {source_id} does not exist.")
+    pipeline: list[dict[str, Any]] = [{"$match": {"_id": ObjectId(source_id)}}]
     search_source_filters_repository.set_source_type_pipeline(pipeline)
     source_data = next(database["sources"].aggregate(pipeline), None)
 
