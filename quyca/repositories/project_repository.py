@@ -1,6 +1,5 @@
 from typing import Generator
 
-from bson import ObjectId
 
 from quyca.generators import project_generator
 from quyca.models.base_model import QueryParams
@@ -10,8 +9,10 @@ from quyca.clients.mongo import database
 from quyca.exceptions.not_entity_exception import NotEntityException
 
 
-def get_project_by_id(project_id: str) -> Project:
-    project = database["projects"].find_one({"_id": ObjectId(project_id)})
+def get_project_by_id(project_id: str, pipeline_params: dict | None = None) -> Project:
+    fields = (pipeline_params or {}).get("project")
+    projection = {field: 1 for field in fields} if fields else None
+    project = database["projects"].find_one({"_id": base_repository.to_object_id(project_id)}, projection)
     if not project:
         raise NotEntityException(f"The project with id {project_id} does not exist.")
     return Project(**project)

@@ -2,7 +2,7 @@ import time
 
 from quyca.constants.summary_rules import PROJECT_SUMMARY_FIELDS
 from quyca.models.base_model import QueryParams
-from quyca.parsers.base_parser import build_metadata
+from quyca.parsers.base_parser import build_entity_metadata, build_metadata, parse_authors
 from quyca.repositories import project_repository
 from quyca.services.base_service import (
     build_pipeline_params,
@@ -18,7 +18,14 @@ from quyca.services.base_service import (
 from quyca.parsers import project_parser
 
 
-def get_project_by_id(project_id: str) -> dict:
+def get_project_by_id(project_id: str, query_params: QueryParams) -> dict:
+    start_time = time.time()
+    if query_params.view == "summary":
+        project = project_repository.get_project_by_id(
+            project_id, build_pipeline_params("summary", PROJECT_SUMMARY_FIELDS)
+        )
+        card = project_parser.parse_projects_by_entity(get_entity_data([project], "summary"))[0]
+        return build_entity_metadata(card, start_time)
     project = project_repository.get_project_by_id(project_id)
     set_external_ids(project)
     set_external_urls(project)
@@ -27,14 +34,14 @@ def get_project_by_id(project_id: str) -> dict:
     set_authors_affiliation_years(project)
     set_title_and_language(project)
     set_product_types(project)
-    data = project_parser.parse_project(project)
-    return {"data": data}
+    return build_entity_metadata(project_parser.parse_project(project), start_time)
 
 
-def get_project_authors(project_id: str) -> dict:
-    project = project_repository.get_project_by_id(project_id)
+def get_project_authors(project_id: str, query_params: QueryParams) -> dict:
+    start_time = time.time()
+    project = project_repository.get_project_by_id(project_id, {"project": ["authors"]})
     set_authors_external_ids(project)
-    return {"data": project.model_dump()["authors"]}
+    return build_entity_metadata(parse_authors(project, query_params.view), start_time)
 
 
 def get_projects_by_affiliation(
