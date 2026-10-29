@@ -1,10 +1,10 @@
 from typing import Any, Callable, Dict, List
 
-from bson import ObjectId
 from pymongo.command_cursor import CommandCursor
 
 from quyca.models.base_model import QueryParams
 from quyca.clients.mongo import database
+from quyca.repositories import base_repository
 from quyca.repositories import work_repository
 from quyca.repositories import affiliation_repository
 
@@ -473,7 +473,7 @@ def get_coauthorship_by_colombian_department_map_by_person(person_id: str, query
 
 def get_annual_scimago_quartile_by_source(source_id: str) -> CommandCursor:
     pipeline: List[Dict[str, Any]] = [
-        {"$match": {"_id": ObjectId(source_id)}},
+        {"$match": {"_id": base_repository.to_object_id(source_id)}},
         {"$project": {"ranking.from_date": 1, "ranking.rank": 1, "ranking.source": 1}},
         {"$unwind": "$ranking"},
         {"$match": {"ranking.source": {"$in": ["scimago Best Quartile", "Scimago Best Quartile"]}}},

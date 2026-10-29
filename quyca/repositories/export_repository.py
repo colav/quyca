@@ -1,6 +1,5 @@
 from typing import Generator
 
-from bson import ObjectId
 
 from quyca.models.base_model import QueryParams
 from quyca.generators import work_generator
@@ -18,7 +17,7 @@ def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams, pip
 
 
 def get_works_by_source(source_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:
-    return _get_export_works({"source.id": ObjectId(source_id)}, query_params, pipeline_params)
+    return _get_export_works({"source.id": base_repository.to_object_id(source_id)}, query_params, pipeline_params)
 
 
 def _get_export_works(match: dict, query_params: QueryParams, pipeline_params: dict) -> Generator:
