@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 from bson import ObjectId
 from pymongo.command_cursor import CommandCursor
@@ -551,7 +551,7 @@ def get_products_by_database_by_person(person_id: str, query_params: QueryParams
 
 
 def get_affiliation_ids_by_institution(institution_id: str, relation_type: str) -> List[str]:
-    affiliations = affiliation_repository.get_affiliations_by_institution(institution_id, relation_type)
+    affiliations = affiliation_repository.get_affiliations_by_parent(institution_id, relation_type)
     return [affiliation.id for affiliation in affiliations] if affiliations else []
 
 
@@ -562,3 +562,41 @@ def get_group_ids_by_faculty_or_department(affiliation_id: str) -> List[str]:
 
 def build_project_stage(dynamic_fields: list[str]) -> dict:
     return {"$project": {field: 1 for field in FILTERS_PROJECT_FIELDS + dynamic_fields}}
+
+
+AFFILIATIONS_METRIC_QUERIES: dict[str, tuple[Callable[..., CommandCursor], ...]] = {
+    "product_type": (
+        get_affiliations_impactu_works_count_by_institution,
+        get_departments_scienti_works_count_by_faculty,
+        get_groups_impactu_works_count_by_faculty_or_department,
+    ),
+    "citations": (
+        get_affiliations_citations_count_by_institution,
+        get_departments_citations_count_by_faculty,
+        get_groups_citations_count_by_faculty_or_department,
+    ),
+    "apc_expenses": (
+        get_affiliations_apc_expenses_by_institution,
+        get_departments_apc_expenses_by_faculty,
+        get_groups_apc_expenses_by_faculty_or_department,
+    ),
+    "h_index": (
+        lambda institution_id, relation_type, query_params: get_h_index_by_institution(institution_id, relation_type),
+        lambda faculty_id, query_params: get_h_index_by_institution(faculty_id, "department"),
+        lambda affiliation_id, query_params: get_h_index_by_faculty_or_department(affiliation_id),
+    ),
+}
+
+
+def get_affiliations_metric(
+    metric: str, affiliation_id: str, affiliation_type: str, relation_type: str, query_params: QueryParams
+) -> CommandCursor | None:
+    """Metric of the faculties, departments or groups under an affiliation; None when it has none of that type."""
+    by_institution, departments_by_faculty, groups_by_faculty_or_department = AFFILIATIONS_METRIC_QUERIES[metric]
+    if affiliation_type == "institution":
+        return by_institution(affiliation_id, relation_type, query_params)
+    if affiliation_type == "faculty" and relation_type == "department":
+        return departments_by_faculty(affiliation_id, query_params)
+    if affiliation_type in ("faculty", "department") and relation_type == "group":
+        return groups_by_faculty_or_department(affiliation_id, query_params)
+    return None

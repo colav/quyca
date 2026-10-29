@@ -6,7 +6,6 @@ from quyca.models.base_model import QueryParams
 from quyca.generators import work_generator
 from quyca.clients.mongo import database
 from quyca.repositories import base_repository
-from quyca.constants.institutions import institutions_list
 from quyca.repositories import search_work_filters_repository
 
 
@@ -14,19 +13,8 @@ def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_para
     return _get_export_works({"authors.id": person_id}, query_params, pipeline_params)
 
 
-def get_works_by_affiliation(
-    affiliation_id: str, affiliation_type: str, query_params: QueryParams, pipeline_params: dict
-) -> Generator:
-    types = institutions_list if affiliation_type == "institution" else [affiliation_type]
-    match = {
-        "authors.affiliations": {
-            "$elemMatch": {
-                "id": affiliation_id,
-                "types": {"$elemMatch": {"type": {"$in": types}}},
-            }
-        }
-    }
-    return _get_export_works(match, query_params, pipeline_params)
+def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:
+    return _get_export_works({"authors.affiliations.id": affiliation_id}, query_params, pipeline_params)
 
 
 def get_works_by_source(source_id: str, query_params: QueryParams, pipeline_params: dict) -> Generator:

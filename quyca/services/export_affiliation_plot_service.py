@@ -3,6 +3,7 @@ from collections.abc import Callable, Iterable
 from typing import Any, Optional, Tuple
 
 from quyca.constants.articles_types import articles_types_list
+from quyca.exceptions.invalid_param_exception import InvalidParamException
 from quyca.models.affiliation_model import Affiliation
 from quyca.models.base_model import QueryParams
 from quyca.models.calculations_model import Calculations
@@ -13,6 +14,7 @@ from quyca.parsers import export_plot_parser
 from quyca.repositories import affiliation_repository
 from quyca.repositories import plot_repository
 from quyca.repositories import work_repository
+from quyca.services import affiliation_plot_service
 
 PlotExporter = Callable[..., Any]
 
@@ -23,146 +25,16 @@ def call_exporter(exporter: PlotExporter, **available: Any) -> Any:
     return exporter(**kwargs)
 
 
-def export_affiliations_by_product_type(
-    affiliation_id: str,
-    affiliation_type: str,
-    query_params: QueryParams,
+def export_relation_plot(
+    affiliation_id: str, affiliation_type: str, query_params: QueryParams
 ) -> Iterable[dict[str, Any]]:
-    plot = query_params.plot
-    if plot is None:
-        raise ValueError("El parámetro 'plot' es obligatorio.")
-
-    relation_type = {
-        "faculties_by_product_type": "faculty",
-        "departments_by_product_type": "department",
-        "research_groups_by_product_type": "group",
-    }[plot]
-
-    if affiliation_type == "institution":
-        return plot_repository.get_affiliations_impactu_works_count_by_institution(
-            affiliation_id,
-            relation_type,
-            query_params,
-        )
-
-    if affiliation_type == "faculty" and relation_type == "department":
-        return plot_repository.get_departments_scienti_works_count_by_faculty(
-            affiliation_id,
-            query_params,
-        )
-
-    if affiliation_type in {"faculty", "department"} and relation_type == "group":
-        return plot_repository.get_groups_impactu_works_count_by_faculty_or_department(
-            affiliation_id,
-            query_params,
-        )
-
-    raise ValueError(f"El plot '{query_params.plot}' no está disponible " f"para la afiliación '{affiliation_type}'.")
-
-
-def export_citations_by_affiliation(
-    affiliation_id: str,
-    affiliation_type: str,
-    query_params: QueryParams,
-) -> Iterable[dict[str, Any]]:
-    plot = query_params.plot
-    if plot is None:
-        raise ValueError("El parámetro 'plot' es obligatorio.")
-
-    relation_type = {
-        "citations_by_faculty": "faculty",
-        "citations_by_department": "department",
-        "citations_by_research_group": "group",
-    }[plot]
-
-    if affiliation_type == "institution":
-        return plot_repository.get_affiliations_citations_count_by_institution(
-            affiliation_id,
-            relation_type,
-            query_params,
-        )
-
-    if affiliation_type == "faculty" and relation_type == "department":
-        return plot_repository.get_departments_citations_count_by_faculty(
-            affiliation_id,
-            query_params,
-        )
-
-    if affiliation_type in {"faculty", "department"} and relation_type == "group":
-        return plot_repository.get_groups_citations_count_by_faculty_or_department(
-            affiliation_id,
-            query_params,
-        )
-
-    raise ValueError(f"El plot '{query_params.plot}' no está disponible " f"para la afiliación '{affiliation_type}'.")
-
-
-def export_apc_expenses_by_affiliation(
-    affiliation_id: str,
-    affiliation_type: str,
-    query_params: QueryParams,
-) -> Iterable[dict[str, Any]]:
-    plot = query_params.plot
-    if plot is None:
-        raise ValueError("El parámetro 'plot' es obligatorio.")
-
-    relation_type = {
-        "apc_expenses_by_faculty": "faculty",
-        "apc_expenses_by_department": "department",
-        "apc_expenses_by_group": "group",
-    }[plot]
-
-    if affiliation_type == "institution":
-        return plot_repository.get_affiliations_apc_expenses_by_institution(
-            affiliation_id,
-            relation_type,
-            query_params,
-        )
-
-    if affiliation_type == "faculty" and relation_type == "department":
-        return plot_repository.get_departments_apc_expenses_by_faculty(
-            affiliation_id,
-            query_params,
-        )
-
-    if affiliation_type in {"faculty", "department"} and relation_type == "group":
-        return plot_repository.get_groups_apc_expenses_by_faculty_or_department(
-            affiliation_id,
-            query_params,
-        )
-
-    raise ValueError(f"El plot '{query_params.plot}' no está disponible " f"para la afiliación '{affiliation_type}'.")
-
-
-def export_h_index_by_affiliation(
-    affiliation_id: str,
-    affiliation_type: str,
-    query_params: QueryParams,
-) -> Iterable[dict[str, Any]]:
-    plot = query_params.plot
-    if plot is None:
-        raise ValueError("El parámetro 'plot' es obligatorio.")
-
-    relation_type = {
-        "h_index_by_faculty": "faculty",
-        "h_index_by_department": "department",
-        "h_index_by_research_group": "group",
-    }[plot]
-
-    if affiliation_type == "institution" or (affiliation_type == "faculty" and relation_type == "department"):
-        cursor = plot_repository.get_h_index_by_institution(affiliation_id, relation_type)
-    elif affiliation_type in {"faculty", "department"} and relation_type == "group":
-        cursor = plot_repository.get_h_index_by_faculty_or_department(affiliation_id)
-    else:
-        raise ValueError(f"El plot '{plot}' no está disponible para la afiliación '{affiliation_type}'.")
-
+    data = affiliation_plot_service.get_relation_plot_data(affiliation_id, affiliation_type, query_params)
+    metric, _ = affiliation_plot_service.RELATION_PLOTS[str(query_params.plot)]
+    if metric != "h_index":
+        return data
     return (
-        {
-            "id": item["_id"],
-            "name": get_affiliation_name(item.get("names")),
-            "h_index": item.get("h_index") or 0,
-        }
-        for item in cursor
+        {"id": item["_id"], "name": get_affiliation_name(item.get("names")), "h_index": item.get("h_index") or 0}
+        for item in data
     )
 
 
@@ -177,7 +49,7 @@ def export_products_by_database(
         "department",
         "group",
     }:
-        raise ValueError(f"Tipo de afiliación no válido: '{affiliation_type}'.")
+        raise InvalidParamException(f"Tipo de afiliación no válido: '{affiliation_type}'.")
 
     return plot_repository.get_products_by_database_by_affiliation(
         affiliation_id,
@@ -237,7 +109,7 @@ def export_annual_articles_by_top_publishers(
     query_params: QueryParams,
 ) -> Iterable[Any]:
     pipeline_params = {
-        "work_project": ["source.name", "source.publisher.name", "source.id", "year_published", "types"],
+        "project": ["source.name", "source.publisher.name", "source.id", "year_published", "types"],
         "match": {
             "types.type": {"$in": articles_types_list},
             "source.publisher.name": {"$ne": None},
@@ -255,7 +127,7 @@ def export_articles_by_publisher(
     query_params: QueryParams,
 ) -> Iterable[Any]:
     pipeline_params = {
-        "work_project": ["source.id", "source.publisher.name", "source.name"],
+        "project": ["source.id", "source.publisher.name", "source.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
     return work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
@@ -314,7 +186,7 @@ def export_articles_by_scimago_quartile(
     query_params: QueryParams,
 ) -> Iterable[Any]:
     pipeline_params = {
-        "work_project": ["source.id", "source.name", "date_published", "source.ranking"],
+        "project": ["source.id", "source.name", "date_published", "source.ranking"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
     return work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
@@ -326,7 +198,7 @@ def export_articles_by_publishing_institution(
 ) -> Tuple[Iterable[Any], Optional[Affiliation]]:
     institution = affiliation_repository.get_affiliation_by_id(affiliation_id)
     pipeline_params = {
-        "work_project": ["source.id", "source.name", "source.publisher.name"],
+        "project": ["source.id", "source.name", "source.publisher.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
     works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
@@ -338,7 +210,7 @@ def export_annual_apc_expenses(
     query_params: QueryParams,
 ) -> Iterable[Any]:
     pipeline_params = {
-        "work_project": [
+        "project": [
             "source.id",
             "source.name",
             "source.apc",
@@ -360,18 +232,7 @@ def export_annual_apc_expenses(
 
 
 AFFILIATION_PLOT_EXPORTERS: dict[str, PlotExporter] = {
-    "faculties_by_product_type": export_affiliations_by_product_type,
-    "departments_by_product_type": export_affiliations_by_product_type,
-    "research_groups_by_product_type": export_affiliations_by_product_type,
-    "citations_by_faculty": export_citations_by_affiliation,
-    "citations_by_department": export_citations_by_affiliation,
-    "citations_by_research_group": export_citations_by_affiliation,
-    "apc_expenses_by_faculty": export_apc_expenses_by_affiliation,
-    "apc_expenses_by_department": export_apc_expenses_by_affiliation,
-    "apc_expenses_by_group": export_apc_expenses_by_affiliation,
-    "h_index_by_faculty": export_h_index_by_affiliation,
-    "h_index_by_department": export_h_index_by_affiliation,
-    "h_index_by_research_group": export_h_index_by_affiliation,
+    **{plot: export_relation_plot for plot in affiliation_plot_service.RELATION_PLOTS},
     "products_by_database": export_products_by_database,
     "coauthorship_by_country_map": export_coauthorship_by_country_map,
     "coauthorship_by_colombian_department_map": export_coauthorship_by_colombian_department_map,
@@ -401,12 +262,12 @@ def get_plot_csv(
     plot = query_params.plot
 
     if not plot:
-        raise ValueError("The 'plot' parameter is required.")
+        raise InvalidParamException("The 'plot' parameter is required.")
 
     exporter = AFFILIATION_PLOT_EXPORTERS.get(plot)
 
     if exporter is None:
-        raise ValueError(f"The plot '{plot}' is not available for affiliation '{affiliation_type}'.")
+        raise InvalidParamException(f"The plot '{plot}' is not available for affiliation '{affiliation_type}'.")
 
     data = call_exporter(
         exporter,

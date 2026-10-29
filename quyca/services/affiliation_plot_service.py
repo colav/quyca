@@ -2,6 +2,7 @@ from typing import Any, Callable
 from pymongo.command_cursor import CommandCursor
 
 from quyca.constants.articles_types import articles_types_list
+from quyca.exceptions.invalid_param_exception import InvalidParamException
 from quyca.models.base_model import QueryParams
 from quyca.parsers import bar_parser, map_parser, network_parser, pie_parser
 from quyca.repositories import calculations_repository
@@ -10,44 +11,34 @@ from quyca.repositories import affiliation_repository
 from quyca.repositories import plot_repository
 from quyca.repositories import work_repository
 
+RELATION_PLOTS = {
+    "faculties_by_product_type": ("product_type", "faculty"),
+    "departments_by_product_type": ("product_type", "department"),
+    "research_groups_by_product_type": ("product_type", "group"),
+    "citations_by_faculty": ("citations", "faculty"),
+    "citations_by_department": ("citations", "department"),
+    "citations_by_research_group": ("citations", "group"),
+    "apc_expenses_by_faculty": ("apc_expenses", "faculty"),
+    "apc_expenses_by_department": ("apc_expenses", "department"),
+    "apc_expenses_by_group": ("apc_expenses", "group"),
+    "h_index_by_faculty": ("h_index", "faculty"),
+    "h_index_by_department": ("h_index", "department"),
+    "h_index_by_research_group": ("h_index", "group"),
+}
 
-def get_affiliation_plot(
-    affiliation_id: str, affiliation_type: str, query_params: QueryParams
-) -> dict[str, Any] | None:
+RELATION_PLOT_PARSERS: dict[str, Callable[[CommandCursor], Any]] = {
+    "product_type": bar_parser.parse_affiliations_by_product_type,
+    "citations": pie_parser.parse_citations_by_affiliations,
+    "apc_expenses": pie_parser.parse_apc_expenses_by_affiliations,
+    "h_index": pie_parser.parse_h_index_by_affiliation,
+}
+
+
+def get_affiliation_plot(affiliation_id: str, affiliation_type: str, query_params: QueryParams) -> Any:
     plot_type = query_params.plot
-    plot_type_dict = {
-        "faculties_by_product_type": "faculty",
-        "departments_by_product_type": "department",
-        "research_groups_by_product_type": "group",
-    }
-
-    if plot_type is not None and plot_type in plot_type_dict:
-        relation_type = plot_type_dict[plot_type]
-        return plot_affiliations_by_product_type(affiliation_id, affiliation_type, relation_type, query_params)
-
-    if plot_type in [
-        "citations_by_faculty",
-        "citations_by_department",
-        "citations_by_research_group",
-    ]:
-        relation_type = plot_type.split("_")[-1]
-        return plot_citations_by_affiliations(affiliation_id, affiliation_type, relation_type, query_params)
-
-    if plot_type in [
-        "apc_expenses_by_faculty",
-        "apc_expenses_by_department",
-        "apc_expenses_by_group",
-    ]:
-        relation_type = plot_type.split("_")[-1]
-        return plot_apc_expenses_by_affiliation(affiliation_id, affiliation_type, relation_type, query_params)
-
-    if plot_type in [
-        "h_index_by_faculty",
-        "h_index_by_department",
-        "h_index_by_research_group",
-    ]:
-        relation_type = plot_type.split("_")[-1]
-        return plot_h_index_by_affiliation(affiliation_id, affiliation_type, relation_type, query_params)
+    if plot_type in RELATION_PLOTS:
+        metric, _ = RELATION_PLOTS[plot_type]
+        return RELATION_PLOT_PARSERS[metric](get_relation_plot_data(affiliation_id, affiliation_type, query_params))
 
     func: Callable[[str, QueryParams], dict[str, Any] | None] | None = globals().get(f"plot_{plot_type}")
     if func is None:
@@ -59,61 +50,18 @@ def get_affiliation_plot(
     return result
 
 
-def plot_affiliations_by_product_type(
-    affiliation_id: str, affiliation_type: str, relation_type: str, query_params: QueryParams
-) -> dict[str, Any] | None:
-    data: CommandCursor[Any] | None = None
-    if affiliation_type == "institution":
-        data = plot_repository.get_affiliations_impactu_works_count_by_institution(
-            affiliation_id, relation_type, query_params
-        )
-    elif affiliation_type == "faculty" and relation_type == "department":
-        data = plot_repository.get_departments_scienti_works_count_by_faculty(affiliation_id, query_params)
-    elif affiliation_type in ["faculty", "department"] and relation_type == "group":
-        data = plot_repository.get_groups_impactu_works_count_by_faculty_or_department(affiliation_id, query_params)
-
+def get_relation_plot_data(affiliation_id: str, affiliation_type: str, query_params: QueryParams) -> CommandCursor:
+    """Data of a RELATION_PLOTS plot, shared by the chart and its CSV export."""
+    plot_type = str(query_params.plot)
+    metric, relation_type = RELATION_PLOTS[plot_type]
+    data = plot_repository.get_affiliations_metric(
+        metric, affiliation_id, affiliation_type, relation_type, query_params
+    )
     if data is None:
-        return None
-    return bar_parser.parse_affiliations_by_product_type(data)
-
-
-def plot_citations_by_affiliations(
-    affiliation_id: str, affiliation_type: str, relation_type: str, query_params: QueryParams
-) -> dict:
-    data: CommandCursor | None = None
-    if affiliation_type == "institution":
-        data = plot_repository.get_affiliations_citations_count_by_institution(
-            affiliation_id, relation_type, query_params
+        raise InvalidParamException(
+            f"El plot '{plot_type}' no está disponible para la afiliación '{affiliation_type}'."
         )
-    elif affiliation_type == "faculty" and relation_type == "department":
-        data = plot_repository.get_departments_citations_count_by_faculty(affiliation_id, query_params)
-    elif affiliation_type in ["faculty", "department"] and relation_type == "group":
-        data = plot_repository.get_groups_citations_count_by_faculty_or_department(affiliation_id, query_params)
-    return pie_parser.parse_citations_by_affiliations(data)
-
-
-def plot_apc_expenses_by_affiliation(
-    affiliation_id: str, affiliation_type: str, relation_type: str, query_params: QueryParams
-) -> dict:
-    data: CommandCursor | None = None
-    if affiliation_type == "institution":
-        data = plot_repository.get_affiliations_apc_expenses_by_institution(affiliation_id, relation_type, query_params)
-    elif affiliation_type == "faculty" and relation_type == "department":
-        data = plot_repository.get_departments_apc_expenses_by_faculty(affiliation_id, query_params)
-    elif affiliation_type in ["faculty", "department"] and relation_type == "group":
-        data = plot_repository.get_groups_apc_expenses_by_faculty_or_department(affiliation_id, query_params)
-    return pie_parser.parse_apc_expenses_by_affiliations(data)
-
-
-def plot_h_index_by_affiliation(
-    affiliation_id: str, affiliation_type: str, relation_type: str, query_params: QueryParams
-) -> dict:
-    data: CommandCursor | None = None
-    if affiliation_type == "institution" or (affiliation_type == "faculty" and relation_type == "department"):
-        data = plot_repository.get_h_index_by_institution(affiliation_id, relation_type)
-    elif affiliation_type in ["faculty", "department"] and relation_type == "group":
-        data = plot_repository.get_h_index_by_faculty_or_department(affiliation_id)
-    return pie_parser.parse_h_index_by_affiliation(data)
+    return data
 
 
 def plot_annual_evolution_by_impactu_classification(affiliation_id: str, query_params: QueryParams) -> dict:
@@ -139,7 +87,7 @@ def plot_annual_articles_open_access(affiliation_id: str, query_params: QueryPar
 
 def plot_annual_articles_by_top_publishers(affiliation_id: str, query_params: QueryParams) -> dict:
     pipeline_params = {
-        "work_project": ["source.name", "source.publisher.name", "source.id", "year_published", "types"],
+        "project": ["source.name", "source.publisher.name", "source.id", "year_published", "types"],
         "match": {
             "types.type": {"$in": articles_types_list},
             "source.publisher.name": {"$ne": None},
@@ -156,7 +104,7 @@ def plot_most_used_title_words(affiliation_id: str, query_params: QueryParams) -
 
 def plot_articles_by_publisher(affiliation_id: str, query_params: QueryParams) -> dict:
     pipeline_params = {
-        "work_project": ["source.id", "source.publisher.name", "source.name"],
+        "project": ["source.id", "source.publisher.name", "source.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
     works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
@@ -207,7 +155,7 @@ def plot_articles_by_scienti_category(affiliation_id: str, query_params: QueryPa
 
 def plot_articles_by_scimago_quartile(affiliation_id: str, query_params: QueryParams) -> dict:
     pipeline_params = {
-        "work_project": ["source.id", "source.name", "date_published", "source.ranking"],
+        "project": ["source.id", "source.name", "date_published", "source.ranking"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
     works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
@@ -217,7 +165,7 @@ def plot_articles_by_scimago_quartile(affiliation_id: str, query_params: QueryPa
 def plot_articles_by_publishing_institution(affiliation_id: str, query_params: QueryParams) -> dict:
     institution = affiliation_repository.get_affiliation_by_id(affiliation_id)
     pipeline_params = {
-        "work_project": ["source.id", "source.name", "source.publisher.name"],
+        "project": ["source.id", "source.name", "source.publisher.name"],
         "match": {"types.type": {"$in": articles_types_list}},
     }
     works = work_repository.get_works_by_affiliation(affiliation_id, query_params, pipeline_params)
@@ -241,7 +189,7 @@ def plot_institutional_coauthorship_network(affiliation_id: str, query_params: Q
 
 def plot_annual_apc_expenses(affiliation_id: str, query_params: QueryParams) -> dict:
     pipeline_params = {
-        "work_project": [
+        "project": [
             "source.id",
             "source.name",
             "source.apc",
