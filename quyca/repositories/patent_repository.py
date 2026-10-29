@@ -1,6 +1,5 @@
 from typing import Generator
 
-from bson import ObjectId
 
 from quyca.generators import patent_generator
 from quyca.models.base_model import QueryParams
@@ -10,8 +9,10 @@ from quyca.clients.mongo import database
 from quyca.exceptions.not_entity_exception import NotEntityException
 
 
-def get_patent_by_id(patent_id: str) -> Patent:
-    patent = database["patents"].find_one({"_id": ObjectId(patent_id)})
+def get_patent_by_id(patent_id: str, pipeline_params: dict | None = None) -> Patent:
+    fields = (pipeline_params or {}).get("project")
+    projection = {field: 1 for field in fields} if fields else None
+    patent = database["patents"].find_one({"_id": base_repository.to_object_id(patent_id)}, projection)
     if not patent:
         raise NotEntityException(f"The patent with id {patent_id} does not exist.")
     return Patent(**patent)

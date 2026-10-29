@@ -2,7 +2,7 @@ import time
 
 from quyca.constants.summary_rules import PATENT_SUMMARY_FIELDS
 from quyca.models.base_model import QueryParams
-from quyca.parsers.base_parser import build_metadata
+from quyca.parsers.base_parser import build_entity_metadata, build_metadata, parse_authors
 from quyca.repositories import patent_repository
 from quyca.services.base_service import (
     build_pipeline_params,
@@ -18,7 +18,12 @@ from quyca.services.base_service import (
 from quyca.parsers import patent_parser
 
 
-def get_patent_by_id(patent_id: str) -> dict:
+def get_patent_by_id(patent_id: str, query_params: QueryParams) -> dict:
+    start_time = time.time()
+    if query_params.view == "summary":
+        patent = patent_repository.get_patent_by_id(patent_id, build_pipeline_params("summary", PATENT_SUMMARY_FIELDS))
+        card = patent_parser.parse_patents_by_entity(get_entity_data([patent], "summary"))[0]
+        return build_entity_metadata(card, start_time)
     patent = patent_repository.get_patent_by_id(patent_id)
     set_external_ids(patent)
     set_external_urls(patent)
@@ -27,14 +32,14 @@ def get_patent_by_id(patent_id: str) -> dict:
     set_title_and_language(patent)
     set_authors_affiliation_years(patent)
     set_product_types(patent)
-    data = patent_parser.parse_patent(patent)
-    return {"data": data}
+    return build_entity_metadata(patent_parser.parse_patent(patent), start_time)
 
 
-def get_patent_authors(patent_id: str) -> dict:
-    patent = patent_repository.get_patent_by_id(patent_id)
+def get_patent_authors(patent_id: str, query_params: QueryParams) -> dict:
+    start_time = time.time()
+    patent = patent_repository.get_patent_by_id(patent_id, {"project": ["authors"]})
     set_authors_external_ids(patent)
-    return {"data": patent.model_dump()["authors"]}
+    return build_entity_metadata(parse_authors(patent, query_params.view), start_time)
 
 
 def get_patents_by_affiliation(
