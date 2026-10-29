@@ -3,7 +3,7 @@ import time
 from quyca.constants.summary_rules import WORK_SUMMARY_FIELDS
 from quyca.models.base_model import QueryParams
 from quyca.models.work_model import Work, Abstract
-from quyca.parsers.base_parser import build_metadata
+from quyca.parsers.base_parser import build_entity_metadata, build_metadata, parse_authors
 from quyca.repositories import work_repository
 from quyca.services.base_service import (
     build_pipeline_params,
@@ -21,8 +21,11 @@ from quyca.validators import search_validator
 
 
 def get_work_by_id(work_id: str, query_params: QueryParams) -> dict:
+    start_time = time.time()
+    if query_params.view == "summary":
+        work = work_repository.get_work_by_id(work_id, build_pipeline_params("summary", WORK_SUMMARY_FIELDS))
+        return build_entity_metadata(work_parser.parse_works(get_entity_data([work], "summary"))[0], start_time)
     work = work_repository.get_work_by_id(work_id)
-
     set_abstract(work)
     set_external_ids(work)
     set_external_urls(work)
@@ -31,21 +34,16 @@ def get_work_by_id(work_id: str, query_params: QueryParams) -> dict:
     set_authors_affiliation_years(work)
     set_title_and_language(work)
     set_product_types(work)
-    data = work_parser.parse_work(work)
-    return {"data": data}
+    return build_entity_metadata(work_parser.parse_work(work), start_time)
 
 
 def get_work_by_doi(work_doi: str, query_params: QueryParams, current_url: str) -> dict:
     start_time = time.time()
-    work = work_repository.get_work_by_doi(work_doi)
-    return build_metadata(
-        work,
-        1,
-        query_params,
-        start_time,
-        current_url,
-        work_parser.parse_works,
-    )
+    pipeline_params = build_pipeline_params(query_params.view, WORK_SUMMARY_FIELDS)
+    works = list(work_repository.get_work_by_doi(work_doi, pipeline_params))
+    if query_params.view == "summary":
+        works = get_entity_data(works, "summary")
+    return build_metadata(works, len(works), query_params, start_time, current_url, work_parser.parse_works)
 
 
 def set_abstract(work: Work) -> None:
@@ -59,10 +57,11 @@ def set_abstract(work: Work) -> None:
     work.abstract = first_abstract.abstract
 
 
-def get_work_authors(work_id: str) -> dict:
-    work = work_repository.get_work_by_id(work_id)
+def get_work_authors(work_id: str, query_params: QueryParams) -> dict:
+    start_time = time.time()
+    work = work_repository.get_work_by_id(work_id, {"project": ["authors"]})
     set_authors_external_ids(work, filter_sensitive=True)
-    return {"data": work.model_dump()["authors"]}
+    return build_entity_metadata(parse_authors(work, query_params.view), start_time)
 
 
 def get_works_by_affiliation(affiliation_id: str, query_params: QueryParams, current_url: str) -> dict:

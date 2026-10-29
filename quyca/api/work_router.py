@@ -1,43 +1,26 @@
-from typing import Tuple
+from flask import Blueprint, Response, jsonify, request
 
-from flask import Blueprint, jsonify, Response, request
-from sentry_sdk import capture_exception
-
-from quyca.models.base_model import QueryParams
+from quyca.api.helpers import parse_query_params, register_error_handlers
+from quyca.exceptions.invalid_param_exception import InvalidParamException
 from quyca.services import work_service
 
 work_router = Blueprint("work_app_router", __name__)
+register_error_handlers(work_router)
 
 
 @work_router.route("/<work_id>", methods=["GET"])
-def get_work_by_id(work_id: str) -> Response | Tuple[Response, int]:
-    try:
-        query_params = QueryParams.model_validate(request.args.to_dict())
-        data = work_service.get_work_by_id(work_id, query_params)
-        return jsonify(data)
-    except Exception as e:
-        capture_exception(e)
-        return jsonify({"error": str(e)}), 400
+def get_work_by_id(work_id: str) -> Response:
+    return jsonify(work_service.get_work_by_id(work_id, parse_query_params()))
 
 
 @work_router.route("", methods=["GET"])
-def get_work_by_doi() -> Response | Tuple[Response, int]:
+def get_work_by_doi() -> Response:
     doi = request.args.get("doi")
     if not doi:
-        return jsonify({"error": "Missing required parameter: doi"}), 401
-    try:
-        query_params = QueryParams.model_validate(request.args.to_dict())
-        data = work_service.get_work_by_doi(doi, query_params, request.url)
-        return jsonify(data)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 404
+        raise InvalidParamException("Missing required parameter: doi")
+    return jsonify(work_service.get_work_by_doi(doi, parse_query_params(), request.url))
 
 
 @work_router.route("/<work_id>/authors", methods=["GET"])
-def get_work_authors(work_id: str) -> Response | Tuple[Response, int]:
-    try:
-        data = work_service.get_work_authors(work_id)
-        return jsonify(data)
-    except Exception as e:
-        capture_exception(e)
-        return jsonify({"error": str(e)}), 400
+def get_work_authors(work_id: str) -> Response:
+    return jsonify(work_service.get_work_authors(work_id, parse_query_params()))

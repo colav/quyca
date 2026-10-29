@@ -1,6 +1,5 @@
 from typing import Generator
 
-from bson import ObjectId
 
 from quyca.generators import work_generator
 from quyca.models.base_model import QueryParams
@@ -12,12 +11,10 @@ from quyca.repositories import geo_repository
 from quyca.repositories.search_work_filters_repository import compute_works_available_filters, set_product_filters
 
 
-def get_work_by_id(work_id: str) -> Work:
-    pipeline = [
-        {"$match": {"_id": ObjectId(work_id)}},
-    ]
-
+def get_work_by_id(work_id: str, pipeline_params: dict | None = None) -> Work:
+    pipeline = [{"$match": {"_id": base_repository.to_object_id(work_id)}}]
     set_issn_to_pipeline(pipeline)
+    base_repository.set_project(pipeline, (pipeline_params or {}).get("project"))
 
     cursor = database["works"].aggregate(pipeline)
     work = next(cursor, None)
@@ -26,8 +23,9 @@ def get_work_by_id(work_id: str) -> Work:
     return Work(**work)
 
 
-def get_work_by_doi(work_doi: str) -> Generator:
+def get_work_by_doi(work_doi: str, pipeline_params: dict | None = None) -> Generator:
     pipeline = [{"$match": {"doi": work_doi}}]
+    base_repository.set_project(pipeline, (pipeline_params or {}).get("project"))
     cursor = database["works"].aggregate(pipeline)
     return work_generator.get(cursor)
 
