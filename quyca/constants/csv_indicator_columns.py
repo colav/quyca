@@ -51,7 +51,7 @@ CSV_COLUMNS_BY_PLOT: dict[str, CsvColumns] = {
         "longitude": "longitude",
         "coautorships": "coauthorship_count",
     },
-    "annual_evolution_by_scienti_classification": {
+    "annual_evolution_by_impactu_classification": {
         "year": "publication_year",
         "type": "scienti_product_type",
         "count": "product_count",

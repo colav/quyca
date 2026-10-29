@@ -1,5 +1,6 @@
 from typing import Any, Callable
 
+from quyca.exceptions.invalid_param_exception import InvalidParamException
 from quyca.models.base_model import QueryParams
 from quyca.parsers import bar_parser
 from quyca.repositories import plot_repository
@@ -10,7 +11,7 @@ def get_source_products_plot(source_id: str, query_params: QueryParams) -> dict[
 
     function: Callable[[str, QueryParams], dict[str, Any] | None] | None = globals().get(f"plot_{plot_type}")
     if function is None:
-        return None
+        raise InvalidParamException(f"The plot '{plot_type}' is not available for source.")
 
     result = function(source_id, query_params)
     if not (result is None or isinstance(result, dict)):

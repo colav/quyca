@@ -171,7 +171,7 @@ def parse_coauthorship_by_colombian_department_map(
         }
 
 
-def parse_annual_evolution_by_scienti_classification(works: Generator) -> Iterator[dict[str, Any]]:
+def parse_annual_evolution_by_impactu_classification(works: Generator) -> Iterator[dict[str, Any]]:
     data: defaultdict = defaultdict(lambda: defaultdict(int))
     for work in works:
         if not work.year_published:
@@ -393,7 +393,7 @@ PLOT_PARSERS: dict[str, PlotParser] = {
     "products_by_database": parse_products_by_database,
     "coauthorship_by_country_map": parse_coauthorship_by_country_map,
     "coauthorship_by_colombian_department_map": parse_coauthorship_by_colombian_department_map,
-    "annual_evolution_by_scienti_classification": parse_annual_evolution_by_scienti_classification,
+    "annual_evolution_by_impactu_classification": parse_annual_evolution_by_impactu_classification,
     "annual_citation_count": parse_annual_citation_count,
     "annual_articles_open_access": parse_annual_articles_open_access,
     "annual_articles_by_top_publishers": parse_annual_articles_by_top_publishers,

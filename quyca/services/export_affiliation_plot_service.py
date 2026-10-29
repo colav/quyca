@@ -77,7 +77,7 @@ def export_institutional_coauthorship_network(affiliation_id: str) -> Calculatio
     return calculations_repository.get_affiliation_calculations(affiliation_id)
 
 
-def export_annual_evolution_by_scienti_classification(
+def export_annual_evolution_by_impactu_classification(
     affiliation_id: str,
     query_params: QueryParams,
 ) -> Iterable[Any]:
@@ -237,7 +237,7 @@ AFFILIATION_PLOT_EXPORTERS: dict[str, PlotExporter] = {
     "coauthorship_by_country_map": export_coauthorship_by_country_map,
     "coauthorship_by_colombian_department_map": export_coauthorship_by_colombian_department_map,
     "institutional_coauthorship_network": export_institutional_coauthorship_network,
-    "annual_evolution_by_scienti_classification": export_annual_evolution_by_scienti_classification,
+    "annual_evolution_by_impactu_classification": export_annual_evolution_by_impactu_classification,
     "annual_citation_count": export_annual_citation_count,
     "annual_articles_open_access": export_annual_articles_open_access,
     "annual_articles_by_top_publishers": export_annual_articles_by_top_publishers,
