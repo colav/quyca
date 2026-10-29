@@ -58,11 +58,8 @@ def get_works_count_by_affiliation(affiliation_id: str, query_params: QueryParam
     )
 
 
-def get_works_available_filters_by_affiliation(
-    affiliation_id: str, affiliation_type: str, query_params: QueryParams
-) -> dict:
-    match = base_repository.affiliation_match(affiliation_id, affiliation_type)
-    return compute_works_available_filters(_works_match(match, query_params))
+def get_works_available_filters_by_affiliation(affiliation_id: str, query_params: QueryParams) -> dict:
+    return compute_works_available_filters(_works_match({"authors.affiliations.id": affiliation_id}, query_params))
 
 
 def get_works_by_person(person_id: str, query_params: QueryParams, pipeline_params: dict | None = None) -> Generator:

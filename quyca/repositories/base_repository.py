@@ -27,6 +27,8 @@ def count(collection: Collection, match_stages: list[dict]) -> int:
 def set_search_end_stages(pipeline: list, query_params: QueryParams, pipeline_params: dict | None = None) -> list:
     if pipeline_params is None:
         pipeline_params = {}
+    if match := pipeline_params.get("match"):
+        pipeline.append({"$match": match})
     set_sort(pipeline, query_params.sort, pipeline_params.get("collection"))
     set_project(pipeline, pipeline_params.get("project"))
     set_pagination(pipeline, query_params)
