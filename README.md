@@ -37,7 +37,7 @@ But this package us deployed with docker, then you need to install docker and do
 
 To deploy, copy `.env.example` to:
 - `.env.dev` for the development environment (`develop` branch).
-- `.env.prod` for the production environment (`master` branch).
+- `.env.prod` for the production environment (`main` branch).
 
 ### Pre-commit
 
@@ -69,13 +69,10 @@ which each Docker target already sets. Real environment variables override the f
 Please read the Makefile to see the available commands to run the package.
 https://github.com/colav/quyca/blob/develop/Makefile
 
-To tests requests to the API, you can use the next urls:
+The API has no route prefix: the web application and the expert API share the same endpoints.
 
-- :8010/app/your/endpoint/here
-- :8010/api/your/endpoint/here
-
-where /app is the endpoint for the web application and /api is the endpoint for the expert API.
-:8010 is the default port for the application but it can be changed in the .env file.
+- Development: https://api.dev.impactu.colav.co/your/endpoint/here
+- Local: http://localhost:8080/your/endpoint/here (`APP_PORT` in the .env file)
 
 # Start the application
 
