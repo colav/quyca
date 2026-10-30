@@ -1,6 +1,6 @@
 from typing import Any
 from unittest.mock import patch, Mock
-from quyca.exceptions.invalid_param_exception import InvalidParamException
+from quyca.exceptions import InvalidParamException
 
 ROUTER = "quyca.api.user_crud_router"
 PERMISSIONS = "quyca.api.permissions"

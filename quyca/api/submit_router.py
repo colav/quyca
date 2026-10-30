@@ -8,8 +8,7 @@ from werkzeug.datastructures import FileStorage
 
 from quyca.api.helpers import register_error_handlers
 from quyca.api.permissions import get_session_email
-from quyca.exceptions.invalid_param_exception import InvalidParamException
-from quyca.exceptions.project_file_exceptions import ProjectFileException
+from quyca.exceptions import InvalidParamException, ProjectFileException
 from quyca.services import ciarp_service, scienti_service, staff_service, submit_project_file_service
 
 submit_router = Blueprint("submit_app_router", __name__)

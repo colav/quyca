@@ -3,10 +3,7 @@ import string
 import time
 from typing import Any, List
 
-from quyca.exceptions.conflict_exception import ConflictException
-from quyca.exceptions.forbidden_exception import ForbiddenException
-from quyca.exceptions.invalid_param_exception import InvalidParamException
-from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.exceptions import ConflictException, ForbiddenException, InvalidParamException, NotEntityException
 from quyca.models.user_model import User
 from quyca.services import notification_service
 from quyca.repositories import user_repository

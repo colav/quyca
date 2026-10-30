@@ -2,7 +2,7 @@ from bson import ObjectId
 from pymongo.collection import Collection
 
 from quyca.constants.institutions import institutions_list
-from quyca.exceptions.invalid_param_exception import InvalidParamException
+from quyca.exceptions import InvalidParamException
 from quyca.models.base_model import QueryParams
 
 

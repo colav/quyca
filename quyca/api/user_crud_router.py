@@ -2,7 +2,7 @@ from flask import Blueprint, Response, jsonify, request
 
 from quyca.api.helpers import register_error_handlers
 from quyca.api.permissions import require_admin, require_same_user
-from quyca.exceptions.invalid_param_exception import InvalidParamException
+from quyca.exceptions import InvalidParamException
 from quyca.services import user_service
 
 user_crud_router = Blueprint("user_crud_app_router", __name__)

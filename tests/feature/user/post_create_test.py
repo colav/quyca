@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch, ANY
 from flask.testing import FlaskClient
 from typing import Any, cast
 
-from quyca.exceptions.conflict_exception import ConflictException
+from quyca.exceptions import ConflictException
 
 ROUTER_MOD = "quyca.api.user_crud_router"
 

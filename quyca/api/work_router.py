@@ -1,7 +1,7 @@
 from flask import Blueprint, Response, jsonify, request
 
 from quyca.api.helpers import parse_query_params, register_error_handlers
-from quyca.exceptions.invalid_param_exception import InvalidParamException
+from quyca.exceptions import InvalidParamException
 from quyca.services import work_service
 
 work_router = Blueprint("work_app_router", __name__)

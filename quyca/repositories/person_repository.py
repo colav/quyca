@@ -4,7 +4,7 @@ from bson import ObjectId
 from quyca.generators import person_generator
 from quyca.models.base_model import ExternalId
 from quyca.repositories import base_repository
-from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.exceptions import NotEntityException
 from quyca.models.person_model import Person
 from quyca.clients.mongo import database
 from quyca.constants.sensitive_data import PUBLIC_PERSON_ID_SOURCES

@@ -1,7 +1,7 @@
 from typing import Any, List, Dict
 
 from quyca.constants.geo_states_cities import GEO_RELATED_FIELDS
-from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.exceptions import NotEntityException
 from quyca.models.geo_model import Geo
 from quyca.generators import geo_generator
 from quyca.clients.mongo import database

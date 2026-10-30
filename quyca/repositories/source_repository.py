@@ -3,7 +3,7 @@ from bson import ObjectId
 
 from quyca.clients.mongo import database
 from quyca.models.source_model import Source
-from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.exceptions import NotEntityException
 from quyca.constants.source_types import normalize_source_type
 from quyca.models.base_model import Topic
 from quyca.repositories import base_repository, search_source_filters_repository

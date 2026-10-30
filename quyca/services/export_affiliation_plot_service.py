@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterable
 from typing import Any, Optional, Tuple
 
 from quyca.constants.articles_types import articles_types_list
-from quyca.exceptions.invalid_param_exception import InvalidParamException
+from quyca.exceptions import InvalidParamException
 from quyca.models.affiliation_model import Affiliation
 from quyca.models.base_model import QueryParams
 from quyca.models.calculations_model import Calculations

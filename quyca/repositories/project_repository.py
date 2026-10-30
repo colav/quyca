@@ -6,7 +6,7 @@ from quyca.models.base_model import QueryParams
 from quyca.models.project_model import Project
 from quyca.repositories import base_repository
 from quyca.clients.mongo import database
-from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.exceptions import NotEntityException
 
 
 def get_project_by_id(project_id: str, pipeline_params: dict | None = None) -> Project:

@@ -1,4 +1,4 @@
-from quyca.exceptions.invalid_param_exception import InvalidParamException
+from quyca.exceptions import InvalidParamException
 
 GEO_TYPES = ("city", "state")
 

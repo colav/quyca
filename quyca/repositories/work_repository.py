@@ -6,7 +6,7 @@ from quyca.models.base_model import QueryParams
 from quyca.models.work_model import Work
 from quyca.repositories import base_repository
 from quyca.clients.mongo import database
-from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.exceptions import NotEntityException
 from quyca.repositories import geo_repository
 from quyca.repositories.search_work_filters_repository import compute_works_available_filters, set_product_filters
 

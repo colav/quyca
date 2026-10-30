@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from quyca.exceptions.conflict_exception import ConflictException
-from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.exceptions import ConflictException, NotEntityException
 from quyca.models.user_model import User
 from quyca.clients.mongo import impactu_database
 from quyca.security.password_hasher import verify_password

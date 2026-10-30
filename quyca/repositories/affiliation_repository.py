@@ -5,7 +5,7 @@ from pymongo.command_cursor import CommandCursor
 from quyca.models.affiliation_model import Affiliation
 from quyca.clients.mongo import database
 from quyca.repositories.base_repository import set_project
-from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.exceptions import NotEntityException
 from quyca.generators import affiliation_generator
 
 

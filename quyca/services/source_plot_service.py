@@ -1,6 +1,6 @@
 from typing import Any, Callable
 
-from quyca.exceptions.invalid_param_exception import InvalidParamException
+from quyca.exceptions import InvalidParamException
 from quyca.models.base_model import QueryParams
 from quyca.parsers import bar_parser
 from quyca.repositories import plot_repository

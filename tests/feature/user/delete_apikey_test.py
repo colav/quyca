@@ -1,6 +1,6 @@
 from typing import Any
 from unittest.mock import patch, Mock
-from quyca.exceptions.not_entity_exception import NotEntityException
+from quyca.exceptions import NotEntityException
 
 ROUTER = "quyca.api.user_crud_router"
 PERMISSIONS = "quyca.api.permissions"

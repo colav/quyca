@@ -3,8 +3,7 @@ from typing import Any, Callable
 
 from flask_jwt_extended import get_jwt, get_jwt_identity, verify_jwt_in_request
 
-from quyca.exceptions.forbidden_exception import ForbiddenException
-from quyca.exceptions.unauthorized_exception import UnauthorizedException
+from quyca.exceptions import ForbiddenException, UnauthorizedException
 
 View = Callable[..., Any]
 

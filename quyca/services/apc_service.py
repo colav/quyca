@@ -1,6 +1,6 @@
 from typing import Generator
 
-from quyca.exceptions.invalid_param_exception import InvalidParamException
+from quyca.exceptions import InvalidParamException
 from quyca.files import tabular_writer_exporter
 from quyca.models.base_model import QueryParams
 from quyca.repositories import apc_repository, base_repository

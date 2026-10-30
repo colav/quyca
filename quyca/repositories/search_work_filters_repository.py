@@ -6,7 +6,7 @@ from typing import Any
 from quyca.models.base_model import QueryParams
 from quyca.normalizers.authors_count import parse_authors_count
 from quyca.clients.mongo import database
-from quyca.exceptions.invalid_param_exception import InvalidParamException
+from quyca.exceptions import InvalidParamException
 from quyca.repositories import base_repository
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,6 @@
 from typing import Any
 from quyca.constants.articles_types import articles_types_list
-from quyca.exceptions.invalid_param_exception import InvalidParamException
+from quyca.exceptions import InvalidParamException
 from quyca.models.base_model import QueryParams
 from quyca.parsers import bar_parser, map_parser, network_parser, pie_parser
 from quyca.repositories import calculations_repository
