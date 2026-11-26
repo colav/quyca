@@ -1,8 +1,10 @@
 import time
 import mongomock
 import pytest
+from quyca.exceptions import InvalidParamException
 from quyca.parsers.source_parser import parse_topic_filter
 from quyca.repositories.search_source_filters_repository import (
+    SUBJECTS_FILTER_PIPELINE,
     TOPICS_FILTER_PIPELINE,
     set_scimago_quartiles,
     set_apc_range,
@@ -10,6 +12,8 @@ from quyca.repositories.search_source_filters_repository import (
     set_publication_time,
     set_license_types,
     set_topics,
+    set_h_index_range,
+    set_subjects,
 )
 
 
@@ -124,7 +128,7 @@ def test_set_open_access_routes_lowercases_and_strips():
 
     set_open_access_routes(pipeline, " DIAMOND , Gold ")
 
-    assert pipeline == [{"$match": {"open_access_status": {"$in": ["diamond", "gold"]}}}]
+    assert pipeline == [{"$match": {"open_access_status.value": {"$in": ["diamond", "gold"]}}}]
 
 
 def test_set_open_access_routes_closed_status_passed_through():
@@ -132,7 +136,7 @@ def test_set_open_access_routes_closed_status_passed_through():
 
     set_open_access_routes(pipeline, "closed")
 
-    assert pipeline == [{"$match": {"open_access_status": {"$in": ["closed"]}}}]
+    assert pipeline == [{"$match": {"open_access_status.value": {"$in": ["closed"]}}}]
 
 
 def test_set_open_access_routes_expands_open_to_diamond_and_gold():
@@ -140,7 +144,7 @@ def test_set_open_access_routes_expands_open_to_diamond_and_gold():
 
     set_open_access_routes(pipeline, "open")
 
-    statuses = pipeline[0]["$match"]["open_access_status"]["$in"]
+    statuses = pipeline[0]["$match"]["open_access_status.value"]["$in"]
     assert set(statuses) == {"diamond", "gold"}
 
 
@@ -149,7 +153,7 @@ def test_set_open_access_routes_open_combined_with_other_status_dedupes():
 
     set_open_access_routes(pipeline, "open,diamond,closed")
 
-    statuses = pipeline[0]["$match"]["open_access_status"]["$in"]
+    statuses = pipeline[0]["$match"]["open_access_status.value"]["$in"]
     assert set(statuses) == {"diamond", "gold", "closed"}
 
 
@@ -333,4 +337,63 @@ def test_topics_filter_tree_counts_each_source_once_per_node():
                 }
             ],
         },
+    ]
+
+
+def subjects_collection() -> mongomock.Collection:
+    collection = mongomock.MongoClient()["impactu"]["sources"]
+    collection.insert_many(
+        [
+            {
+                "_id": "ecology",
+                "subjects": [
+                    {
+                        "source": "scimago",
+                        "subjects": [{"name": "Ecology"}, {"name": "Ecology, Evolution, Behavior and Systematics"}],
+                    },
+                    {"source": "LCC", "subjects": [{"name": "Ecology"}]},
+                ],
+            },
+            {"_id": "plant-ecology", "subjects": [{"source": "LCC", "subjects": [{"name": "Plant ecology"}]}]},
+            {"_id": "no-subjects"},
+        ]
+    )
+    return collection
+
+
+def ids(pipeline: list) -> list:
+    return [source["_id"] for source in subjects_collection().aggregate(pipeline)]
+
+
+@pytest.mark.parametrize("h_index_range", ["-1", "a", "1,2,3", "10,"])
+def test_set_h_index_range_rejects_what_is_not_one_or_two_whole_numbers(h_index_range):
+    with pytest.raises(InvalidParamException):
+        set_h_index_range([], h_index_range)
+
+
+@pytest.mark.parametrize(
+    "subjects, expected",
+    [
+        ("ecology", ["ecology"]),
+        ("Ecology, Evolution, Behavior and Systematics", ["ecology"]),
+        ("Plant ecology,Ecology", ["ecology", "plant-ecology"]),
+        ("Ecology, Evolution, Behavior and Systematics,Plant ecology", ["ecology", "plant-ecology"]),
+        ("Evolution", []),
+        ("Ecolog", []),
+        (",", ["ecology", "plant-ecology", "no-subjects"]),
+    ],
+)
+def test_set_subjects_matches_whole_names_of_any_subject_list_ignoring_case(subjects, expected):
+    pipeline: list = []
+
+    set_subjects(pipeline, subjects)
+
+    assert ids(pipeline) == expected
+
+
+def test_subjects_filter_counts_each_source_once_per_name():
+    assert list(subjects_collection().aggregate(SUBJECTS_FILTER_PIPELINE)) == [
+        {"_id": "Ecology", "count": 1},
+        {"_id": "Ecology, Evolution, Behavior and Systematics", "count": 1},
+        {"_id": "Plant ecology", "count": 1},
     ]

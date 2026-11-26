@@ -117,6 +117,8 @@ def test_search_sources_available_filters(client):
         "publication_time",
         "license_type",
         "topics",
+        "subjects",
+        "h_index_range",
     }
 
     assert set(data.keys()).issubset(expected_filters)
@@ -140,3 +142,49 @@ def test_search_sources_available_filters_with_params(client, query):
     assert response.status_code == 200
     data = response.get_json()
     assert isinstance(data, dict)
+
+
+def latest_h_index(source: dict) -> int | None:
+    """What the source profile shows: the latest Scimago h-index row, valid today or not."""
+    rows = [row for row in source.get("ranking") or [] if row["source"] == "scimago hindex"]
+    return max(rows, key=lambda row: row["to_date"])["rank"] if rows else None
+
+
+ECOLOGY = "subjects=Ecology,Ecology, Evolution, Behavior and Systematics"
+
+
+def test_search_sources_by_subject_and_h_index_range_sorted_by_h(client):
+    """E.g. open access ecology journals without APC and an h-index between 50 and 300."""
+    query = f"{ECOLOGY}&h_index_range=50,300&status=diamond&sort=h_desc&max=50&page=1"
+    sources = client.get(f"{ENDPOINT}?{query}").get_json()["data"]
+
+    assert sources
+    h_indexes = [latest_h_index(source) for source in sources]
+    assert all(50 <= h_index <= 300 for h_index in h_indexes)
+    assert h_indexes == sorted(h_indexes, reverse=True)
+    for source in sources:
+        names = {subject["name"].lower() for group in source["subjects"] for subject in group["subjects"]}
+        assert names & {"ecology", "ecology, evolution, behavior and systematics"}
+
+
+def test_search_sources_summary_sorts_every_h_index_and_shows_why_it_is_diamond(client):
+    """The reviewed query: journals that left Scimago are sorted by their last h-index, not left at the end."""
+    query = "keywords=ecology&subjects=Ecology&sort=h_desc&status=diamond&view=summary&max=100&page=1"
+    sources = client.get(f"{ENDPOINT}?{query}").get_json()["data"]
+
+    h_indexes = [latest_h_index(source) for source in sources]
+    with_h_index = [h_index for h_index in h_indexes if h_index is not None]
+    assert h_indexes == with_h_index + [None] * (len(h_indexes) - len(with_h_index))
+    assert with_h_index == sorted(with_h_index, reverse=True)
+    assert {source["open_access_status"]["value"] for source in sources} == {"diamond"}
+    assert all("apc" in source for source in sources)
+
+
+def test_search_sources_filters_list_subjects_and_the_h_index_range(client):
+    filters = client.get(f"{ENDPOINT}/filters?keywords=ecology&h_index_range=50,300").get_json()
+    subjects = filters["subjects"]
+
+    assert {"title": subjects[0]["value"], "value": subjects[0]["value"], "count": subjects[0]["count"]} == subjects[0]
+    assert "Ecology" in {subject["value"] for subject in subjects}
+    assert 50 <= filters["h_index_range"]["min_h_index"] <= filters["h_index_range"]["max_h_index"] <= 300
+    assert client.get(f"{ENDPOINT}?h_index_range=-1").status_code == 400

@@ -1,4 +1,5 @@
 import re
+import time
 
 from bson import ObjectId
 from pymongo.collection import Collection
@@ -39,6 +40,11 @@ def to_object_id(value: str) -> ObjectId:
     if not ObjectId.is_valid(value):
         raise InvalidParamException(f"Invalid id '{value}'.")
     return ObjectId(value)
+
+
+def id_match(value: str) -> str | dict:
+    """`_id` that comes in the URL: a string, or an ObjectId in documents loaded before ids became strings."""
+    return {"$in": [value, ObjectId(value)]} if ObjectId.is_valid(value) else value
 
 
 def affiliation_match(affiliation_id: str, affiliation_type: str) -> dict:
@@ -85,6 +91,20 @@ def set_project(pipeline: list, project: list | dict | None) -> None:
         return
 
     pipeline.append({"$project": {"_id": 1, **{p: 1 for p in project}}})
+
+
+def latest_source_h_index() -> dict:
+    """A source keeps one Scimago h-index per year in `ranking`, not always in order; this is the latest one, so a
+    journal that left Scimago keeps its last h-index (the one its profile shows)."""
+    rows = {
+        "$filter": {
+            "input": {"$ifNull": ["$ranking", []]},
+            "as": "r",
+            "cond": {"$eq": ["$$r.source", "scimago hindex"]},
+        }
+    }
+    latest = {"$first": {"$sortArray": {"input": rows, "sortBy": {"to_date": -1}}}}
+    return {"$let": {"vars": {"latest": latest}, "in": "$$latest.rank"}}
 
 
 def set_sort(pipeline: list, sort: str | None, collection: str | None = None) -> None:
@@ -268,6 +288,8 @@ def set_sort(pipeline: list, sort: str | None, collection: str | None = None) ->
     elif sort_field == "products":
         sort_field = "products_count"
     elif sort_field == "h":
+        if collection == "sources":
+            pipeline.append({"$addFields": {"h_index": latest_source_h_index()}})
         sort_field = "h_index"
     elif sort_field == "h5":
         sort_field = "h5_index"

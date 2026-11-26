@@ -47,19 +47,31 @@ class Identifier(BaseModel):
     COD_PRODUCTO: str | None = None
 
 
+class Occurrence(BaseModel):
+    """Id of the minciencias ETL: the CvLAC or GrupLAC (source_id) that reports the product, and that report's hash."""
+
+    source_kind: str
+    source_id: str
+    occurrence_id: str
+
+
 class ExternalId(BaseModel):
-    id: str | int | list[str] | Identifier | None = None
+    id: str | int | list[str] | Identifier | Occurrence | None = None
     provenance: str | None = None
     source: str | None = None
 
     @field_validator("id", mode="after")
     @classmethod
-    def id_validator(cls, value: str | int | list[str] | Identifier | None) -> str | int | list[str] | None:
+    def id_validator(
+        cls, value: str | int | list[str] | Identifier | Occurrence | None
+    ) -> str | int | list[str] | None:
         if isinstance(value, Identifier):
             if value.COD_PRODUCTO and value.COD_RH:
                 value = value.COD_RH + "-" + value.COD_PRODUCTO
             else:
                 value = value.COD_RH
+        if isinstance(value, Occurrence):
+            value = value.source_id + "-" + value.occurrence_id
         return value
 
     def __hash__(self) -> int:
@@ -175,6 +187,7 @@ class QueryParams(BaseModel):
     countries: str | None = None
     fields: str | None = None
     groups_ranking: str | None = None
+    h_index_range: str | None = None
     institutions_type: str | None = None
     keywords: str | None = None
     license_type: str | None = None
@@ -186,6 +199,7 @@ class QueryParams(BaseModel):
     states: str | None = None
     scimago_quartiles: str | None = None
     source_types: str | None = None
+    subjects: str | None = None
     topics: str | None = None
     view: Literal["full", "summary"] = "full"
     years: str | None = None
